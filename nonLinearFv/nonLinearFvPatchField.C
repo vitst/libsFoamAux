@@ -234,7 +234,8 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
     }
     
     const IOdictionary& iod = this->db().objectRegistry::template lookupObject<IOdictionary>("transportProperties");
-    l_T = (new dimensionedScalar(iod.lookup("l_T")))->value();
+    //l_T = (new dimensionedScalar(iod.lookup("l_T")))->value();
+    l_T = iod.lookupOrDefault<scalar>("l_T", 1.0);
     
     Field<Type>& val = *this;
     

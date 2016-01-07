@@ -1,0 +1,3 @@
+steadyStateControl.C
+
+LIB = $(FOAM_USER_LIBBIN)/libsteadyStateControl

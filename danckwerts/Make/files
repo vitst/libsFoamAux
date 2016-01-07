@@ -1,0 +1,3 @@
+danckwertsFvPatchScalarField.C
+
+LIB = $(FOAM_USER_LIBBIN)/libdanckwertsFvPatchScalarField

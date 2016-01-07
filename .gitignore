@@ -1,3 +1,10 @@
+# Dependencies
+*.dep
+
+# Include 
+lnInclude/
+linux64Gcc*/
+
 # Compiled Object files
 *.slo
 *.lo

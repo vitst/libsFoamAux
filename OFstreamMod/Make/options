@@ -1,0 +1,11 @@
+EXE_INC = \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/triSurface/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    $(FOAM_DEV_OPTION)
+
+EXE_LIBS = \
+    -lfiniteVolume \
+    -ltriSurface \
+    -lmeshTools
+

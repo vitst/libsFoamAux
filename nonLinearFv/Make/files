@@ -1,0 +1,3 @@
+nonLinearFvPatchFields.C
+
+LIB = $(FOAM_USER_LIBBIN)/libnonLinearFvPatchFields

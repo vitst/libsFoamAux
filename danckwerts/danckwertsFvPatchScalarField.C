@@ -53,7 +53,7 @@ danckwertsFvPatchScalarField
 )
 :
   fixedValueFvPatchScalarField(ptf, p, iF, mapper),
-  D_(1.0)
+  D_(ptf.D_)
 {
 }
 
@@ -67,7 +67,7 @@ danckwertsFvPatchScalarField
 :
   fixedValueFvPatchScalarField(p, iF)
 {
-  D_ = 1.0;
+  D_ = 1.0; //default value (later we read it from the file)
 
   if (dict.found("value"))
   {

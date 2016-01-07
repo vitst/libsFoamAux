@@ -97,7 +97,8 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
         Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 3" << endl;
     }
 
-    l_T = dict.lookupOrDefault<scalar>("l_T", 1.0);
+    //l_T = dict.lookupOrDefault<scalar>("l_T", 1.0);
+    l_T = 1.0; // default value (later we read it from the file)
     Cth = dict.lookupOrDefault<scalar>("Cth", 1.0);
     n1 = dict.lookupOrDefault<scalar>("n1", 1.0);
     n2 = dict.lookupOrDefault<scalar>("n2", 1.0);
@@ -231,6 +232,9 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
     if(debug) {
         Info << "nonLinearFvPatchField<Type>::updateCoeffs - updating" << endl;
     }
+    
+    const IOdictionary& iod = this->db().objectRegistry::template lookupObject<IOdictionary>("transportProperties");
+    l_T = (new dimensionedScalar(iod.lookup("l_T")))->value();
     
     Field<Type>& val = *this;
     

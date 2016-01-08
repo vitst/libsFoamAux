@@ -233,9 +233,15 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
         Info << "nonLinearFvPatchField<Type>::updateCoeffs - updating" << endl;
     }
     
-    const IOdictionary& iod = this->db().objectRegistry::template lookupObject<IOdictionary>("transportProperties");
+    const IOdictionary& iod = this->db().objectRegistry::template 
+                              lookupObject<IOdictionary>("transportProperties");
     //l_T = (new dimensionedScalar(iod.lookup("l_T")))->value();
-    l_T = iod.lookupOrDefault<scalar>("l_T", 1.0);
+    //l_T = iod.lookupOrDefault<scalar>("l_T", 1.0);
+    if( !iod.readIfPresent<scalar>("l_T", l_T) ){
+      SeriousErrorIn("nonLinearFvPatchField<Type>::updateCoeffs")
+              <<"There is no l_T parameter in transportProperties dictionary"
+              <<exit(FatalError);
+    }
     
     Field<Type>& val = *this;
     

@@ -51,7 +51,7 @@ bool Foam::steadyStateControl::criteriaSatisfied()
     Time& time = const_cast<Time&>(mesh_.time());
     if (debug)
     {
-        Info<<"Time: "<< time.timeName() <<"   Iteration: "<<iter_counter<<nl;
+        Info<<"Time: "<< time.timeName() <<"    Iteration: "<<iter_counter<<nl;
     }
 
     bool achieved = true;

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+for d in */ ; do
+  echo ""
+  echo "Enter directory $d"
+  cd $d
+  wclean
+  cd ..
+done

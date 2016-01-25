@@ -104,7 +104,6 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
     n2 = dict.lookupOrDefault<scalar>("n2", 1.0);
     
     if(debug) {
-        Info << "l_T: "<< l_T << endl;
         Info << "Cth: "<< Cth << endl;
         Info << "n1: "<< n1 << endl;
         Info << "n2: "<< n2 << endl;
@@ -235,12 +234,14 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
     
     const IOdictionary& iod = this->db().objectRegistry::template 
                               lookupObject<IOdictionary>("transportProperties");
-    //l_T = (new dimensionedScalar(iod.lookup("l_T")))->value();
-    //l_T = iod.lookupOrDefault<scalar>("l_T", 1.0);
     if( !iod.readIfPresent<scalar>("l_T", l_T) ){
       SeriousErrorIn("nonLinearFvPatchField<Type>::updateCoeffs")
               <<"There is no l_T parameter in transportProperties dictionary"
               <<exit(FatalError);
+    }
+    
+    if(debug) {
+        Info << "l_T: "<< l_T << endl;
     }
     
     Field<Type>& val = *this;

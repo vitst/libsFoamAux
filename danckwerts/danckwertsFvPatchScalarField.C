@@ -145,7 +145,7 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
     AA = (boundaryU & n) * (del & n) / patchD;
   }
   
-  operator==( (AA+iF)/(AA+1.0) );
+  operator==( (AA+iF) / (AA+1.0) );
   
   fixedValueFvPatchScalarField::updateCoeffs();
 }

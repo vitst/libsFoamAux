@@ -97,13 +97,20 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
         Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 3" << endl;
     }
 
-    //l_T = dict.lookupOrDefault<scalar>("l_T", 1.0);
-    l_T = 1.0; // default value (later we read it from the file)
+    const IOdictionary& iod = this->db().objectRegistry::template 
+                              lookupObject<IOdictionary>("transportProperties");
+    
+    if( !iod.readIfPresent<scalar>("l_T", l_T) ){
+      SeriousErrorIn("nonLinearFvPatchField<Type>::nonLinearFvPatchField")
+              <<"There is no l_T parameter in transportProperties dictionary"
+              <<exit(FatalError);
+    }
     Cth = dict.lookupOrDefault<scalar>("Cth", 1.0);
     n1 = dict.lookupOrDefault<scalar>("n1", 1.0);
     n2 = dict.lookupOrDefault<scalar>("n2", 1.0);
     
     if(debug) {
+        Info << "l_T: "<< l_T << endl;
         Info << "Cth: "<< Cth << endl;
         Info << "n1: "<< n1 << endl;
         Info << "n2: "<< n2 << endl;
@@ -232,18 +239,6 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
         Info << "nonLinearFvPatchField<Type>::updateCoeffs - updating" << endl;
     }
     
-    const IOdictionary& iod = this->db().objectRegistry::template 
-                              lookupObject<IOdictionary>("transportProperties");
-    if( !iod.readIfPresent<scalar>("l_T", l_T) ){
-      SeriousErrorIn("nonLinearFvPatchField<Type>::updateCoeffs")
-              <<"There is no l_T parameter in transportProperties dictionary"
-              <<exit(FatalError);
-    }
-    
-    if(debug) {
-        Info << "l_T: "<< l_T << endl;
-    }
-    
     Field<Type>& val = *this;
     
     scalarField del = mag( 1. / this->patch().deltaCoeffs() );
@@ -308,7 +303,6 @@ void nonLinearFvPatchField<Type>::write(Ostream& os) const
         Info << "nonLinearFvPatchField<Type>::write" << endl;
     }
     mixedFvPatchField<Type>::write(os);
-    //os.writeKeyword("l_T")<< l_T << token::END_STATEMENT << nl;
     os.writeKeyword("Cth")<< Cth << token::END_STATEMENT << nl;
     os.writeKeyword("n1")<< n1 << token::END_STATEMENT << nl;
     os.writeKeyword("n2")<< n2 << token::END_STATEMENT << nl;

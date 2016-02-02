@@ -57,7 +57,6 @@ Description
     myPatch
     {
         type            danckwerts;
-        rhoName         rho;
         p               uniform 0;
         value           uniform 0; // optional initial value
     }
@@ -93,9 +92,7 @@ class danckwertsFvPatchScalarField
 protected:
 
     // Protected data
-        //- diffusion coefficient from transportProperties dictionary
-        scalar D_;
-
+  
 public:
 
     //- Runtime type information

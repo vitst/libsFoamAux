@@ -29,6 +29,9 @@ License
 #include "volFields.H"
 #include "uniformDimensionedFields.H"
 
+
+#include <typeinfo>
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::danckwertsFvPatchScalarField::
@@ -38,8 +41,7 @@ danckwertsFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-  fixedValueFvPatchScalarField(p, iF),
-  D_(1.0)
+  fixedValueFvPatchScalarField(p, iF)
 {
 }
 
@@ -52,13 +54,11 @@ danckwertsFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-  fixedValueFvPatchScalarField(ptf, p, iF, mapper),
-  D_(ptf.D_)
+  fixedValueFvPatchScalarField(ptf, p, iF, mapper)
 {
 }
 
-Foam::danckwertsFvPatchScalarField::
-danckwertsFvPatchScalarField
+Foam::danckwertsFvPatchScalarField::danckwertsFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -67,8 +67,6 @@ danckwertsFvPatchScalarField
 :
   fixedValueFvPatchScalarField(p, iF)
 {
-  D_ = 1.0; //default value (later we read it from the file)
-
   if (dict.found("value"))
   {
       fvPatchScalarField::operator=
@@ -84,8 +82,7 @@ danckwertsFvPatchScalarField
     const danckwertsFvPatchScalarField& ptf
 )
 :
-    fixedValueFvPatchScalarField(ptf),
-    D_(ptf.D_)
+    fixedValueFvPatchScalarField(ptf)
 {
 }
 
@@ -97,8 +94,7 @@ danckwertsFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchScalarField(ptf, iF),
-    D_(ptf.D_)
+    fixedValueFvPatchScalarField(ptf, iF)
 {
 }
 
@@ -109,25 +105,48 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
 {
   if (updated()) return;
   
-  const IOdictionary& iod = this->db().lookupObject<IOdictionary>("transportProperties");
-  D_ = (new dimensionedScalar(iod.lookup("D")))->value();
-  
-  scalarField newValues(this->patchInternalField());
-
-  vectorField del = this->patch().delta();
-
-  const vectorField& boundaryU =
+  vectorField n   = (-1)*this->patch().nf();
+  scalarField iF  = this->patchInternalField();
+  vectorField del = (-1)*this->patch().delta();
+  vectorField boundaryU =
           this->patch().template lookupPatchField<volVectorField, vector>("U");
   
-  scalar Dinv_ = 1.0 / D_;
-
-  forAll(newValues, ii){
-    scalar aa = mag( boundaryU[ii].z()*del[ii].z() ) * Dinv_;
-    newValues[ii] = ( aa+newValues[ii] )/(aa+1.0);
+  scalarField AA;
+  if(this->db().find("D") != this->db().end()){
+    if( this->db().find("D")()->type() == "volScalarField" ){
+      const scalarField& patchD =
+            this->patch().template lookupPatchField<volScalarField, scalar>("D");
+      AA = (boundaryU & n) * (del & n) / patchD;
+    }
+    else if( this->db().find("D")()->type() == "volSphericalTensorField" ){
+      const sphericalTensorField& patchD =
+            this->patch().template lookupPatchField<volSphericalTensorField, sphericalTensor>("D");
+      AA = (boundaryU & n) * (del & n) / (n & patchD & n);
+    }
+    else if( this->db().find("D")()->type() == "volSymmTensorField" ){
+      const symmTensorField& patchD =
+            this->patch().template lookupPatchField<volSymmTensorField, symmTensor>("D");
+      AA = (boundaryU & n) * (del & n) / (n & patchD & n);
+    }
+    else if( this->db().find("D")()->type() == "volTensorField" ){
+      const tensorField& patchD =
+            this->patch().template lookupPatchField<volTensorField, tensor>("D");
+      AA = (boundaryU & n) * (del & n) / (n & patchD & n);
+    }
+    else{
+      SeriousErrorIn("danckwertsFvPatchScalarField::updateCoeffs()")
+              <<"D type is not implemented. D type is "<< this->db().find("D")()->type()
+              <<exit(FatalError);
+    }
+  }
+  else{
+    const IOdictionary& iod = this->db().lookupObject<IOdictionary>("transportProperties");
+    scalar patchD = (new dimensionedScalar(iod.lookup("D")))->value();
+    AA = (boundaryU & n) * (del & n) / patchD;
   }
   
-  operator==(newValues);
-
+  operator==( (AA+iF)/(AA+1.0) );
+  
   fixedValueFvPatchScalarField::updateCoeffs();
 }
 

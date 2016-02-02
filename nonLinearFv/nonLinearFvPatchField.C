@@ -308,7 +308,7 @@ void nonLinearFvPatchField<Type>::write(Ostream& os) const
         Info << "nonLinearFvPatchField<Type>::write" << endl;
     }
     mixedFvPatchField<Type>::write(os);
-    os.writeKeyword("l_T")<< l_T << token::END_STATEMENT << nl;
+    //os.writeKeyword("l_T")<< l_T << token::END_STATEMENT << nl;
     os.writeKeyword("Cth")<< Cth << token::END_STATEMENT << nl;
     os.writeKeyword("n1")<< n1 << token::END_STATEMENT << nl;
     os.writeKeyword("n2")<< n2 << token::END_STATEMENT << nl;

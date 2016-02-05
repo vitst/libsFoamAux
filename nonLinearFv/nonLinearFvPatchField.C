@@ -97,20 +97,12 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
         Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 3" << endl;
     }
 
-    const IOdictionary& iod = this->db().objectRegistry::template 
-                              lookupObject<IOdictionary>("transportProperties");
-    
-    if( !iod.readIfPresent<scalar>("l_T", l_T) ){
-      SeriousErrorIn("nonLinearFvPatchField<Type>::nonLinearFvPatchField")
-              <<"There is no l_T parameter in transportProperties dictionary"
-              <<exit(FatalError);
-    }
+    l_T = 1.0;
     Cth = dict.lookupOrDefault<scalar>("Cth", 1.0);
     n1 = dict.lookupOrDefault<scalar>("n1", 1.0);
     n2 = dict.lookupOrDefault<scalar>("n2", 1.0);
     
     if(debug) {
-        Info << "l_T: "<< l_T << endl;
         Info << "Cth: "<< Cth << endl;
         Info << "n1: "<< n1 << endl;
         Info << "n2: "<< n2 << endl;
@@ -237,6 +229,18 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
 
     if(debug) {
         Info << "nonLinearFvPatchField<Type>::updateCoeffs - updating" << endl;
+    }
+    
+    const IOdictionary& iod = this->db().objectRegistry::template 
+                              lookupObject<IOdictionary>("transportProperties");
+    if( !iod.readIfPresent<scalar>("l_T", l_T) ){
+      SeriousErrorIn("nonLinearFvPatchField<Type>::nonLinearFvPatchField")
+              <<"There is no l_T parameter in transportProperties dictionary"
+              <<exit(FatalError);
+    }
+    
+    if(debug) {
+        Info << "l_T: "<< l_T << endl;
     }
     
     Field<Type>& val = *this;

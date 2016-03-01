@@ -27,6 +27,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
+#include "surfaceFields.H"
 #include "uniformDimensionedFields.H"
 
 
@@ -110,12 +111,27 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
   vectorField del = (-1)*this->patch().delta();
   vectorField boundaryU =
           this->patch().template lookupPatchField<volVectorField, vector>("U");
+
+/*  
+  word phiName_ = "D";
+      const Field<scalar>& phip =
+        this->patch().template lookupPatchField<surfaceScalarField, scalar>
+        (
+            phiName_
+        );
+ */
+
   
   scalarField AA;
   if(this->db().find("D") != this->db().end()){
     if( this->db().find("D")()->type() == "volScalarField" ){
       const scalarField& patchD =
             this->patch().template lookupPatchField<volScalarField, scalar>("D");
+      AA = (boundaryU & n) * (del & n) / patchD;
+    }
+    else if( this->db().find("D")()->type() == "surfaceScalarField" ){
+      const scalarField& patchD =
+            this->patch().template lookupPatchField<surfaceScalarField, scalar>("D");
       AA = (boundaryU & n) * (del & n) / patchD;
     }
     else if( this->db().find("D")()->type() == "volSphericalTensorField" ){

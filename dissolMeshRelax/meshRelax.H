@@ -180,6 +180,10 @@ private:
 
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
+  pointField updatePoints(const labelList&, const vectorField&);
+  
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  
   template<class Patch>
   vectorField edgeRelaxation(Patch& patchIO_, const scalarFieldList& wv)
   {

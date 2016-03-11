@@ -249,8 +249,57 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   //Info << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<nl;
 
   Info << "Final mesh update" << nl << endl;
+  
+  labelList mainPoints;
+  vectorField mpDispl;
+  
+  const labelList& meshPointsWall =  mesh_.boundaryMesh()[wallID].meshPoints();
+  const vectorField wallField = wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
+  forAll(meshPointsWall, i)
+  {
+    const label& globalPID = meshPointsWall[i];
+    mainPoints.append( globalPID );
+    mpDispl.append( wallField[i] );
+  }
+  
+  const labelList& meshPointsInlet =  mesh_.boundaryMesh()[inletID].meshPoints();
+  const vectorField inletField = inlRelax + pointDispInlet;
+  forAll(meshPointsInlet, i)
+  {
+    const label& globalPID = meshPointsInlet[i];
+    if( findIndex(mainPoints, globalPID) == -1){
+      mainPoints.append( globalPID );
+      mpDispl.append( inletField[i] );
+    }
+  }
+  
+  const labelList& meshPointsOutlet =  mesh_.boundaryMesh()[outletID].meshPoints();
+  const vectorField outletField = outRelax + pointDispOutlet;
+  forAll(meshPointsOutlet, i)
+  {
+    const label& globalPID = meshPointsOutlet[i];
+    if( findIndex(mainPoints, globalPID) == -1){
+      mainPoints.append( globalPID );
+      mpDispl.append( outletField[i] );
+    }
+  }
+  
+  if( fixedWallID != -1 ){
+    const labelList& meshPointsFixedWall =  mesh_.boundaryMesh()[fixedWallID].meshPoints();
+    const vectorField fixedWallField = fixedWallRelax;
+    forAll(meshPointsFixedWall, i)
+    {
+      const label& globalPID = meshPointsFixedWall[i];
+      if( findIndex(mainPoints, globalPID) == -1){
+        mainPoints.append( globalPID );
+        mpDispl.append( fixedWallField[i] );
+      }
+    }
+  }
+  
+  mesh_.movePoints( updatePoints(mainPoints, mpDispl) );
 
-  mesh_.update();
+  //mesh_.update();
   
   // if it is Debug mode finalize the run here
   if( dissolDebug ){
@@ -267,7 +316,82 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
 
 
 
+pointField meshRelax::updatePoints(const labelList& mainPoints, const vectorField& mpDispl)
+{
+  pointField newPoints = mesh_.points();
+  vectorField displacement(mesh_.nPoints(), vector::zero);
+  forAll(mainPoints, pid)
+  {
+    label id = mainPoints[pid];
+    displacement[ id ] = mpDispl[pid];
+  }
+  
+  const labelListList& pp = mesh_.pointPoints();
+  
+  double displ_tol = 1.0;
+  int itt = 0;
+  while(displ_tol>rlxTol)
+  {
+    // apply boundary
+    scalarList sumWeights( mesh_.nPoints(), 0.0 );
+    vectorField newDisplacement(mesh_.nPoints(), vector::zero);
+    
+    forAll(pp, i)
+    {
+      const point& curP = newPoints[i];
+      
+      const labelList& plist = pp[i];
+      forAll(plist, j)
+      {
+        const label& np = plist[j];
+        vector d = displacement[np];
+        const point& nppos = newPoints[np];
+        
+        vector wv = nppos - curP;
+        scalar mag_wv = mag(wv);
+        scalar nw = 1.0 / mag_wv;
 
+        vector disp = nw * d;
+        newDisplacement[i] += disp;
+        sumWeights[i] += nw;
+      }
+    }
+
+    syncTools::syncPointList(mesh_, newDisplacement, plusEqOp<vector>(), vector::zero);
+    syncTools::syncPointList(mesh_, sumWeights, plusEqOp<scalar>(), 0.0);
+
+    forAll(newDisplacement, pointi){
+      newDisplacement[pointi] /= sumWeights[pointi];
+    }
+    
+    forAll(mainPoints, pid)
+    {
+      label id = mainPoints[pid];
+      newDisplacement[ id ] = mpDispl[pid];
+    }
+    
+    displ_tol = gAverage( mag(newDisplacement - displacement) );
+    scalar displ_tol_norm = gAverage( mag(newDisplacement) );
+    if(displ_tol_norm > SMALL){
+      displ_tol /= displ_tol_norm;
+    }
+    else{
+      displ_tol = 0.0;
+    }
+
+    displacement = newDisplacement;
+    
+    if(itt%10==0){
+      Info << " All points update  rlx iter " << itt
+           << "  tolerance: " << displ_tol << endl;
+    }
+    itt+=1;
+  }
+  
+  newPoints += deltaT * displacement;
+  
+  return newPoints;
+}
 
 
 

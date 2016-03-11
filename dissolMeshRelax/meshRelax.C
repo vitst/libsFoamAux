@@ -239,6 +239,14 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
 
   outRelax /= deltaT;
   pointVelocity.boundaryField()[outletID] == outRelax + pointDispOutlet;
+  
+  if( fixedWallID != -1 ){
+    pointVelocity.boundaryField()[fixedWallID] == fixedWallRelax;
+  }
+
+  //Info << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<nl<<nl;
+  //Info << pointVelocity<<nl<<nl;
+  //Info << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<nl;
 
   Info << "Final mesh update" << nl << endl;
 

@@ -129,6 +129,66 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
   if( fixedWallID != -1 ){
     fixedWallWeights = calc_weights2( meshTmp, meshTmp.boundaryMesh()[fixedWallID]);
   }
+  
+
+  const labelList& meshPointsWall =  mesh_.boundaryMesh()[wallID].meshPoints();
+  forAll(meshPointsWall, i)
+  {
+    const label& globalPID = meshPointsWall[i];
+    
+    labelList auxL(2);
+    auxL[0] = wallID;
+    auxL[1] = i;
+    
+    mainPoints.append( globalPID );
+    pchlcPoints.append( auxL );
+  }
+  
+  const labelList& meshPointsInlet =  mesh_.boundaryMesh()[inletID].meshPoints();
+  forAll(meshPointsInlet, i)
+  {
+    const label& globalPID = meshPointsInlet[i];
+    if( findIndex(mainPoints, globalPID) == -1){
+      labelList auxL(2);
+      auxL[0] = inletID;
+      auxL[1] = i;
+
+      mainPoints.append( globalPID );
+      pchlcPoints.append( auxL );
+    }
+  }
+  
+  const labelList& meshPointsOutlet =  mesh_.boundaryMesh()[outletID].meshPoints();
+  forAll(meshPointsOutlet, i)
+  {
+    const label& globalPID = meshPointsOutlet[i];
+    if( findIndex(mainPoints, globalPID) == -1){
+      labelList auxL(2);
+      auxL[0] = outletID;
+      auxL[1] = i;
+
+      mainPoints.append( globalPID );
+      pchlcPoints.append( auxL );
+    }
+  }
+  
+  if( fixedWallID != -1 ){
+    const labelList& meshPointsFixedWall =  mesh_.boundaryMesh()[fixedWallID].meshPoints();
+    forAll(meshPointsFixedWall, i)
+    {
+      const label& globalPID = meshPointsFixedWall[i];
+      if( findIndex(mainPoints, globalPID) == -1){
+        labelList auxL(2);
+        auxL[0] = fixedWallID;
+        auxL[1] = i;
+
+        mainPoints.append( globalPID );
+        pchlcPoints.append( auxL );
+      }
+    }
+  }
+  
+  
 }
 
 
@@ -250,51 +310,16 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
 
   Info << "Final mesh update" << nl << endl;
   
-  labelList mainPoints;
-  vectorField mpDispl;
+  vectorField mpDispl(mainPoints.size(), vector::zero);
   
-  const labelList& meshPointsWall =  mesh_.boundaryMesh()[wallID].meshPoints();
-  const vectorField wallField = wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
-  forAll(meshPointsWall, i)
+  pointVelocity.correctBoundaryConditions();
+  
+  forAll(mpDispl, i)
   {
-    const label& globalPID = meshPointsWall[i];
-    mainPoints.append( globalPID );
-    mpDispl.append( wallField[i] );
-  }
-  
-  const labelList& meshPointsInlet =  mesh_.boundaryMesh()[inletID].meshPoints();
-  const vectorField inletField = inlRelax + pointDispInlet;
-  forAll(meshPointsInlet, i)
-  {
-    const label& globalPID = meshPointsInlet[i];
-    if( findIndex(mainPoints, globalPID) == -1){
-      mainPoints.append( globalPID );
-      mpDispl.append( inletField[i] );
-    }
-  }
-  
-  const labelList& meshPointsOutlet =  mesh_.boundaryMesh()[outletID].meshPoints();
-  const vectorField outletField = outRelax + pointDispOutlet;
-  forAll(meshPointsOutlet, i)
-  {
-    const label& globalPID = meshPointsOutlet[i];
-    if( findIndex(mainPoints, globalPID) == -1){
-      mainPoints.append( globalPID );
-      mpDispl.append( outletField[i] );
-    }
-  }
-  
-  if( fixedWallID != -1 ){
-    const labelList& meshPointsFixedWall =  mesh_.boundaryMesh()[fixedWallID].meshPoints();
-    const vectorField fixedWallField = fixedWallRelax;
-    forAll(meshPointsFixedWall, i)
-    {
-      const label& globalPID = meshPointsFixedWall[i];
-      if( findIndex(mainPoints, globalPID) == -1){
-        mainPoints.append( globalPID );
-        mpDispl.append( fixedWallField[i] );
-      }
-    }
+    label phID = pchlcPoints[i][0];
+    label lcID = pchlcPoints[i][1];
+    vectorField pv = pointVelocity.boundaryField()[phID].patchInternalField();
+    mpDispl[i] = pv[lcID];
   }
   
   mesh_.movePoints( updatePoints(mainPoints, mpDispl) );

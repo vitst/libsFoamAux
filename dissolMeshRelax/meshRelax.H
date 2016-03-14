@@ -130,6 +130,11 @@ private:
   scalarFieldList inletWallEdgeWeights;
   scalarFieldList outletWallEdgeWeights;
   
+  /////////////////////////////////////////////////
+  
+  labelList mainPoints; // structure: [N]; global id, patch id, local id
+  labelListList pchlcPoints; // structure: [N][2]; patch id, local id
+  
   ///////////////////////////////////////////////////////////////////////////
   // private functions
   ///////////////////////////////////////////////////////////////////////////

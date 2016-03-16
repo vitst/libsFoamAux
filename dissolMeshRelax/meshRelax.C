@@ -130,8 +130,11 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
     fixedWallWeights = calc_weights2( meshTmp, meshTmp.boundaryMesh()[fixedWallID]);
   }
   
-
+  /*
   const labelList& meshPointsWall =  mesh_.boundaryMesh()[wallID].meshPoints();
+  Info <<nl<< "Add wall points: "<< meshPointsWall.size() <<endl;
+  mainPoints.setSize( meshPointsWall.size() );
+  pchlcPoints.setSize( meshPointsWall.size() );
   forAll(meshPointsWall, i)
   {
     const label& globalPID = meshPointsWall[i];
@@ -140,11 +143,17 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
     auxL[0] = wallID;
     auxL[1] = i;
     
-    mainPoints.append( globalPID );
-    pchlcPoints.append( auxL );
+    mainPoints[i] = globalPID;
+    pchlcPoints[i] = auxL;
+    //mainPoints.append( globalPID );
+    //pchlcPoints.append( auxL );
   }
   
   const labelList& meshPointsInlet =  mesh_.boundaryMesh()[inletID].meshPoints();
+  Info <<nl<< "Add inlet points: "<< meshPointsInlet.size() <<endl;
+  mainPoints.resize( mainPoints.size() + meshPointsInlet.size() );
+  pchlcPoints.resize( pchlcPoints.size() + meshPointsInlet.size() );
+  int count = 0; // count how many points repeat
   forAll(meshPointsInlet, i)
   {
     const label& globalPID = meshPointsInlet[i];
@@ -153,12 +162,21 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
       auxL[0] = inletID;
       auxL[1] = i;
 
-      mainPoints.append( globalPID );
-      pchlcPoints.append( auxL );
+      mainPoints[i] = globalPID;
+      pchlcPoints[i] = auxL;
+      //mainPoints.append( globalPID );
+      //pchlcPoints.append( auxL );
+    }
+    else{
+      count++;
     }
   }
   
   const labelList& meshPointsOutlet =  mesh_.boundaryMesh()[outletID].meshPoints();
+  Info <<nl<< "Add outlet points: "<< meshPointsOutlet.size() <<endl;
+  mainPoints.resize( mainPoints.size() + meshPointsOutlet.size() - count );
+  pchlcPoints.resize( pchlcPoints.size() + meshPointsOutlet.size() - count );
+  count = 0;
   forAll(meshPointsOutlet, i)
   {
     const label& globalPID = meshPointsOutlet[i];
@@ -167,13 +185,22 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
       auxL[0] = outletID;
       auxL[1] = i;
 
-      mainPoints.append( globalPID );
-      pchlcPoints.append( auxL );
+      mainPoints[i] = globalPID;
+      pchlcPoints[i] = auxL;
+      //mainPoints.append( globalPID );
+      //pchlcPoints.append( auxL );
+    }
+    else{
+      count++;
     }
   }
   
   if( fixedWallID != -1 ){
     const labelList& meshPointsFixedWall =  mesh_.boundaryMesh()[fixedWallID].meshPoints();
+    Info <<nl<< "Add fixed wall points: "<< meshPointsFixedWall.size() <<endl;
+    mainPoints.resize( mainPoints.size() + meshPointsFixedWall.size() - count );
+    pchlcPoints.resize( pchlcPoints.size() + meshPointsFixedWall.size() - count );
+    //count = 0;
     forAll(meshPointsFixedWall, i)
     {
       const label& globalPID = meshPointsFixedWall[i];
@@ -182,13 +209,16 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
         auxL[0] = fixedWallID;
         auxL[1] = i;
 
-        mainPoints.append( globalPID );
-        pchlcPoints.append( auxL );
+        mainPoints[i] = globalPID;
+        pchlcPoints[i] = auxL;
+        //mainPoints.append( globalPID );
+        //pchlcPoints.append( auxL );
       }
     }
   }
   
-  
+  Info <<"Done adding surface points"<<endl;
+  */
 }
 
 
@@ -310,6 +340,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
 
   Info << "Final mesh update" << nl << endl;
   
+  /*
   vectorField mpDispl(mainPoints.size(), vector::zero);
   
   pointVelocity.correctBoundaryConditions();
@@ -318,13 +349,14 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   {
     label phID = pchlcPoints[i][0];
     label lcID = pchlcPoints[i][1];
-    vectorField pv = pointVelocity.boundaryField()[phID].patchInternalField();
+    const vectorField& pv = pointVelocity.boundaryField()[phID].patchInternalField();
     mpDispl[i] = pv[lcID];
   }
   
   mesh_.movePoints( updatePoints(mainPoints, mpDispl) );
+  */
 
-  //mesh_.update();
+  mesh_.update();
   
   // if it is Debug mode finalize the run here
   if( dissolDebug ){

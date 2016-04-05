@@ -151,8 +151,10 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
   
   const labelList& meshPointsInlet =  mesh_.boundaryMesh()[inletID].meshPoints();
   Info <<nl<< "Add inlet points: "<< meshPointsInlet.size() <<endl;
+  int ii = mainPoints.size();
   mainPoints.resize( mainPoints.size() + meshPointsInlet.size() );
   pchlcPoints.resize( pchlcPoints.size() + meshPointsInlet.size() );
+  
   int count = 0; // count how many points repeat
   forAll(meshPointsInlet, i)
   {
@@ -162,8 +164,9 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
       auxL[0] = inletID;
       auxL[1] = i;
 
-      mainPoints[i] = globalPID;
-      pchlcPoints[i] = auxL;
+      mainPoints[ii] = globalPID;
+      pchlcPoints[ii] = auxL;
+      ii++;
       //mainPoints.append( globalPID );
       //pchlcPoints.append( auxL );
     }
@@ -185,8 +188,9 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
       auxL[0] = outletID;
       auxL[1] = i;
 
-      mainPoints[i] = globalPID;
-      pchlcPoints[i] = auxL;
+      mainPoints[ii] = globalPID;
+      pchlcPoints[ii] = auxL;
+      ii++;
       //mainPoints.append( globalPID );
       //pchlcPoints.append( auxL );
     }
@@ -200,7 +204,7 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
     Info <<nl<< "Add fixed wall points: "<< meshPointsFixedWall.size() <<endl;
     mainPoints.resize( mainPoints.size() + meshPointsFixedWall.size() - count );
     pchlcPoints.resize( pchlcPoints.size() + meshPointsFixedWall.size() - count );
-    //count = 0;
+    count = 0;
     forAll(meshPointsFixedWall, i)
     {
       const label& globalPID = meshPointsFixedWall[i];
@@ -209,16 +213,24 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
         auxL[0] = fixedWallID;
         auxL[1] = i;
 
-        mainPoints[i] = globalPID;
-        pchlcPoints[i] = auxL;
+        mainPoints[ii] = globalPID;
+        pchlcPoints[ii] = auxL;
+        ii++;
         //mainPoints.append( globalPID );
         //pchlcPoints.append( auxL );
+      }
+      else{
+        count++;
       }
     }
   }
   
+  mainPoints.resize( mainPoints.size() - count );
+  pchlcPoints.resize( pchlcPoints.size() - count );
+  
+  //Info <<"IIII   "<< ii << "  "<< mainPoints.size() <<endl;
   Info <<"Done adding surface points"<<endl;
-  */
+  //*/
 }
 
 
@@ -322,7 +334,10 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   wiEdgeRlx /= deltaT;
   woEdgeRlx /= deltaT;
   wallRelax /= deltaT;
+  
   pointVelocity.boundaryField()[wallID] == wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
+
+  vectorField hh1 = wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
   
   inlRelax /= deltaT;
   pointVelocity.boundaryField()[inletID] == inlRelax + pointDispInlet;
@@ -333,28 +348,68 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   if( fixedWallID != -1 ){
     pointVelocity.boundaryField()[fixedWallID] == fixedWallRelax;
   }
-
+  
   //Info << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<nl<<nl;
   //Info << pointVelocity<<nl<<nl;
   //Info << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<nl;
 
+  
+  //pointVelocity.boundaryField().updateCoeffs();
+  //pointVelocity.boundaryField().evaluate();
+  //pointVelocity.correctBoundaryConditions();
+  
   Info << "Final mesh update" << nl << endl;
+  
+  //vectorField HH1 = dynamicCast<vectorField>( pointVelocity.boundaryField()[wallID] );
+  //vectorField HH2 = dynamicCast<vectorField>( pointVelocity.boundaryField()[inletID] );
+  //vectorField HH3 = dynamicCast<vectorField>( pointVelocity.boundaryField()[outletID] );
+  //if( fixedWallID != -1 ){
+  //  vectorField HH3 = dynamicCast<vectorField>( pointVelocity.boundaryField()[fixedWallID] );
+  //}
+  
+  //const vectorField& HH = pointVelocity.boundaryField()[wallID].patchInternalField();
+  //for(int i=0; i<1; i++){
+  //  Info<< i << "  "<<HH[i]<<"  "<<hh1[i]<<"  "<<HH1[i]<<nl;
+  //  Info<< i << "  "<<hh1[i]<<"  "<<HH1[i]<<nl;
+  //}
+  //std::exit(0);
+  
   
   /*
   vectorField mpDispl(mainPoints.size(), vector::zero);
   
-  pointVelocity.correctBoundaryConditions();
+  //pointVelocity.correctBoundaryConditions();
+  //pointVelocity.boundaryField().updateCoeffs();
+  //pointVelocity.boundaryField().evaluate();
+  
   
   forAll(mpDispl, i)
   {
+    //Info<< " EEEEEEEEEEEEEEEEEEEEEEEE "<< pchlcPoints[i].size() <<nl;
     label phID = pchlcPoints[i][0];
     label lcID = pchlcPoints[i][1];
-    const vectorField& pv = pointVelocity.boundaryField()[phID].patchInternalField();
+    
+    
+    //const vectorField& pv = pointVelocity.boundaryField()[phID].patchInternalField();
+    vectorField pv = dynamicCast<vectorField>( pointVelocity.boundaryField()[phID] );
+    
+    //if(i==0){
+    //  Info<< "EEEEEEEEEEE phID and lcID:  " << phID 
+    //          << "   " << lcID
+    //          << "   " << pv[lcID]
+    //          <<nl;
+    //  Info << wallID<<"  "
+    //          << inletID << "  "<<outletID<<"  "<<fixedWallID<<nl;
+    //  
+    //  Info<<"Check:     "<< hh1[0] <<"   pv  "<<pv[lcID]
+    //          << "    "<< pv[1] <<nl;
+    //}
+    
     mpDispl[i] = pv[lcID];
   }
   
   mesh_.movePoints( updatePoints(mainPoints, mpDispl) );
-  */
+  //*/
 
   mesh_.update();
   
@@ -384,6 +439,14 @@ pointField meshRelax::updatePoints(const labelList& mainPoints, const vectorFiel
   }
   
   const labelListList& pp = mesh_.pointPoints();
+  
+  
+  const label& cycID1 = mesh_.boundaryMesh().findPatchID("periodicx1");
+  const label& cycID2 = mesh_.boundaryMesh().findPatchID("periodicx2");
+  // map vetex ID: patch to global
+  const labelList& cycToAll1  = mesh_.boundaryMesh()[cycID1].meshPoints();
+  const labelList& cycToAll2  = mesh_.boundaryMesh()[cycID2].meshPoints();
+  
   
   double displ_tol = 1.0;
   int itt = 0;
@@ -425,6 +488,8 @@ pointField meshRelax::updatePoints(const labelList& mainPoints, const vectorFiel
     {
       label id = mainPoints[pid];
       newDisplacement[ id ] = mpDispl[pid];
+      //if(id==0)
+      //  Info<< pid << "      " << mpDispl[pid] << nl;
     }
     
     displ_tol = gAverage( mag(newDisplacement - displacement) );
@@ -438,12 +503,46 @@ pointField meshRelax::updatePoints(const labelList& mainPoints, const vectorFiel
 
     displacement = newDisplacement;
     
-    if(itt%10==0){
+    forAll(mainPoints, pid)
+    {
+      label id = mainPoints[pid];
+      displacement[ id ] = mpDispl[pid];
+    }
+  
+    if(itt%50==0){
       Info << " All points update  rlx iter " << itt
            << "  tolerance: " << displ_tol << endl;
     }
     itt+=1;
   }
+
+  /*
+  forAll(cycToAll1, i){
+    Info<< newPoints[cycToAll1[i]] << "      " << displacement[cycToAll1[i]] << "      "
+            << newPoints[ cycToAll2[i] ] << "      "<< displacement[cycToAll2[i]] << "      "
+            << nl;
+    if(i>1) break;
+  }
+  */
+  
+  scalarField cc(displacement.size(), 1.0);
+  syncTools::syncPointList(mesh_, displacement, plusEqOp<vector>(), vector::zero);
+  syncTools::syncPointList(mesh_, cc, plusEqOp<scalar>(), 0.0);
+
+  forAll(displacement, i){
+    displacement[i] /= cc[i];
+  }
+  
+  /*
+  Info<<nl<<nl;
+  forAll(cycToAll1, i){
+    Info<< cycToAll1[i]<< "   " << newPoints[cycToAll1[i]] 
+            << "      " << displacement[cycToAll1[i]] << "      "
+            << newPoints[ cycToAll2[i] ] << "      "<< displacement[cycToAll2[i]] << "      "
+            << nl;
+    if(i>1) break;
+  }
+  */
   
   newPoints += deltaT * displacement;
   

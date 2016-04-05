@@ -153,7 +153,6 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
         this->valueFraction() = 1;
     }
 
-    // emulate mixedFvPatchField<Type>::evaluate, but avoid calling "our" updateCoeffs
     if (!this->updated())
     {
         this->mixedFvPatchField<Type>::updateCoeffs();
@@ -253,16 +252,32 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
     scalar n2_ = n2-1;
     
     scalar A1 = 1.0;
-    scalar A2 = A1 * std::pow(Cth, n1_-n2_);
+    scalar A2 = A1 * pow(Cth, n1_-n2_);
+    double len=0.01;
     
     forAll(fb, i){
       scalar ff = fb[i];
+      scalar c1 = A1 * std::pow(ff, n1_);
+      scalar c2 = A2 * std::pow(ff, n2_);
+      double w = tanh((ff-Cth)/len);
+      w = 0.5*(1 + w);
+      fb[i] = (w*c1 + (1-w)*c2);
+      
+      /*
       if( ff < Cth ){
         fb[i] = A1 * std::pow(ff, n1_);
       }
       else{
         fb[i] = A2 * std::pow(ff, n2_);
       }
+      double len=0.01;
+      double w = tanh((ff-Cth)/len);
+      w = 0.5*(1 + w);
+      double c1 = pow(ff/Cth,n1_);
+      double c2 = std::pow(ff/Cth,n2_);
+      fb[i] = ff*(w*c1 + (1-w)*c2);
+      // dR[i] = w*p1*c1 + (1-w)*p2*c2;
+      */
     }
     
     scalarField delval = mag( del * fb );

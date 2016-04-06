@@ -305,7 +305,6 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
     Info << "Fixed wall relaxation cpuTime: "
          << time.cpuTimeIncrement() << " s" << endl;
   }
-  
 
   mesh_.movePoints( savedPointsAll );
 
@@ -314,9 +313,10 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
                     + woEdgeRlx
                     + pointDispWall * deltaT;
   
-  if( fixedWallID != -1 ){
-    vvff += fixedWallRelax;
-  }
+  // incorrect
+  //if( fixedWallID != -1 ){
+    //vvff += fixedWallRelax;
+  //}
 
   Info << "Relaxing inlet..." << endl;
   vectorField inlRelax = inletOutletRlx( mesh_.boundaryMesh()[inletID], vvff);
@@ -337,7 +337,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   
   pointVelocity.boundaryField()[wallID] == wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
 
-  vectorField hh1 = wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
+  //vectorField hh1 = wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
   
   inlRelax /= deltaT;
   pointVelocity.boundaryField()[inletID] == inlRelax + pointDispInlet;
@@ -346,6 +346,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   pointVelocity.boundaryField()[outletID] == outRelax + pointDispOutlet;
   
   if( fixedWallID != -1 ){
+    fixedWallRelax /= deltaT;
     pointVelocity.boundaryField()[fixedWallID] == fixedWallRelax;
   }
   
@@ -376,19 +377,25 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   
   
   /*
+  Info << "Update mpDispl" << nl << endl;
   vectorField mpDispl(mainPoints.size(), vector::zero);
   
   //pointVelocity.correctBoundaryConditions();
   //pointVelocity.boundaryField().updateCoeffs();
   //pointVelocity.boundaryField().evaluate();
   
+  const pointField& aaa =  mesh_.boundaryMesh()[fixedWallID].localPoints();
+  const pointField& bbb =  mesh_.boundaryMesh()[inletID].localPoints();
+  //forAll(aaa, i){
+  //  Info<<i<<"  "<<aaa[i] <<"  "<<fixedWallWeights[i]<<nl;
+   // if(i>5) break;
+  //}
   
   forAll(mpDispl, i)
   {
     //Info<< " EEEEEEEEEEEEEEEEEEEEEEEE "<< pchlcPoints[i].size() <<nl;
     label phID = pchlcPoints[i][0];
     label lcID = pchlcPoints[i][1];
-    
     
     //const vectorField& pv = pointVelocity.boundaryField()[phID].patchInternalField();
     vectorField pv = dynamicCast<vectorField>( pointVelocity.boundaryField()[phID] );
@@ -405,9 +412,17 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
     //          << "    "<< pv[1] <<nl;
     //}
     
+    if(phID==fixedWallID && lcID<5){
+      Info<< lcID<<"  "<< aaa[lcID] << "  "<< pv[lcID]<<nl;
+    }
+    if(phID==inletID && lcID<5){
+      Info<<"inlet:  "<< lcID<<"  "<< bbb[lcID] << "  "<< pv[lcID]<<nl;
+    }
+    
     mpDispl[i] = pv[lcID];
   }
   
+  Info << "movePoints" << nl << endl;
   mesh_.movePoints( updatePoints(mainPoints, mpDispl) );
   //*/
 

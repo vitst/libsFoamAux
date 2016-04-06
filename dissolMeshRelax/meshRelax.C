@@ -255,7 +255,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   }
 
   pointField savedPointsAll = mesh_.points();
-  vectorField pointDispInlet = calculateInletDisplacement(pointDispWall);
+  vectorField pointDispInlet = calculateInletDisplacement1(pointDispWall);
   vectorField pointDispOutlet = calculateOutletDisplacement(pointDispWall);
 
 //  Mesh update 3: boundary mesh relaxation
@@ -665,6 +665,33 @@ Foam::vectorField meshRelax::localFaceToPointNormalInterpolate(const pointField&
   }
 
   return pointValue;
+}
+
+
+vectorField meshRelax::calculateInletDisplacement1(vectorField& wallDispl){
+
+  pointField waP = mesh_.boundaryMesh()[wallID].localPoints();
+  pointField inP = mesh_.boundaryMesh()[inletID].localPoints();
+  
+  vector nz(0,0,1);
+  plane pll(inP, nz);           // plane perpendicular to the edge via midpoint
+
+  //vectorField
+  forAll(local_wall_WallsInletEdges, i){
+    label pointI = local_wall_WallsInletEdges[i];
+    point Ap = waP[pointI]+wallDispl[pointI];
+    point projp = pll.nearestPoint(Ap); // projection of endNorm onto pll plane
+    
+    vector AA = projp - waP[pointI];
+    
+    scalar sina = mag(wallDispl[pointI]^AA)/ ( mag(wallDispl[pointI])*mag(AA) );
+    
+    scalar L = mag(wallDispl[pointI]) / sina;
+    
+    wallDispl[pointI] = L * AA / mag(AA);
+  }
+  vectorField pointDispInlet( inP.size(), vector::zero );
+  return pointDispInlet;
 }
 
 

@@ -160,6 +160,7 @@ private:
   
   void fixIWEdgeDispl( vectorField& );
   // fix edge displacement and calculate inlet displ.
+  vectorField calculateInletDisplacement1( vectorField& );
   vectorField calculateInletDisplacement( vectorField& );
   vectorField calculateOutletDisplacement( vectorField& );
   

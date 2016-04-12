@@ -164,6 +164,9 @@ private:
   vectorField calculateInletDisplacement( vectorField& );
   vectorField calculateOutletDisplacement( vectorField& );
   
+  // constrain points to stay within the cyclic boundary
+  void constrainCyclic(vectorField&);
+  
   pointField doInletDisplacement(const vectorField&);
   pointField doWallDisplacement(const vectorField&);
   pointField doOutletDisplacement(const vectorField&);

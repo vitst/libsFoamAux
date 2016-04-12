@@ -255,7 +255,10 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   }
 
   pointField savedPointsAll = mesh_.points();
-  vectorField pointDispInlet = calculateInletDisplacement1(pointDispWall);
+  
+  constrainCyclic(pointDispWall);
+  
+  vectorField pointDispInlet = calculateInletDisplacement(pointDispWall);
   vectorField pointDispOutlet = calculateOutletDisplacement(pointDispWall);
 
 //  Mesh update 3: boundary mesh relaxation
@@ -349,15 +352,6 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
     fixedWallRelax /= deltaT;
     pointVelocity.boundaryField()[fixedWallID] == fixedWallRelax;
   }
-  
-  //Info << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<nl<<nl;
-  //Info << pointVelocity<<nl<<nl;
-  //Info << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<nl;
-
-  
-  //pointVelocity.boundaryField().updateCoeffs();
-  //pointVelocity.boundaryField().evaluate();
-  //pointVelocity.correctBoundaryConditions();
   
   Info << "Final mesh update" << nl << endl;
   
@@ -668,27 +662,57 @@ Foam::vectorField meshRelax::localFaceToPointNormalInterpolate(const pointField&
 }
 
 
-vectorField meshRelax::calculateInletDisplacement1(vectorField& wallDispl){
 
+
+void meshRelax::constrainCyclic(vectorField& wallDispl)
+{
+  const labelList& meshPoints = mesh_.boundaryMesh()[wallID].meshPoints();
+  // @TODO move out of the loop
+  const label& cycID1 = mesh_.boundaryMesh().findPatchID("periodicx1");
+  const label& cycID2 = mesh_.boundaryMesh().findPatchID("periodicx2");
+  labelList local_wall_WallsCycEdgesInternal1, local_wall_WallsCycEdgesInternal2;
+  labelList global_WallsCycEdgesInternal1, global_WallsCycEdgesInternal2;
+  if(cycID1!=-1 && cycID2!=-1){
+    const labelList& cycMeshPoints1 = mesh_.boundaryMesh()[cycID1].meshPoints();
+    const labelList& cycMeshPoints2 = mesh_.boundaryMesh()[cycID2].meshPoints();
+    commonPoints(meshPoints, cycMeshPoints1, local_wall_WallsCycEdgesInternal1, global_WallsCycEdgesInternal1);
+    commonPoints(meshPoints, cycMeshPoints2, local_wall_WallsCycEdgesInternal2, global_WallsCycEdgesInternal2);
+  }
+  
+  forAll(local_wall_WallsCycEdgesInternal1, i){
+    label ind = local_wall_WallsCycEdgesInternal1[i];
+    wallDispl[ind].x() = 0.0;
+  }
+  forAll(local_wall_WallsCycEdgesInternal2, i){
+    label ind = local_wall_WallsCycEdgesInternal2[i];
+    wallDispl[ind].x() = 0.0;
+  }
+}
+
+
+vectorField meshRelax::calculateInletDisplacement1(vectorField& wallDispl)
+{
   pointField waP = mesh_.boundaryMesh()[wallID].localPoints();
   pointField inP = mesh_.boundaryMesh()[inletID].localPoints();
   
-  vector nz(0,0,1);
-  plane pll(inP, nz);           // plane perpendicular to the edge via midpoint
+  if(inP.size()>0){
+    vector nz(0,0,1);
+    plane pll(inP[0], nz);           // plane perpendicular to the edge via midpoint
 
-  //vectorField
-  forAll(local_wall_WallsInletEdges, i){
-    label pointI = local_wall_WallsInletEdges[i];
-    point Ap = waP[pointI]+wallDispl[pointI];
-    point projp = pll.nearestPoint(Ap); // projection of endNorm onto pll plane
-    
-    vector AA = projp - waP[pointI];
-    
-    scalar sina = mag(wallDispl[pointI]^AA)/ ( mag(wallDispl[pointI])*mag(AA) );
-    
-    scalar L = mag(wallDispl[pointI]) / sina;
-    
-    wallDispl[pointI] = L * AA / mag(AA);
+    //vectorField
+    forAll(local_wall_WallsInletEdges, i){
+      label pointI = local_wall_WallsInletEdges[i];
+      point Ap = waP[pointI]+wallDispl[pointI];
+      point projp = pll.nearestPoint(Ap); // projection of endNorm onto pll plane
+
+      vector AA = projp - waP[pointI];
+
+      scalar cosa = ( wallDispl[pointI]&AA ) / ( mag(wallDispl[pointI])*mag(AA) );
+      if(cosa>SMALL){
+        scalar L = mag(wallDispl[pointI]) / cosa;
+        wallDispl[pointI] = L * AA / mag(AA);
+      }
+    }
   }
   vectorField pointDispInlet( inP.size(), vector::zero );
   return pointDispInlet;
@@ -696,7 +720,8 @@ vectorField meshRelax::calculateInletDisplacement1(vectorField& wallDispl){
 
 
 // ++
-vectorField meshRelax::calculateInletDisplacement(vectorField& wallDispl){
+vectorField meshRelax::calculateInletDisplacement(vectorField& wallDispl)
+{
   // currnt wall points
   const pointField& wallBP = mesh_.boundaryMesh()[wallID].localPoints();
   // list of neighbor faces

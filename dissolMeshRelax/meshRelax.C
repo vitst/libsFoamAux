@@ -256,7 +256,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
 
   pointField savedPointsAll = mesh_.points();
   
-  constrainCyclic(pointDispWall);
+  constrainCyclic(pointDispWall); // keeps points on the cyclic boundary
   
   vectorField pointDispInlet = calculateInletDisplacement(pointDispWall);
   vectorField pointDispOutlet = calculateOutletDisplacement(pointDispWall);

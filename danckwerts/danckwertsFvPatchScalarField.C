@@ -42,7 +42,8 @@ danckwertsFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-  fixedValueFvPatchScalarField(p, iF)
+  fixedValueFvPatchScalarField(p, iF),
+  AA_(p.size())
 {
 }
 
@@ -55,7 +56,8 @@ danckwertsFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-  fixedValueFvPatchScalarField(ptf, p, iF, mapper)
+  fixedValueFvPatchScalarField(ptf, p, iF, mapper),
+  AA_(ptf.AA_, mapper)        
 {
 }
 
@@ -66,7 +68,8 @@ Foam::danckwertsFvPatchScalarField::danckwertsFvPatchScalarField
     const dictionary& dict
 )
 :
-  fixedValueFvPatchScalarField(p, iF)
+  fixedValueFvPatchScalarField(p, iF),
+  AA_(p.size())
 {
   if (dict.found("value"))
   {
@@ -75,6 +78,8 @@ Foam::danckwertsFvPatchScalarField::danckwertsFvPatchScalarField
           scalarField("value", dict, p.size())
       );
   }
+  fvPatchScalarField::evaluate();
+  
 }
 
 Foam::danckwertsFvPatchScalarField::
@@ -83,7 +88,8 @@ danckwertsFvPatchScalarField
     const danckwertsFvPatchScalarField& ptf
 )
 :
-    fixedValueFvPatchScalarField(ptf)
+    fixedValueFvPatchScalarField(ptf),
+    AA_(ptf.AA_)
 {
 }
 
@@ -95,7 +101,8 @@ danckwertsFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchScalarField(ptf, iF)
+    fixedValueFvPatchScalarField(ptf, iF),
+    AA_(ptf.AA_)
 {
 }
 
@@ -161,9 +168,29 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
     AA = (boundaryU & n) * (del & n) / patchD;
   }
   
-  operator==( (AA+iF) / (AA+1.0) );
+  AA_ = AA;
+  
+  //operator==( (AA + iF) / (AA+1.0) );
   
   fixedValueFvPatchScalarField::updateCoeffs();
+}
+
+
+void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
+{
+    if (!this->updated())
+    {
+        this->updateCoeffs();
+    }
+    
+    scalarField iF = this->patchInternalField();
+
+    scalarField::operator==
+    (
+      (AA_ + iF) / (AA_+1.0)
+    );
+    
+    fvPatchScalarField::evaluate();
 }
 
 

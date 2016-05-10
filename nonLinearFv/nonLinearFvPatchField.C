@@ -253,7 +253,7 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
     
     scalar A1 = 1.0;
     scalar A2 = A1 * pow(Cth, n1_-n2_);
-    double len=0.01;
+    double len=0.02;
     
     forAll(fb, i){
       scalar ff = fb[i];

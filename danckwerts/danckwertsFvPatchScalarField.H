@@ -89,9 +89,12 @@ class danckwertsFvPatchScalarField
     public fixedValueFvPatchScalarField
 {
 
+  scalarField AA_;
+  
 protected:
 
     // Protected data
+  
   
 public:
 
@@ -165,10 +168,10 @@ public:
     // Member functions
 
         // Evaluation functions
+            virtual void evaluate( const Pstream::commsTypes commsType=Pstream::blocking );
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();
-
 
         //- Write
         virtual void write(Ostream&) const;

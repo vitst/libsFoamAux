@@ -63,7 +63,7 @@ Description
     \endverbatim
 
 SeeAlso
-    Foam::fixedValueFvPatchScalarField
+    Foam::mixedFvPatchScalarField
 
 SourceFiles
     danckwertsFvPatchScalarField.C
@@ -73,7 +73,7 @@ SourceFiles
 #ifndef danckwertsFvPatchScalarField_H
 #define danckwertsFvPatchScalarField_H
 
-#include "fixedValueFvPatchFields.H"
+#include "mixedFvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -86,7 +86,7 @@ namespace Foam
 
 class danckwertsFvPatchScalarField
 :
-    public fixedValueFvPatchScalarField
+    public mixedFvPatchScalarField
 {
 
   scalarField AA_;

@@ -248,42 +248,61 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
     
     scalarField fb = mag(val);
     
+    scalarField f( fb.size(), 0.0 );
+    scalarField refVal( fb.size(), 0.0 );
+    
     scalar n1_ = n1-1;
     scalar n2_ = n2-1;
     
-    scalar A1 = 1.0;
-    scalar A2 = A1 * pow(Cth, n1_-n2_);
-    double len=0.02;
+    scalar A1         = 1.0;
+    scalar A2         = A1 * pow(Cth, n1_-n2_);
+    scalar gamma      = 0.01;
+    //scalarField alpha = del / l_T;
+
+    //Info << "Before: l_T: "<< l_T << endl;
     
     forAll(fb, i){
-      scalar ff = fb[i];
-      scalar c1 = A1 * std::pow(ff, n1_);
-      scalar c2 = A2 * std::pow(ff, n2_);
-      double w = tanh((ff-Cth)/len);
-      w = 0.5*(1 + w);
-      fb[i] = (w*c1 + (1-w)*c2);
+      scalar ff   = fb[i];
+      scalar c1   = A1 * pow(ff, n1);
+      scalar c2   = A2 * pow(ff, n2);
+      scalar dc1  = A1 * n1 * pow(ff, n1_);
+      scalar dc2  = A2 * n2 * pow(ff, n2_);
+      scalar w    = 0.5 + 0.5 * tanh( (ff-Cth)/gamma );
+      scalar dw   = 0.5 / gamma / pow( cosh( (ff-Cth)/gamma ), 2 );
+
+      scalar R    = w * c1 + (1-w) * c2;
+      scalar dR   = dw * (c1-c2) + w * (dc1-dc2) + dc2;
       
       /*
-      if( ff < Cth ){
-        fb[i] = A1 * std::pow(ff, n1_);
-      }
-      else{
-        fb[i] = A2 * std::pow(ff, n2_);
-      }
-      double len=0.01;
-      double w = tanh((ff-Cth)/len);
-      w = 0.5*(1 + w);
-      double c1 = pow(ff/Cth,n1_);
-      double c2 = std::pow(ff/Cth,n2_);
-      fb[i] = ff*(w*c1 + (1-w)*c2);
-      // dR[i] = w*p1*c1 + (1-w)*p2*c2;
-      */
+      Info << "Middle: "
+              << ff << "  "
+              << c1 << "  "
+              << c2 << "  "
+              << dc1 << "  "
+              << dc2 << "  "
+              << w << "  "
+              << dw << "  "
+              << R << "  "
+              << dR << "  "
+              << endl;
+       */
+      
+      scalar alpha  = del[i] / l_T;
+      scalar adR    = alpha * dR;
+      
+      f[i]      = adR / (1 + adR );
+      if(dR>SMALL)
+        refVal[i] = ff - R / dR;
+      else
+        refVal[i] = ff;
     }
     
-    scalarField delval = mag( del * fb );
-    scalarField f   = delval / (l_T + delval);
+    //Info << "After: "<< f << endl;
     
-    this->refValue() = pTraits<Type>::zero;
+    //scalarField delval = mag( del * fb );
+    //scalarField f   = delval / (l_T + delval);
+    
+    this->refValue() = pTraits<Type>::one * refVal;
     this->refGrad() = pTraits<Type>::zero;
     this->valueFraction() = f;
     
@@ -309,7 +328,14 @@ void nonLinearFvPatchField<Type>::evaluate(const Pstream::commsTypes)
 
     Field<Type>::operator=
     (
-        (1.0 - this->valueFraction()) * iF
+      this->valueFraction()*this->refValue()
+      +
+      (1.0 - this->valueFraction())*
+      (
+        iF
+        +
+        this->refGrad()/this->patch().deltaCoeffs()
+      )
     );
     fvPatchField<Type>::evaluate();
 }

@@ -66,6 +66,9 @@ danckwertsFvPatchScalarField
   mixedFvPatchScalarField(ptf, p, iF, mapper),
   AA_(ptf.AA_, mapper)        
 {
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 1.1" << endl;
+  }
 }
 
 Foam::danckwertsFvPatchScalarField::
@@ -88,6 +91,9 @@ danckwertsFvPatchScalarField
       );
   }
   */
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2" << endl;
+  }
   
   
     if (dict.found("refValue"))
@@ -95,6 +101,11 @@ danckwertsFvPatchScalarField
     else
       this->refValue() = pTraits<scalar>::zero;
 
+    if(debug) {
+        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+                "refValue set" << endl;
+    }
+  
     if (dict.found("value"))
     {
       fvPatchScalarField::operator=
@@ -121,6 +132,11 @@ danckwertsFvPatchScalarField
           << this->refValue()
           << endl;
     }
+  
+    if(debug) {
+        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+                "value set" << endl;
+    }
 
     if (dict.found("refGradient")) {
         this->refGrad() = scalarField("refGradient", dict, p.size());
@@ -128,12 +144,22 @@ danckwertsFvPatchScalarField
         this->refGrad() = pTraits<scalar>::zero;
     }
 
+    if(debug) {
+        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+                "refGrad set" << endl;
+    }
+  
     if (dict.found("valueFraction")) {
         this->valueFraction() = Field<scalar>("valueFraction", dict, p.size());
     } else {
         this->valueFraction() = 1;
     }
 
+    if(debug) {
+        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+                "valueFraction set" << endl;
+    }
+  
     if (!this->updated())
     {
         this->mixedFvPatchScalarField::updateCoeffs();
@@ -150,6 +176,10 @@ danckwertsFvPatchScalarField
             )
         );
 
+    if(debug) {
+        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+                "operator" << endl;
+    }
   
   
   fvPatchScalarField::evaluate();
@@ -165,6 +195,9 @@ danckwertsFvPatchScalarField
     mixedFvPatchScalarField(ptf),
     AA_(ptf.AA_)
 {
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 3" << endl;
+  }
 }
 
 
@@ -178,6 +211,9 @@ danckwertsFvPatchScalarField
     mixedFvPatchScalarField(ptf, iF),
     AA_(ptf.AA_)
 {
+  if(debug) {
+    Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 4" << endl;
+  }
 }
 
 
@@ -185,6 +221,10 @@ danckwertsFvPatchScalarField
 
 void Foam::danckwertsFvPatchScalarField::updateCoeffs()
 {
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::updateCoeffs" << endl;
+  }
+  
   if (updated()) return;
   
   vectorField n   = (-1)*this->patch().nf();
@@ -247,6 +287,10 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
 
 void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
 {
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::evaluate" << endl;
+  }
+  
     if (!this->updated())
     {
         this->updateCoeffs();
@@ -275,8 +319,9 @@ void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
 
 void Foam::danckwertsFvPatchScalarField::write(Ostream& os) const
 {
-  fvPatchScalarField::write(os);
-  writeEntry("value", os);
+  //fvPatchScalarField::write(os);
+  mixedFvPatchScalarField::write(os);
+  //writeEntry("value", os);
 }
 
 

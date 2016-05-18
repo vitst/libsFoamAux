@@ -82,108 +82,101 @@ danckwertsFvPatchScalarField
   mixedFvPatchScalarField(p, iF),
   AA_(p.size())
 {
-  /*
-  if (dict.found("value"))
-  {
-      fvPatchScalarField::operator=
-      (
-          scalarField("value", dict, p.size())
-      );
-  }
-  */
   if(debug) {
       Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2" << endl;
   }
   
   
-    if (dict.found("refValue"))
-      this->refValue() = scalarField("refValue", dict, p.size());
-    else
+  if (dict.found("value"))
+  {
+    fvPatchScalarField::operator=
+    (
+      scalarField("value", dict, p.size())
+    );
+  }
+  else
+  {
+    fvPatchScalarField::operator=(this->refValue());
+    WarningIn(
+        "!!!nonLinearFvPatchField<Type>::nonLinearFvPatchField"
+        "("
+        "const fvPatch& p,"
+        "const DimensionedField<Type, volMesh>& iF,"
+        "const dictionary& dict"
+        ")"
+    ) << "No value defined for " << this->dimensionedInternalField().name()
+        << " on " << this->patch().name() << " therefore using "
+        << this->refValue()
+        << endl;
+  }
+
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+              "value set" << endl;
+  }
+
+  if (dict.found("refValue"))
+    this->refValue() = scalarField("refValue", dict, p.size());
+  else
+  {
+    if (dict.found("value")) {
+      // make sure that refValue has a sensible value for the "update" below
+      this->refValue() = scalarField(this->patchInternalField());
+    }
+    else{
       this->refValue() = pTraits<scalar>::zero;
-
-    if(debug) {
-        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
-                "refValue set" << endl;
     }
-  
-    if (dict.found("value"))
-    {
-      fvPatchScalarField::operator=
+  }
+
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+              "refValue set" << endl;
+  }
+
+  if (dict.found("refGradient")) {
+      this->refGrad() = scalarField("refGradient", dict, p.size());
+  } else {
+      this->refGrad() = pTraits<scalar>::zero;
+  }
+
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+              "refGrad set" << endl;
+  }
+
+  if (dict.found("valueFraction")) {
+      this->valueFraction() = Field<scalar>("valueFraction", dict, p.size());
+  } else {
+      this->valueFraction() = 1;
+  }
+
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+              "valueFraction set" << endl;
+  }
+
+  if (!this->updated())
+  {
+      this->mixedFvPatchScalarField::updateCoeffs();
+  }
+
+  scalarField::operator=
       (
-        scalarField("value", dict, p.size())
+          this->valueFraction()*this->refValue()
+          +
+          (1.0 - this->valueFraction())*
+          (
+              this->patchInternalField()
+              + this->refGrad()/this->patch().deltaCoeffs()
+          )
       );
-      if (!dict.found("refValue")) {
-        // make sure that refValue has a sensible value for the "update" below
-        this->refValue() = scalarField("value", dict, p.size());
-      }
-    }
-    else
-    {
-      fvPatchScalarField::operator=(this->refValue());
-      WarningIn(
-          "!!!nonLinearFvPatchField<Type>::nonLinearFvPatchField"
-          "("
-          "const fvPatch& p,"
-          "const DimensionedField<Type, volMesh>& iF,"
-          "const dictionary& dict"
-          ")"
-      ) << "No value defined for " << this->dimensionedInternalField().name()
-          << " on " << this->patch().name() << " therefore using "
-          << this->refValue()
-          << endl;
-    }
-  
-    if(debug) {
-        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
-                "value set" << endl;
-    }
 
-    if (dict.found("refGradient")) {
-        this->refGrad() = scalarField("refGradient", dict, p.size());
-    } else {
-        this->refGrad() = pTraits<scalar>::zero;
-    }
-
-    if(debug) {
-        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
-                "refGrad set" << endl;
-    }
-  
-    if (dict.found("valueFraction")) {
-        this->valueFraction() = Field<scalar>("valueFraction", dict, p.size());
-    } else {
-        this->valueFraction() = 1;
-    }
-
-    if(debug) {
-        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
-                "valueFraction set" << endl;
-    }
-  
-    if (!this->updated())
-    {
-        this->mixedFvPatchScalarField::updateCoeffs();
-    }
-
-    scalarField::operator=
-        (
-            this->valueFraction()*this->refValue()
-            +
-            (1.0 - this->valueFraction())*
-            (
-                this->patchInternalField()
-                + this->refGrad()/this->patch().deltaCoeffs()
-            )
-        );
-
-    if(debug) {
-        Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
-                "operator" << endl;
-    }
-  
+  if(debug) {
+      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
+              "operator" << endl;
+  }
   
   fvPatchScalarField::evaluate();
-  
 }
 
 Foam::danckwertsFvPatchScalarField::
@@ -319,9 +312,9 @@ void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
 
 void Foam::danckwertsFvPatchScalarField::write(Ostream& os) const
 {
-  //fvPatchScalarField::write(os);
-  mixedFvPatchScalarField::write(os);
-  //writeEntry("value", os);
+  fvPatchScalarField::write(os);
+  //mixedFvPatchScalarField::write(os);
+  writeEntry("value", os);
 }
 
 

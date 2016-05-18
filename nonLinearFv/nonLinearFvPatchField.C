@@ -93,83 +93,140 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
 :
     mixedFvPatchField<Type>(p, iF)
 {
-    if(debug) {
-        Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 3" << endl;
-    }
+  if(debug) {
+    Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 3" << endl;
+  }
 
-    l_T = 1.0;
-    Cth = dict.lookupOrDefault<scalar>("Cth", 1.0);
-    n1 = dict.lookupOrDefault<scalar>("n1", 1.0);
-    n2 = dict.lookupOrDefault<scalar>("n2", 1.0);
-    
-    if(debug) {
-        Info << "Cth: "<< Cth << endl;
-        Info << "n1: "<< n1 << endl;
-        Info << "n2: "<< n2 << endl;
-    }
-    
-    if (dict.found("refValue")) {
-        this->refValue() = Field<Type>("refValue", dict, p.size());
-    } else {
-        this->refValue() = pTraits<Type>::zero;
-    }
+  l_T = 1.0;
+  //Cth = dict.lookupOrDefault<scalar>("Cth", 1.0);
+  //n1 = dict.lookupOrDefault<scalar>("n1", 1.0);
+  //n2 = dict.lookupOrDefault<scalar>("n2", 1.0);
+  
+  if (!dict.readIfPresent<scalar>("Cth", Cth))
+  {
+    Cth = 1.0;
+    WarningIn(
+        "nonLinearFvPatchField<Type>::nonLinearFvPatchField"
+        "("
+        "const fvPatch& p,"
+        "const DimensionedField<Type, volMesh>& iF,"
+        "const dictionary& dict"
+        ")"
+    ) << "No value defined for Cth"
+        << " on " << this->patch().name() << " therefore using "
+        << Cth
+        << endl;
+  }
+  
+  if (!dict.readIfPresent<scalar>("n1", n1))
+  {
+    n1 = 1.0;
+    WarningIn(
+        "nonLinearFvPatchField<Type>::nonLinearFvPatchField"
+        "("
+        "const fvPatch& p,"
+        "const DimensionedField<Type, volMesh>& iF,"
+        "const dictionary& dict"
+        ")"
+    ) << "No value defined for n1"
+        << " on " << this->patch().name() << " therefore using "
+        << n1
+        << endl;
+  }
+  
+  if (!dict.readIfPresent<scalar>("n2", n2))
+  {
+    n2 = 1.0;
+    WarningIn(
+        "nonLinearFvPatchField<Type>::nonLinearFvPatchField"
+        "("
+        "const fvPatch& p,"
+        "const DimensionedField<Type, volMesh>& iF,"
+        "const dictionary& dict"
+        ")"
+    ) << "No value defined for n2"
+        << " on " << this->patch().name() << " therefore using "
+        << n2
+        << endl;
+  }
+  
 
-    if (dict.found("value"))
-    {
-        fvPatchField<Type>::operator=
-        (
-            Field<Type>("value", dict, p.size())
-        );
-	if (!dict.found("refValue")) {
- 	    // make sure that refValue has a sensible value for the "update" below
-	    this->refValue() = Field<Type>("value", dict, p.size());
-	}
-    }
-    else
-    {
-        fvPatchField<Type>::operator=(this->refValue());
-        WarningIn(
-            "nonLinearFvPatchField<Type>::nonLinearFvPatchField"
-            "("
-            "const fvPatch& p,"
-            "const DimensionedField<Type, volMesh>& iF,"
-            "const dictionary& dict"
-            ")"
-        ) << "No value defined for " << this->dimensionedInternalField().name()
-            << " on " << this->patch().name() << " therefore using "
-            << this->refValue()
-            << endl;
-    }
+  if(debug) {
+    Info << "Cth: "<< Cth << endl;
+    Info << "n1: "<< n1 << endl;
+    Info << "n2: "<< n2 << endl;
+  }
+  
+  if (dict.found("value"))
+  {
+    fvPatchField<Type>::operator=
+    (
+      Field<Type>("value", dict, p.size())
+    );
+  }
+  else
+  {
+    fvPatchField<Type>::operator=(this->refValue());
+    WarningIn(
+        "nonLinearFvPatchField<Type>::nonLinearFvPatchField"
+        "("
+        "const fvPatch& p,"
+        "const DimensionedField<Type, volMesh>& iF,"
+        "const dictionary& dict"
+        ")"
+    ) << "No value defined for " << this->dimensionedInternalField().name()
+        << " on " << this->patch().name() << " therefore using "
+        << this->refValue()
+        << endl;
+  }
 
-    if (dict.found("refGradient")) {
-        this->refGrad() = Field<Type>("refGradient", dict, p.size());
-    } else {
-        this->refGrad() = pTraits<Type>::zero;
+  if (dict.found("refValue"))
+    this->refValue() = Field<Type>("refValue", dict, p.size());
+  else
+  {
+    if (dict.found("value")) {
+      // make sure that refValue has a sensible value for the "update" below
+      this->refValue() = Field<Type>(this->patchInternalField());
     }
-
-    if (dict.found("valueFraction")) {
-        this->valueFraction() = Field<scalar>("valueFraction", dict, p.size());
-    } else {
-        this->valueFraction() = 1;
+    else{
+      this->refValue() = pTraits<Type>::zero;
     }
+  }
+  
+  if(debug) {
+      Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 2  "
+              "refValue set" << endl;
+  }
+  
+  if (dict.found("refGradient")) {
+      this->refGrad() = Field<Type>("refGradient", dict, p.size());
+  } else {
+      this->refGrad() = pTraits<Type>::zero;
+  }
 
-    if (!this->updated())
-    {
-        this->mixedFvPatchField<Type>::updateCoeffs();
-    }
+  if (dict.found("valueFraction")) {
+      this->valueFraction() = Field<scalar>("valueFraction", dict, p.size());
+  } else {
+      this->valueFraction() = 1;
+  }
 
-    Field<Type>::operator=
-        (
-            this->valueFraction()*this->refValue()
-            +
-            (1.0 - this->valueFraction())*
-            (
-                this->patchInternalField()
-                + this->refGrad()/this->patch().deltaCoeffs()
-            )
-        );
+  if (!this->updated())
+  {
+      this->mixedFvPatchField<Type>::updateCoeffs();
+  }
 
-    fvPatchField<Type>::evaluate();
+  Field<Type>::operator=
+                (
+                  this->valueFraction()*this->refValue()
+                  +
+                  (1.0 - this->valueFraction())*
+                  (
+                    this->patchInternalField()
+                    + this->refGrad()/this->patch().deltaCoeffs()
+                  )
+                );
+
+  fvPatchField<Type>::evaluate();
 }
 
 
@@ -185,9 +242,9 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
     n1(ptf.n1),
     n2(ptf.n2)
 {
-    if(debug) {
-        Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 4" << endl;
-    }
+  if(debug) {
+      Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 4" << endl;
+  }
 }
 
 
@@ -347,10 +404,12 @@ void nonLinearFvPatchField<Type>::write(Ostream& os) const
     if(debug) {
         Info << "nonLinearFvPatchField<Type>::write" << endl;
     }
-    mixedFvPatchField<Type>::write(os);
+    //mixedFvPatchField<Type>::write(os);
+    fvPatchField<Type>::write(os);
     os.writeKeyword("Cth")<< Cth << token::END_STATEMENT << nl;
     os.writeKeyword("n1")<< n1 << token::END_STATEMENT << nl;
     os.writeKeyword("n2")<< n2 << token::END_STATEMENT << nl;
+    this->writeEntry("value", os);
 }
 
 

@@ -265,6 +265,12 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   pointField mpW = doWallDisplacement( pointDispWall * deltaT );
   mesh_.movePoints( mpW);
 
+  if(dissolDebug){
+    // only wall points moved
+    time.write();
+    time++;
+  }
+  
   pointField mpI = doInletDisplacement( pointDispInlet * deltaT );
   mesh_.movePoints( mpI );
 
@@ -272,6 +278,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   mesh_.movePoints( mpO );
 
   if(dissolDebug){
+    // wall, inlet, and outlet points moved
     time.write();
     time++;
   }

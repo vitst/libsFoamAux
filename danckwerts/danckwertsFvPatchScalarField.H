@@ -89,8 +89,6 @@ class danckwertsFvPatchScalarField
     public mixedFvPatchScalarField
 {
 
-  scalarField AA_;
-  
 protected:
 
     // Protected data
@@ -166,6 +164,22 @@ public:
         }
 
     // Member functions
+        //- Return patch-normal gradient
+        virtual tmp<scalarField> snGrad() const;
+
+        //- Return patch-normal gradient for coupled-patches
+        //  using the deltaCoeffs provided
+        virtual tmp<scalarField> snGrad
+        (
+            const scalarField& deltaCoeffs
+        ) const
+        {
+            notImplemented
+            (
+                type() + "::snGrad(const scalarField& deltaCoeffs)"
+            );
+            return *this;
+        }
 
         // Evaluation functions
             virtual void evaluate( const Pstream::commsTypes commsType=Pstream::blocking );

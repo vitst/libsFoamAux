@@ -129,6 +129,23 @@ public:
 
 
     // Member functions
+    //- Return patch-normal gradient
+    virtual tmp<Field<Type> > snGrad() const;
+
+    //- Return patch-normal gradient for coupled-patches
+    //  using the deltaCoeffs provided
+    virtual tmp<Field<Type> > snGrad
+    (
+        const scalarField& deltaCoeffs
+    ) const
+    {
+        notImplemented
+        (
+            type() + "::snGrad(const scalarField& deltaCoeffs)"
+        );
+        return *this;
+    }
+    
     virtual void evaluate( const Pstream::commsTypes commsType=Pstream::blocking );
 
 

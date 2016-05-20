@@ -42,8 +42,7 @@ danckwertsFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-  mixedFvPatchScalarField(p, iF),
-  AA_(p.size())
+  mixedFvPatchScalarField(p, iF)
 {
   if(debug) {
       Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 1" << endl;
@@ -63,8 +62,7 @@ danckwertsFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-  mixedFvPatchScalarField(ptf, p, iF, mapper),
-  AA_(ptf.AA_, mapper)        
+  mixedFvPatchScalarField(ptf, p, iF, mapper)
 {
   if(debug) {
       Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 1.1" << endl;
@@ -79,8 +77,7 @@ danckwertsFvPatchScalarField
     const dictionary& dict
 )
 :
-  mixedFvPatchScalarField(p, iF),
-  AA_(p.size())
+  mixedFvPatchScalarField(p, iF)
 {
   if(debug) {
       Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2" << endl;
@@ -157,9 +154,11 @@ danckwertsFvPatchScalarField
 
   if (!this->updated())
   {
-      this->mixedFvPatchScalarField::updateCoeffs();
+    this->mixedFvPatchScalarField::updateCoeffs();
+    //updateCoeffs();
   }
 
+  /*
   scalarField::operator=
       (
           this->valueFraction()*this->refValue()
@@ -170,6 +169,7 @@ danckwertsFvPatchScalarField
               + this->refGrad()/this->patch().deltaCoeffs()
           )
       );
+  */
 
   if(debug) {
       Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
@@ -185,14 +185,12 @@ danckwertsFvPatchScalarField
     const danckwertsFvPatchScalarField& ptf
 )
 :
-    mixedFvPatchScalarField(ptf),
-    AA_(ptf.AA_)
+  mixedFvPatchScalarField(ptf)
 {
   if(debug) {
-      Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 3" << endl;
+    Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 3" << endl;
   }
 }
-
 
 Foam::danckwertsFvPatchScalarField::
 danckwertsFvPatchScalarField
@@ -201,16 +199,20 @@ danckwertsFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchScalarField(ptf, iF),
-    AA_(ptf.AA_)
+    mixedFvPatchScalarField(ptf, iF)
 {
   if(debug) {
     Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 4" << endl;
   }
 }
 
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::Field<Foam::scalar> > Foam::danckwertsFvPatchScalarField::snGrad() const
+{
+  return Foam::fvPatchScalarField::snGrad();
+}
+
 
 void Foam::danckwertsFvPatchScalarField::updateCoeffs()
 {
@@ -265,14 +267,9 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
     AA = (boundaryU & n) * (del & n) / patchD;
   }
   
-  AA_ = AA;
-  
-  
   this->refValue() = pTraits<scalar>::one;
   this->refGrad() = pTraits<scalar>::zero;
   this->valueFraction() = AA / (AA+1.0);
-  
-  //operator==( (AA + iF) / (AA+1.0) );
   
   mixedFvPatchScalarField::updateCoeffs();
 }
@@ -293,7 +290,6 @@ void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
 
     scalarField::operator=
     (
-      //(AA_ + iF) / (AA_+1.0)
       this->valueFraction()*this->refValue()
       +
       (1.0 - this->valueFraction())*
@@ -312,9 +308,9 @@ void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
 
 void Foam::danckwertsFvPatchScalarField::write(Ostream& os) const
 {
-  fvPatchScalarField::write(os);
-  //mixedFvPatchScalarField::write(os);
-  writeEntry("value", os);
+  //fvPatchScalarField::write(os);
+  //writeEntry("value", os);
+  mixedFvPatchScalarField::write(os);
 }
 
 

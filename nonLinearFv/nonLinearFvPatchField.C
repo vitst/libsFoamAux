@@ -210,11 +210,14 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
       this->valueFraction() = 1;
   }
 
+  
   if (!this->updated())
   {
-      this->mixedFvPatchField<Type>::updateCoeffs();
+    this->mixedFvPatchField<Type>::updateCoeffs();
+    //updateCoeffs();
   }
 
+  /*
   Field<Type>::operator=
                 (
                   this->valueFraction()*this->refValue()
@@ -225,7 +228,7 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
                     + this->refGrad()/this->patch().deltaCoeffs()
                   )
                 );
-
+  */
   fvPatchField<Type>::evaluate();
 }
 
@@ -268,148 +271,134 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+template<class Type>
+tmp<Field<Type> > nonLinearFvPatchField<Type>::snGrad() const
+{
+  return Foam::fvPatchField<Type>::snGrad();
+}
 
 template<class Type>
 void nonLinearFvPatchField<Type>::updateCoeffs()
 {
-    if(debug) {
-        Info << "nonLinearFvPatchField<Type>::updateCoeffs" << endl;
-        //Info << "Value: " << this->valueExpression_ << endl;
-        //Info << "Gradient: " << this->gradientExpression_ << endl;
-        //Info << "Fraction: " << this->fractionExpression_ << endl;
-    }
-    if (this->updated())
-    {
-        return;
-    }
+  if(debug) {
+      Info << "nonLinearFvPatchField<Type>::updateCoeffs" << endl;
+  }
+  if (this->updated())
+  {
+      return;
+  }
 
-    if(debug) {
-        Info << "nonLinearFvPatchField<Type>::updateCoeffs - updating" << endl;
-    }
-    
-    const IOdictionary& iod = this->db().objectRegistry::template 
-                              lookupObject<IOdictionary>("transportProperties");
-    if( !iod.readIfPresent<scalar>("l_T", l_T) ){
-      SeriousErrorIn("nonLinearFvPatchField<Type>::nonLinearFvPatchField")
-              <<"There is no l_T parameter in transportProperties dictionary"
-              <<exit(FatalError);
-    }
-    
-    if(debug) {
-        Info << "l_T: "<< l_T << endl;
-    }
-    
-    Field<Type>& val = *this;
-    
-    scalarField del = mag( 1. / this->patch().deltaCoeffs() );
-    
-    scalarField fb = mag(val);
-    
-    scalarField f( fb.size(), 0.0 );
-    scalarField refVal( fb.size(), 0.0 );
-    
-    scalar n1_ = n1-1;
-    scalar n2_ = n2-1;
-    
-    scalar A1         = 1.0;
-    scalar A2         = A1 * pow(Cth, n1_-n2_);
-    scalar gamma      = 0.01;
-    //scalarField alpha = del / l_T;
+  if(debug) {
+      Info << "nonLinearFvPatchField<Type>::updateCoeffs - updating" << endl;
+  }
 
-    //Info << "Before: l_T: "<< l_T << endl;
-    
-    forAll(fb, i){
-      scalar ff   = fb[i];
-      scalar c1   = A1 * pow(ff, n1);
-      scalar c2   = A2 * pow(ff, n2);
-      scalar dc1  = A1 * n1 * pow(ff, n1_);
-      scalar dc2  = A2 * n2 * pow(ff, n2_);
-      scalar w    = 0.5 + 0.5 * tanh( (ff-Cth)/gamma );
-      scalar dw   = 0.5 / gamma / pow( cosh( (ff-Cth)/gamma ), 2 );
+  const IOdictionary& iod = this->db().objectRegistry::template 
+                            lookupObject<IOdictionary>("transportProperties");
+  if( !iod.readIfPresent<scalar>("l_T", l_T) ){
+    SeriousErrorIn("nonLinearFvPatchField<Type>::nonLinearFvPatchField")
+            <<"There is no l_T parameter in transportProperties dictionary"
+            <<exit(FatalError);
+  }
 
-      scalar R    = w * c1 + (1-w) * c2;
-      scalar dR   = dw * (c1-c2) + w * (dc1-dc2) + dc2;
-      
-      /*
-      Info << "Middle: "
-              << ff << "  "
-              << c1 << "  "
-              << c2 << "  "
-              << dc1 << "  "
-              << dc2 << "  "
-              << w << "  "
-              << dw << "  "
-              << R << "  "
-              << dR << "  "
-              << endl;
-       */
-      
-      scalar alpha  = del[i] / l_T;
-      scalar adR    = alpha * dR;
-      
-      f[i]      = adR / (1 + adR );
-      if(dR>SMALL)
-        refVal[i] = ff - R / dR;
-      else
-        refVal[i] = ff;
-    }
-    
-    //Info << "After: "<< f << endl;
-    
-    //scalarField delval = mag( del * fb );
-    //scalarField f   = delval / (l_T + delval);
-    
-    this->refValue() = pTraits<Type>::one * refVal;
-    this->refGrad() = pTraits<Type>::zero;
-    this->valueFraction() = f;
-    
-    if(debug) {
-      Field<Type> iF = this->patchInternalField();
-      Field<Type> newF = (1.0 - this->valueFraction()) * iF;
-      scalar residual = ( max( mag( newF ) )<SMALL ) ? (1.0) : (max( mag( newF-val ) ) / max( mag( newF ) )) ;
-      Info << "  Nonlinear boundary field residual " << residual << nl << nl;
-    }
+  if(debug) {
+      Info << "l_T: "<< l_T << endl;
+  }
 
-    mixedFvPatchField<Type>::updateCoeffs();
+  Field<Type>& val = *this;
+
+  scalarField del = mag( 1. / this->patch().deltaCoeffs() );
+
+  scalarField fb = mag(val);
+
+  scalarField f( fb.size(), 0.0 );
+  scalarField refVal( fb.size(), 0.0 );
+  scalarField refGr( fb.size(), 0.0 );
+
+  scalar n1_ = n1-1;
+  scalar n2_ = n2-1;
+
+  scalar A1         = 1.0;
+  scalar A2         = A1 * pow(Cth, n1_-n2_);
+  scalar gamma      = 0.01;
+
+  forAll(fb, i){
+    scalar ff   = fb[i];
+    scalar c1   = A1 * pow(ff, n1);
+    scalar c2   = A2 * pow(ff, n2);
+    scalar dc1  = A1 * n1 * pow(ff, n1_);
+    scalar dc2  = A2 * n2 * pow(ff, n2_);
+    scalar w    = 0.5 + 0.5 * tanh( (ff-Cth)/gamma );
+    scalar dw   = 0.5 / gamma / pow( cosh( (ff-Cth)/gamma ), 2 );
+
+    scalar R    = w * c1 + (1-w) * c2;
+    scalar dR   = dw * (c1-c2) + w * (dc1-dc2) + dc2;
+
+    scalar alpha  = del[i] / l_T;
+    scalar adR    = alpha * dR;
+
+    f[i]      = adR / (1 + adR );
+    refVal[i] = ff;
+    refGr[i]  = - R / l_T;
+            
+    /*
+    if(dR>SMALL)
+      refVal[i] = ff - R / dR;
+    else
+      refVal[i] = ff;
+    */
+  }
+
+  this->refValue() = pTraits<Type>::one * refVal;
+  this->refGrad() = pTraits<Type>::one * refGr;
+  this->valueFraction() = f;
+
+  if(debug) {
+    Field<Type> iF = this->patchInternalField();
+    Field<Type> newF = (1.0 - this->valueFraction()) * iF;
+    scalar residual = ( max( mag( newF ) )<SMALL ) ? (1.0) : (max( mag( newF-val ) ) / max( mag( newF ) )) ;
+    Info << "  Nonlinear boundary field residual " << residual << nl << nl;
+  }
+
+  mixedFvPatchField<Type>::updateCoeffs();
 }
 
 template<class Type>
 void nonLinearFvPatchField<Type>::evaluate(const Pstream::commsTypes)
 {
-    if (!this->updated())
-    {
-        this->updateCoeffs();
-    }
-    
-    Field<Type> iF = this->patchInternalField();
+  if (!this->updated())
+  {
+      this->updateCoeffs();
+  }
 
-    Field<Type>::operator=
+  Field<Type> iF = this->patchInternalField();
+
+  Field<Type>::operator=
+  (
+    this->valueFraction()*this->refValue()
+    +
+    (1.0 - this->valueFraction())*
     (
-      this->valueFraction()*this->refValue()
+      iF
       +
-      (1.0 - this->valueFraction())*
-      (
-        iF
-        +
-        this->refGrad()/this->patch().deltaCoeffs()
-      )
-    );
-    fvPatchField<Type>::evaluate();
+      this->refGrad()/this->patch().deltaCoeffs()
+    )
+  );
+  fvPatchField<Type>::evaluate();
 }
 
 
 template<class Type>
 void nonLinearFvPatchField<Type>::write(Ostream& os) const
 {
-    if(debug) {
-        Info << "nonLinearFvPatchField<Type>::write" << endl;
-    }
-    //mixedFvPatchField<Type>::write(os);
-    fvPatchField<Type>::write(os);
-    os.writeKeyword("Cth")<< Cth << token::END_STATEMENT << nl;
-    os.writeKeyword("n1")<< n1 << token::END_STATEMENT << nl;
-    os.writeKeyword("n2")<< n2 << token::END_STATEMENT << nl;
-    this->writeEntry("value", os);
+  if(debug) {
+    Info << "nonLinearFvPatchField<Type>::write" << endl;
+  }
+  mixedFvPatchField<Type>::write(os);
+  //fvPatchField<Type>::write(os);
+  os.writeKeyword("Cth")<< Cth << token::END_STATEMENT << nl;
+  os.writeKeyword("n1")<< n1 << token::END_STATEMENT << nl;
+  os.writeKeyword("n2")<< n2 << token::END_STATEMENT << nl;
+  //this->writeEntry("value", os);
 }
 
 

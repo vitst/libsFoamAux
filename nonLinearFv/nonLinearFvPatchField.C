@@ -149,7 +149,6 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
         << n2
         << endl;
   }
-  
 
   if(debug) {
     Info << "Cth: "<< Cth << endl;
@@ -209,15 +208,12 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
   } else {
       this->valueFraction() = 1;
   }
-
   
   if (!this->updated())
   {
     this->mixedFvPatchField<Type>::updateCoeffs();
-    //updateCoeffs();
   }
 
-  /*
   Field<Type>::operator=
                 (
                   this->valueFraction()*this->refValue()
@@ -228,7 +224,7 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
                     + this->refGrad()/this->patch().deltaCoeffs()
                   )
                 );
-  */
+  
   fvPatchField<Type>::evaluate();
 }
 
@@ -271,12 +267,6 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-template<class Type>
-tmp<Field<Type> > nonLinearFvPatchField<Type>::snGrad() const
-{
-  return Foam::fvPatchField<Type>::snGrad();
-}
-
 template<class Type>
 void nonLinearFvPatchField<Type>::updateCoeffs()
 {
@@ -339,13 +329,6 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
     f[i]      = adR / (1 + adR );
     refVal[i] = ff;
     refGr[i]  = - R / l_T;
-            
-    /*
-    if(dR>SMALL)
-      refVal[i] = ff - R / dR;
-    else
-      refVal[i] = ff;
-    */
   }
 
   this->refValue() = pTraits<Type>::one * refVal;

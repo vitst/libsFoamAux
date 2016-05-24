@@ -164,28 +164,11 @@ public:
         }
 
     // Member functions
-        //- Return patch-normal gradient
-        virtual tmp<scalarField> snGrad() const;
-
-        //- Return patch-normal gradient for coupled-patches
-        //  using the deltaCoeffs provided
-        virtual tmp<scalarField> snGrad
-        (
-            const scalarField& deltaCoeffs
-        ) const
-        {
-            notImplemented
-            (
-                type() + "::snGrad(const scalarField& deltaCoeffs)"
-            );
-            return *this;
-        }
-
         // Evaluation functions
-            virtual void evaluate( const Pstream::commsTypes commsType=Pstream::blocking );
+        virtual void evaluate( const Pstream::commsTypes commsType=Pstream::blocking );
 
-            //- Update the coefficients associated with the patch field
-            virtual void updateCoeffs();
+        //- Update the coefficients associated with the patch field
+        virtual void updateCoeffs();
 
         //- Write
         virtual void write(Ostream&) const;

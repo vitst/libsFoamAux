@@ -207,13 +207,6 @@ danckwertsFvPatchScalarField
 }
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::Field<Foam::scalar> > Foam::danckwertsFvPatchScalarField::snGrad() const
-{
-  return Foam::fvPatchScalarField::snGrad();
-}
-
-
 void Foam::danckwertsFvPatchScalarField::updateCoeffs()
 {
   if(debug) {

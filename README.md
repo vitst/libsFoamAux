@@ -1,6 +1,15 @@
 # libsOpenFOAMauxiliary
 Auxiliary external libraries for OpenFOAM.
 
+* danckwerts: User library.
+
+
+* dissolMeshRelax: User library.
+
+
+* nonLinearFv: User library.
+
+
 * steadyStateControl: User library. Based on the simpleControl class
 ($FOAM_SRC/finiteVolume/cfdTools/general/solutionControl/simpleControl/)
 

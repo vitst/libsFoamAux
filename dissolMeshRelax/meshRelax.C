@@ -12,14 +12,14 @@
 meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
 :
   version("0.7"),
-  date("Mar 2016"),
+  date("May 2016"),
   mesh_(mesh)
 {
   // get ID of each patch we need
   fixedWallID = mesh_.boundaryMesh().findPatchID("fixedWall");
-  wallID   = mesh_.boundaryMesh().findPatchID("walls");
-  inletID  = mesh_.boundaryMesh().findPatchID("inlet");
-  outletID = mesh_.boundaryMesh().findPatchID("outlet");
+  wallID      = mesh_.boundaryMesh().findPatchID("walls");
+  inletID     = mesh_.boundaryMesh().findPatchID("inlet");
+  outletID    = mesh_.boundaryMesh().findPatchID("outlet");
 
   setUpLists();
   setUpPairsConc();
@@ -32,7 +32,7 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
   (
     IOobject
     (
-      "dissolFoamDict",
+      "surfMeshRelaxDict",
       time.system(),
       mesh,
       IOobject::MUST_READ,

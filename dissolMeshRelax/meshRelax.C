@@ -113,13 +113,7 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
   Info << "dissolFoamDict, q_edge_norm_recalc:  " 
        << q_edge_norm_recalc << nl;
   
-  if( variableGrading ){
-    Info << "dissolFoamDict, inigradingZ:  " << inigradingZ << nl;
-    Info << "dissolFoamDict, timeCoefZ:  " << timeCoefZ << nl;
-    Info << "dissolFoamDict, numberOfCellsZ:  " << Nz << nl;
-  }
-  Info << "************************************************************"
-       << nl << endl;
+  Info << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * "<<nl<<endl;
   
   // calculating weights for the edges inlet-wall, outlet-wall
   inletWallEdgeWeights  = calc_edge_weights( meshTmp, meshTmp.boundaryMesh()[inletID] );

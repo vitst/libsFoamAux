@@ -30,7 +30,6 @@ License
 #include "surfaceFields.H"
 #include "uniformDimensionedFields.H"
 
-
 #include <typeinfo>
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -51,8 +50,6 @@ danckwertsFvPatchScalarField
   this->refValue() = pTraits<scalar>::zero;
   this->refGrad() = pTraits<scalar>::zero;
   this->valueFraction() = 1;
-  
-  vf_ = 1;
 }
 
 Foam::danckwertsFvPatchScalarField::
@@ -64,8 +61,7 @@ danckwertsFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-  mixedFvPatchScalarField(ptf, p, iF, mapper),
-        vf_(1.0)
+  mixedFvPatchScalarField(ptf, p, iF, mapper)
 {
   if(debug) {
       Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 1.1" << endl;
@@ -159,8 +155,6 @@ danckwertsFvPatchScalarField
   {
     this->mixedFvPatchScalarField::updateCoeffs();
   }
-  
-  vf_ = 1.0;
   
   /*
   scalarField aux = 
@@ -270,9 +264,6 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
   this->refValue() = pTraits<scalar>::one;
   this->refGrad() = pTraits<scalar>::zero;
   this->valueFraction() = AA / (AA+1.0);
-  //this->valueFraction() = 1.0;
-  
-  vf_ = AA / (AA+1.0);
   
   mixedFvPatchScalarField::updateCoeffs();
 }
@@ -288,7 +279,7 @@ void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
 
   scalarField iF = this->patchInternalField();
 
-  scalarField aux = //(1-vf_) * iF;
+  scalarField aux =
           
     this->valueFraction()*this->refValue()
     +

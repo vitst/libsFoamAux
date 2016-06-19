@@ -28,28 +28,25 @@ Group
     grpGenericBoundaryConditions
 
 Description
-    This boundary condition provides static pressure condition for p_rgh,
+    This boundary condition provides danckwerts condition for scalar field
     calculated as:
 
-        \f[
-            p_rgh = p - \rho g h
-        \f]
+        (u*n)(1-F) + D*n*grad(F) = 0
 
     where
     \vartable
-        p_rgh   | Pseudo hydrostatic pressure [Pa]
-        p       | Static pressure [Pa]
-        h       | Height in the opposite direction to gravity
-        \rho    | density
-        g       | acceleration due to gravity [m/s2]
+        F       | current field
+        u       | velocity field
+        D       | diffusion coefficient
+        n       | normals
     \endtable
 
     \heading Patch usage
 
     \table
-        Property     | Description             | Required    | Default value
-        rhoName      | rho field name          | no          | rho
-        p            | static pressure         | yes         |
+        Property     | Description             | Required
+        u            | field U                 | yes
+        D            | diffusion coef D        | yes
     \endtable
 
     Example of the boundary condition specification:
@@ -57,7 +54,6 @@ Description
     myPatch
     {
         type            danckwerts;
-        p               uniform 0;
         value           uniform 0; // optional initial value
     }
     \endverbatim
@@ -91,9 +87,6 @@ class danckwertsFvPatchScalarField
 
 protected:
 
-    // Protected data
-    scalarField vf_;
-  
 public:
 
     //- Runtime type information
@@ -127,7 +120,6 @@ public:
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
-         
 
         //- Construct as copy
         danckwertsFvPatchScalarField

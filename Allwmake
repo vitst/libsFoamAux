@@ -3,7 +3,5 @@
 for d in */ ; do
   echo ""
   echo "Enter directory $d"
-  cd $d
-  wmake libso
-  cd ..
+  wmake libso $d
 done

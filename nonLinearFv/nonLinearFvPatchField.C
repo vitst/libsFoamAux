@@ -22,12 +22,6 @@ License
     along with OpenFOAM; if not, write to the Free Software Foundation,
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
   
-Description
-    This is the patch for nonlinear boundary concentration field.
-  
-Contributors/Copyright:
-    Vitaliy Starchenko (2015) <vitaliy.starchenko@gmail.com>
-
 \*---------------------------------------------------------------------------*/
 
 #include "nonLinearFvPatchField.H"
@@ -52,13 +46,13 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
     n1(1.0),
     n2(1.0)
 {
-    if(debug) {
-        Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 1" << endl;
-    }
+  if(debug) {
+      Info << "nonLinearFvPatchField<Type>::nonLinearFvPatchField 1" << endl;
+  }
 
-    this->refValue() = pTraits<Type>::zero;
-    this->refGrad() = pTraits<Type>::zero;
-    this->valueFraction() = 1;
+  this->refValue() = pTraits<Type>::zero;
+  this->refGrad() = pTraits<Type>::zero;
+  this->valueFraction() = 1;
 }
 
 
@@ -98,9 +92,6 @@ nonLinearFvPatchField<Type>::nonLinearFvPatchField
   }
 
   l_T = 1.0;
-  //Cth = dict.lookupOrDefault<scalar>("Cth", 1.0);
-  //n1 = dict.lookupOrDefault<scalar>("n1", 1.0);
-  //n2 = dict.lookupOrDefault<scalar>("n2", 1.0);
   
   if (!dict.readIfPresent<scalar>("Cth", Cth))
   {
@@ -346,44 +337,16 @@ void nonLinearFvPatchField<Type>::updateCoeffs()
 }
 
 template<class Type>
-void nonLinearFvPatchField<Type>::evaluate(const Pstream::commsTypes)
-{
-  if (!this->updated())
-  {
-      this->updateCoeffs();
-  }
-
-  Field<Type> iF = this->patchInternalField();
-
-  Field<Type>::operator=
-  (
-    this->valueFraction()*this->refValue()
-    +
-    (1.0 - this->valueFraction())*
-    (
-      iF
-      +
-      this->refGrad()/this->patch().deltaCoeffs()
-    )
-  );
-  fvPatchField<Type>::evaluate();
-}
-
-
-template<class Type>
 void nonLinearFvPatchField<Type>::write(Ostream& os) const
 {
   if(debug) {
     Info << "nonLinearFvPatchField<Type>::write" << endl;
   }
   mixedFvPatchField<Type>::write(os);
-  //fvPatchField<Type>::write(os);
   os.writeKeyword("Cth")<< Cth << token::END_STATEMENT << nl;
   os.writeKeyword("n1")<< n1 << token::END_STATEMENT << nl;
   os.writeKeyword("n2")<< n2 << token::END_STATEMENT << nl;
-  //this->writeEntry("value", os);
 }
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

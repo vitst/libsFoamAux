@@ -22,8 +22,49 @@ License
     along with OpenFOAM; if not, write to the Free Software Foundation,
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
   
+Class
+    Foam::danckwertsFvPatchScalarField
+
 Description
     This is the patch for nonlinear boundary concentration field.
+    Where reaction kinetics is proportional to:
+
+        ~ c^n_1  if c<c_th
+        ~ c^n_2  if c>c_th
+
+    where
+    \vartable
+        c       | concentration field
+        c_th    | threshold
+        n_1     | exponent 1 for nonlinear kinetics
+        n_2     | exponent 2 for nonlinear kinetics
+    \endtable
+
+    \heading Patch usage
+
+    \table
+        Property     | Description                                 | Required
+        l_T          | thickness of concentration boundary layer   | yes
+    \endtable
+
+    Example of the boundary condition specification:
+    \verbatim
+    myPatch
+    {
+      type            nonLinear;
+      value           uniform 0.0;
+      Cth   0.2;
+      n1    1.0;
+      n2    4.0;
+    }
+    \endverbatim
+
+SeeAlso
+    Foam::mixedFvPatchScalarField
+
+SourceFiles
+    danckwertsFvPatchScalarField.C
+
   
 Contributors/Copyright:
     Vitaliy Starchenko (2015) <vitaliy.starchenko@gmail.com>
@@ -51,21 +92,16 @@ class nonLinearFvPatchField
 {
 
 protected:
-
     // Protected data
     scalar l_T;
     
     scalar Cth; // threshold concentration
     
     scalar n1, n2; // power low for the dissolution kinetics
-
-    //PatchValueExpressionDriver driver_;
-
 public:
 
     //- Runtime type information
     TypeName("nonLinear");
-
 
     // Constructors
 
@@ -127,10 +163,7 @@ public:
                 );
         }
 
-
     // Member functions
-    virtual void evaluate( const Pstream::commsTypes commsType=Pstream::blocking );
-
     //- Update the coefficients associated with the patch field
     virtual void updateCoeffs();
 

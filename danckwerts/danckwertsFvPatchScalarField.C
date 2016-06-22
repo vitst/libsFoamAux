@@ -156,21 +156,16 @@ danckwertsFvPatchScalarField
     this->mixedFvPatchScalarField::updateCoeffs();
   }
   
-  /*
-  scalarField aux = 
-          this->valueFraction()*this->refValue()
-          +
-          (1.0 - this->valueFraction())*
-          (
-              this->patchInternalField()
-              + this->refGrad()/this->patch().deltaCoeffs()
-          );
-
   scalarField::operator=
       (
-          aux
+        this->valueFraction()*this->refValue()
+        +
+        (1.0 - this->valueFraction())*
+        (
+            this->patchInternalField()
+            + this->refGrad()/this->patch().deltaCoeffs()
+        )
       );
-   */
 
   if(debug) {
       Info << "danckwertsFvPatchField<Type>::danckwertsFvPatchField 2  "
@@ -267,126 +262,6 @@ void Foam::danckwertsFvPatchScalarField::updateCoeffs()
   
   mixedFvPatchScalarField::updateCoeffs();
 }
-
-
-void Foam::danckwertsFvPatchScalarField::evaluate(const Pstream::commsTypes)
-{
-  if(debug) {
-      Info << "danckwertsFvPatchField<Type>::evaluate" << endl;
-  }
-  
-  if (!this->updated()) this->updateCoeffs();
-
-  scalarField iF = this->patchInternalField();
-
-  scalarField aux =
-          
-    this->valueFraction()*this->refValue()
-    +
-    (1.0 - this->valueFraction())*
-    (
-      iF
-      +
-      this->refGrad()/this->patch().deltaCoeffs()
-    );
-           
-  
-  //Info<<nl<< "this->patchInternalField()  "<<this->patchInternalField()<<nl<<endl;
-  //Info<<nl<< "*this  "<<*this<<nl<<endl;
-
-  scalarField::operator=
-  (
-    aux
-  );
-  
-  //Info<<nl<< "!!!!!AAAAA this->patchInternalField()  "<<this->patchInternalField()<<nl<<endl;
-  //Info<<nl<< "!!!!!AAAAA *this  "<<*this<<nl<<endl;
-
-  fvPatchScalarField::evaluate();
-}
-
-
-
-
-Foam::tmp<Foam::Field<Foam::scalar> > 
-Foam::danckwertsFvPatchScalarField::snGrad() const
-{
-  if(debug) {
-      Info << "danckwerts::snGrad()" << endl;
-  }
-    return
-        this->valueFraction()
-       *(this->refValue() - this->patchInternalField())
-       *this->patch().deltaCoeffs()
-      + (1.0 - this->valueFraction())*this->refGrad();
-}
-
-Foam::tmp<Foam::Field<Foam::scalar> > 
-Foam::danckwertsFvPatchScalarField::valueInternalCoeffs
-(
-    const tmp<scalarField>&
-) const
-{
-  if(debug) {
-      Info << "danckwerts::valueInternalCoeffs" << endl;
-  }
-  
-    return scalar(pTraits<scalar>::one)*(1.0 - this->valueFraction());
-}
-
-Foam::tmp<Foam::Field<Foam::scalar> > 
-Foam::danckwertsFvPatchScalarField::valueBoundaryCoeffs
-(
-    const tmp<scalarField>&
-) const
-{
-  if(debug) {
-      Info << "danckwerts::valueBoundaryCoeffs" << endl;
-  }
-    return
-         this->valueFraction() * this->refValue()
-       + 
-         (1.0 - this->valueFraction())
-            *
-         this->refGrad()/this->patch().deltaCoeffs();
-}
-
-Foam::tmp<Foam::Field<Foam::scalar> > 
-Foam::danckwertsFvPatchScalarField::gradientInternalCoeffs() const
-{
-  if(debug) {
-      Info << "danckwerts::gradientInternalCoeffs()" << endl;
-  }
-    return 
-          - scalar(pTraits<scalar>::one)
-            *
-            this->valueFraction()
-            *
-            this->patch().deltaCoeffs();
-}
-
-Foam::tmp<Foam::Field<Foam::scalar> > 
-Foam::danckwertsFvPatchScalarField::gradientBoundaryCoeffs() const
-{
-  if(debug) {
-      Info << "danckwerts::gradientBoundaryCoeffs()" << endl;
-  }
-    return
-        this->valueFraction() * this->patch().deltaCoeffs() * this->refValue()
-      + (1.0 - this->valueFraction()) * this->refGrad();
-}
-
-
-
-
-
-void Foam::danckwertsFvPatchScalarField::write(Ostream& os) const
-{
-  //fvPatchScalarField::write(os);
-  //writeEntry("value", os);
-  mixedFvPatchScalarField::write(os);
-}
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

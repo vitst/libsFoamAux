@@ -24,9 +24,6 @@ License
 Class
     Foam::danckwertsFvPatchScalarField
 
-Group
-    grpGenericBoundaryConditions
-
 Description
     This boundary condition provides danckwerts condition for scalar field
     calculated as:
@@ -35,7 +32,7 @@ Description
 
     where
     \vartable
-        F       | current field
+        F       | field
         u       | velocity field
         D       | diffusion coefficient
         n       | normals
@@ -63,6 +60,9 @@ SeeAlso
 
 SourceFiles
     danckwertsFvPatchScalarField.C
+
+Contributors/Copyright:
+    Vitaliy Starchenko (2015) <vitaliy.starchenko@gmail.com>
 
 \*---------------------------------------------------------------------------*/
 
@@ -156,41 +156,8 @@ public:
         }
 
     // Member functions
-        // Evaluation functions
-        virtual void evaluate( const Pstream::commsTypes commsType=Pstream::blocking );
-
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
-        
-        
-            //- Return gradient at boundary
-            virtual tmp<Field<scalar> > snGrad() const;
-
-            //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
-            virtual tmp<Field<scalar> > valueInternalCoeffs
-            (
-                const tmp<scalarField>&
-            ) const;
-
-            //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
-            virtual tmp<Field<scalar> > valueBoundaryCoeffs
-            (
-                const tmp<scalarField>&
-            ) const;
-
-            //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
-            virtual tmp<Field<scalar> > gradientInternalCoeffs() const;
-
-            //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
-            virtual tmp<Field<scalar> > gradientBoundaryCoeffs() const;
-        
-
-        //- Write
-        virtual void write(Ostream&) const;
 };
 
 

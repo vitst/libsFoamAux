@@ -26,24 +26,21 @@ License
 
 #include "nonLinearFvPatchScalarField.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
+Foam::nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchScalarField(p, iF),
-    l_T(1.0),
-    Cth(1.0),
-    n1(1.0),
-    n2(1.0)
+  mixedFvPatchScalarField(p, iF),
+  l_T(1.0),
+  Cth(1.0),
+  n1(1.0),
+  n2(1.0)
 {
   if(debug) {
       Info << "nonLinearFvPatchScalarField::nonLinearFvPatchScalarField 1" << endl;
@@ -54,7 +51,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
   this->valueFraction() = 1;
 }
 
-nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
+Foam::nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
 (
     const nonLinearFvPatchScalarField& ptf,
     const fvPatch& p,
@@ -73,7 +70,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
     }
 }
 
-nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
+Foam::nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -95,7 +92,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
         "nonLinearFvPatchScalarField::nonLinearFvPatchScalarField"
         "("
         "const fvPatch& p,"
-        "const DimensionedField<Type, volMesh>& iF,"
+        "const DimensionedField<scalar, volMesh>& iF,"
         "const dictionary& dict"
         ")"
     ) << "No value defined for Cth"
@@ -127,7 +124,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
         "nonLinearFvPatchScalarField::nonLinearFvPatchScalarField"
         "("
         "const fvPatch& p,"
-        "const DimensionedField<Type, volMesh>& iF,"
+        "const DimensionedField<scalar, volMesh>& iF,"
         "const dictionary& dict"
         ")"
     ) << "No value defined for n2"
@@ -153,10 +150,10 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
   {
     fvPatchField<scalar>::operator=(this->refValue());
     WarningIn(
-        "nonLinearFvPatchScalarField<Type>::nonLinearFvPatchScalarField"
+        "nonLinearFvPatchScalarField::nonLinearFvPatchScalarField"
         "("
         "const fvPatch& p,"
-        "const DimensionedField<Type, volMesh>& iF,"
+        "const DimensionedField<scalar, volMesh>& iF,"
         "const dictionary& dict"
         ")"
     ) << "No value defined for " << this->dimensionedInternalField().name()
@@ -179,7 +176,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
   }
   
   if(debug) {
-      Info << "nonLinearFvPatchScalarField<Type>::nonLinearFvPatchScalarField 2  "
+      Info << "nonLinearFvPatchScalarField::nonLinearFvPatchScalarField 3  "
               "refValue set" << endl;
   }
   
@@ -200,6 +197,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
     this->mixedFvPatchScalarField::updateCoeffs();
   }
 
+  /*
   Field<scalar>::operator=
                 (
                   this->valueFraction()*this->refValue()
@@ -210,12 +208,21 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
                     + this->refGrad()/this->patch().deltaCoeffs()
                   )
                 );
+  Field<scalar> iF111 = this->patchInternalField();
+  
+  Info<< this->valueFraction()[0] << "  "
+          << this->refValue()[0] << "  "
+          << iF111[0] << "  "
+          << this->refGrad()[0] << "  "
+          << this->patch().deltaCoeffs()[0] << "  "
+          << nl << nl;
+  */
   
   fvPatchField<scalar>::evaluate();
 }
 
 
-nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
+Foam::nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
 (
     const nonLinearFvPatchScalarField& ptf
 )
@@ -232,7 +239,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
 }
 
 
-nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
+Foam::nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
 (
     const nonLinearFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
@@ -251,7 +258,7 @@ nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-void nonLinearFvPatchScalarField::updateCoeffs()
+void Foam::nonLinearFvPatchScalarField::updateCoeffs()
 {
   if(debug) {
       Info << "nonLinearFvPatchScalarField<Type>::updateCoeffs" << endl;
@@ -328,7 +335,7 @@ void nonLinearFvPatchScalarField::updateCoeffs()
   mixedFvPatchScalarField::updateCoeffs();
 }
 
-void nonLinearFvPatchScalarField::write(Ostream& os) const
+void Foam::nonLinearFvPatchScalarField::write(Ostream& os) const
 {
   if(debug) {
     Info << "nonLinearFvPatchScalarField<Type>::write" << endl;
@@ -340,7 +347,11 @@ void nonLinearFvPatchScalarField::write(Ostream& os) const
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
-
-// ************************************************************************* //
+namespace Foam
+{
+  makePatchTypeField
+  (
+    fvPatchScalarField,
+    nonLinearFvPatchScalarField
+  );
+}

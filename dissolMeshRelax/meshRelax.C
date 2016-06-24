@@ -70,8 +70,8 @@ meshRelax::meshRelax(dynamicFvMesh& mesh, const argList& args)
 
   // in case 0 time does not exist
   if( timeTmp.timeName()!="0" ){
-    SeriousErrorIn("fieldOperations::getInletFlowRateT0")
-            <<"There is no 0 time directory. Check your decomposition as well!"
+    SeriousErrorIn("meshRelax")
+            <<"There is no 0 time directory!"
             <<exit(FatalError);
   }
   

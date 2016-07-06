@@ -1,7 +1,8 @@
 #!/bin/bash
 
 for d in */ ; do
+  [[ $d == "coupledPatchInterpolation/" ]] && continue
   echo ""
-  echo "Enter directory $d"
+  echo "Directory $d"
   wmake libso $d
 done

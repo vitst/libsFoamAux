@@ -77,6 +77,21 @@ protected:
 
     	int iter_counter;
 
+        template<class Type>
+        void maxTypeResidual
+        (
+            const word& fieldName,
+            ITstream& data,
+            scalar& firstRes,
+            scalar& lastRes
+        ) const;
+
+        scalar maxResidual
+        (
+            const word& fieldName,
+            ITstream& data,
+            scalar& lastRes
+        ) const;
 
 public:
 

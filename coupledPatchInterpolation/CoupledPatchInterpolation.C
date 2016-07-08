@@ -218,11 +218,12 @@ tmp<Field<Type> > CoupledPatchInterpolation<Patch>::faceToPointInterpolate
     (
         new Field<Type>
         (
-            patch_.nPoints(), pTraits<Type>::zero
+//            patch_.nPoints(), pTraits<Type>::zero
+            patch_.nPoints(), Zero
         )
     );
 
-    Field<Type>& result = tresult();
+    Field<Type>& result = tresult.ref();
 
     List<Type> pointValue;
     pointValue.setSize( patch_.nPoints() );

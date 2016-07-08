@@ -196,14 +196,20 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   wiEdgeRlx /= deltaT;
   woEdgeRlx /= deltaT;
   wallRelax /= deltaT;
+
+  //vectorField& pointVelocityWall = const_cast<vectorField&>(
+	//	pointVelocity.boundaryFieldRef()[wallID]
+  //);
+
   
-  pointVelocity.boundaryField()[wallID] == wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
+  pointVelocity.boundaryFieldRef()[wallID] == wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
+  //pointVelocityWall = wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
 
   inlRelax /= deltaT;
-  pointVelocity.boundaryField()[inletID] == inlRelax + pointDispInlet;
+  pointVelocity.boundaryFieldRef()[inletID] == inlRelax + pointDispInlet;
 
   outRelax /= deltaT;
-  pointVelocity.boundaryField()[outletID] == outRelax + pointDispOutlet;
+  pointVelocity.boundaryFieldRef()[outletID] == outRelax + pointDispOutlet;
   
   Info << "Final mesh update" << nl << endl;
   

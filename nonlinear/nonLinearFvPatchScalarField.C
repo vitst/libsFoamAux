@@ -156,7 +156,7 @@ Foam::nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
         "const DimensionedField<scalar, volMesh>& iF,"
         "const dictionary& dict"
         ")"
-    ) << "No value defined for " << this->dimensionedInternalField().name()
+    ) << "No value defined for " << this->internalField().name()
         << " on " << this->patch().name() << " therefore using "
         << this->refValue()
         << endl;

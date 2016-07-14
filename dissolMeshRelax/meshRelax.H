@@ -119,10 +119,11 @@ private:
   // it fixes inlet boundary condition inconsistency
   labelListList inletTriple;
   
-  vectorFieldList fixedWallWeights;
   vectorFieldList wallWeights;
   scalarFieldList inletWallEdgeWeights;
   scalarFieldList outletWallEdgeWeights;
+  
+  label fixedInletEdgePoint;
   
   ///////////////////////////////////////////////////////////////////////////
   // private functions
@@ -173,7 +174,12 @@ private:
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
   template<class Patch>
-  vectorField edgeRelaxation(Patch& patchIO_, const scalarFieldList& wv)
+  vectorField edgeRelaxation
+  (
+    Patch& patchIO_,
+    const scalarFieldList& wv,
+    const pointField& saveWallPoints
+  )
   {
     Patch& wall_patch = mesh_.boundaryMesh()[wallID];
     const List<face>& llf = wall_patch.localFaces();
@@ -199,6 +205,62 @@ private:
     int itt = 0;
     vectorField pointNorm( NN, vector::zero );
     scalarList faceToPointSumWeights( NN, 0.0 );
+    
+    
+    // *************************************************************************
+    // calculate old points normals once
+    vectorField savePointNorm( NN, vector::zero );
+    
+    {
+      pointField faceCs = faceCentres(saveWallPoints, llf);
+      vectorField faceNs = faceNormals(saveWallPoints, llf);
+      
+      scalarList sumWeights( NN, 0.0 );
+      
+      forAll(nepe, i){
+        label  curI = local_wall_WallEdges[i];
+        const point& curP = saveWallPoints[curI];
+        const labelList& pNeib = nepe[i];
+        
+        const labelList& pFaces = plistFaces[curI];
+        forAll(pFaces, j){
+          label ind = pNeib[j];
+          const point& neibP = saveWallPoints[ind];
+          vector d2 = neibP - curP;     // vector from the current point to its neighbor
+
+          label faceI = pFaces[j]; 
+          vector fnn = faceNs[ faceI ]; // face normal
+          fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
+
+          // correction of the normal, otherwise realN = fnn
+          scalar middi = mag(d2)/2.0;   // half distance to neighbor
+          point midpo = curP + d2/2.0;  // midpoint
+          plane pll(midpo, d2);           // plane perpendicular to the edge via midpoint
+          point endNorm = midpo + fnn;  // end of the face normal projected on the inlet
+          point projp = pll.nearestPoint(endNorm); // projection of endNorm onto pll plane
+
+          vector realN = projp - midpo; // normal to the edge between current point
+                                        // and its neighbor in the inlet plane facing
+                                        // outside the fracture (mag(realN)!=1 !!!)
+
+          scalar nw = 1.0 / middi;
+          savePointNorm[i] += nw * realN;
+          savePointNorm[i].z()=0;
+          faceToPointSumWeights[i] += nw;
+        }
+      }
+      
+      syncTools::syncPointList(mesh_, global_WallEdges, sumWeights, plusEqOp<scalar>(), 0.0);
+      syncTools::syncPointList(mesh_, global_WallEdges, savePointNorm, plusEqOp<vector>(), vector::zero);
+      syncTools::syncPointList(mesh_, global_WallEdges, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
+      // normalization
+      forAll(savePointNorm, i){
+        savePointNorm[i] /= mag( savePointNorm[i] );
+      }
+    }
+    
+    // *************************************************************************
+    
     while(displ_tol>rlxTol)
     {
       if(itt%q_edge_norm_recalc==0){
@@ -273,14 +335,20 @@ private:
       syncTools::syncPointList(mesh_, global_WallEdges, tol, plusEqOp<scalar>(), 0.0);
       syncTools::syncPointList(mesh_, global_WallEdges, sumWeights, plusEqOp<scalar>(), 0.0);
       
+      forAll(pointNorm, i){
+        displacement[i] /= sumWeights[i];
+      }
+      
       if(itt%q_edge_norm_recalc==0){
         syncTools::syncPointList(mesh_, global_WallEdges, pointNorm, plusEqOp<vector>(), vector::zero);
         syncTools::syncPointList(mesh_, global_WallEdges, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
         // normalization
         forAll(pointNorm, i){
-          displacement[i] /= sumWeights[i];
           pointNorm[i] /= mag( pointNorm[i] );
         }
+        
+        scalarField aa = savePointNorm & pointNorm;
+        
       }
 
       vectorField projectedDisplacement = transform(I - pointNorm*pointNorm, displacement);

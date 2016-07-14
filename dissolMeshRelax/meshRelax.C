@@ -122,6 +122,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   
 //  Mesh update 2: boundary mesh relaxation
   pointField savedPointsAll = mesh_.points();
+  const pointField saveWallPoints = mesh_.boundaryMesh()[wallID].localPoints();
   
   constrainCyclic(pointDispWall); // keeps points on the cyclic boundary
   
@@ -152,12 +153,16 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
 
 // Relaxing edges. 1D
   Info << "Relaxing inlet-wall edge..." << endl;
-  vectorField wiEdgeRlx = edgeRelaxation( mesh_.boundaryMesh()[inletID], inletWallEdgeWeights);
+  vectorField wiEdgeRlx = edgeRelaxation( mesh_.boundaryMesh()[inletID],
+          inletWallEdgeWeights, saveWallPoints);
+  
   pointField mpWIE = doWallDisplacement( wiEdgeRlx );
   mesh_.movePoints( mpWIE );
 
   Info << "Relaxing outlet-wall edge..." << endl;
-  vectorField woEdgeRlx = edgeRelaxation( mesh_.boundaryMesh()[outletID], outletWallEdgeWeights);
+  vectorField woEdgeRlx = edgeRelaxation( mesh_.boundaryMesh()[outletID], 
+          outletWallEdgeWeights, saveWallPoints);
+  
   pointField mpWOE = doWallDisplacement( woEdgeRlx );
   mesh_.movePoints( mpWOE );
   Info << "Edge relaxation cpuTime: "
@@ -196,14 +201,7 @@ void meshRelax::meshUpdate(vectorField& pointDispWall, Time& time)
   wiEdgeRlx /= deltaT;
   woEdgeRlx /= deltaT;
   wallRelax /= deltaT;
-
-  //vectorField& pointVelocityWall = const_cast<vectorField&>(
-	//	pointVelocity.boundaryFieldRef()[wallID]
-  //);
-
-  
   pointVelocity.boundaryFieldRef()[wallID] == wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
-  //pointVelocityWall = wallRelax + pointDispWall + wiEdgeRlx + woEdgeRlx;
 
   inlRelax /= deltaT;
   pointVelocity.boundaryFieldRef()[inletID] == inlRelax + pointDispInlet;
@@ -327,22 +325,34 @@ void meshRelax::constrainCyclic(vectorField& wallDispl)
   // @TODO move out of the loop
   const label& cycID1 = mesh_.boundaryMesh().findPatchID("periodicx1");
   const label& cycID2 = mesh_.boundaryMesh().findPatchID("periodicx2");
-  labelList local_wall_WallsCycEdgesInternal1, local_wall_WallsCycEdgesInternal2;
-  labelList global_WallsCycEdgesInternal1, global_WallsCycEdgesInternal2;
-  if(cycID1!=-1 && cycID2!=-1){
+  if(cycID1!=-1 && cycID2!=-1)
+  {
+    labelList local_wall_WallsCycEdgesInternal1, local_wall_WallsCycEdgesInternal2;
+    labelList global_WallsCycEdgesInternal1, global_WallsCycEdgesInternal2;
+    
     const labelList& cycMeshPoints1 = mesh_.boundaryMesh()[cycID1].meshPoints();
     const labelList& cycMeshPoints2 = mesh_.boundaryMesh()[cycID2].meshPoints();
     commonPoints(meshPoints, cycMeshPoints1, local_wall_WallsCycEdgesInternal1, global_WallsCycEdgesInternal1);
     commonPoints(meshPoints, cycMeshPoints2, local_wall_WallsCycEdgesInternal2, global_WallsCycEdgesInternal2);
-  }
   
-  forAll(local_wall_WallsCycEdgesInternal1, i){
-    label ind = local_wall_WallsCycEdgesInternal1[i];
-    wallDispl[ind].x() = 0.0;
+    forAll(local_wall_WallsCycEdgesInternal1, i){
+      label ind = local_wall_WallsCycEdgesInternal1[i];
+      wallDispl[ind].x() = 0.0;
+    }
+    forAll(local_wall_WallsCycEdgesInternal2, i){
+      label ind = local_wall_WallsCycEdgesInternal2[i];
+      wallDispl[ind].x() = 0.0;
+    }
+    fixedInletEdgePoint = -1;
   }
-  forAll(local_wall_WallsCycEdgesInternal2, i){
-    label ind = local_wall_WallsCycEdgesInternal2[i];
-    wallDispl[ind].x() = 0.0;
+  else
+  {
+    //Patch& wall_patch = mesh_.boundaryMesh()[wallID];
+    //const List<face>& llf = wall_patch.localFaces();
+    //const labelListList& plistFaces = wall_patch.pointFaces();
+
+    //pointField boundaryPoints = wall_patch.localPoints();
+    
   }
 }
 

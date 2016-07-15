@@ -60,7 +60,7 @@ public:
   // Constructors
   meshRelax(dynamicFvMesh&, const argList&);
 
-  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // public functions
   
   // update a dynamic mesh according to the vector field for wall points
@@ -128,19 +128,39 @@ private:
   ///////////////////////////////////////////////////////////////////////////
   // private functions
   ///////////////////////////////////////////////////////////////////////////
-  vector extrapolateVectorLinear(const pointField&, vector&, vector&, const labelList&);
-  scalar extrapolateConcentrationExpZ(const pointField&, scalar&, scalar&, const labelList&);
+  vector extrapolateVectorLinear
+  (
+    const pointField&,
+    vector&,
+    vector&,
+    const labelList&
+  );
+  scalar extrapolateConcentrationExpZ
+  (
+    const pointField&,
+    scalar&,
+    scalar&,
+    const labelList&
+  );
 
-  pointField faceCentres(const pointField& points, const List<face>& flist) const;
-  vectorField faceNormals(const pointField& points, const List<face>& flist) const;
+  pointField faceCentres
+  (
+    const pointField& points,
+    const List<face>& flist
+  ) const;
+  vectorField faceNormals
+  (
+    const pointField& points, 
+    const List<face>& flist
+  ) const;
 
-  vectorField localFaceToPointNormalInterpolate(
-          const pointField& points,
-          const pointField& faceCs,
-          const vectorField& faceNs,
-          const labelListList& pointFaces,
-          const labelList& meshPoints
-
+  vectorField localFaceToPointNormalInterpolate
+  (
+    const pointField& points,
+    const pointField& faceCs,
+    const vectorField& faceNs,
+    const labelListList& pointFaces,
+    const labelList& meshPoints
   ) const;
   
   void fixIWEdgeDispl( vectorField& );
@@ -157,13 +177,24 @@ private:
   
   vectorField normalsOnTheEdge();
   
-  // common points on label lists, result is two lists of local (for list1) and global labels
-  void commonPoints(const labelList& list1, const labelList& list2, 
-                    labelList& localList, labelList& globalList);
+  // common points on label lists, result is two lists of local (for list1)
+  // and global labels
+  void commonPoints
+  (
+    const labelList& list1,
+    const labelList& list2, 
+    labelList& localList, 
+    labelList& globalList
+  );
 
-  void neighborListEdge(const labelList& list, const edgeList& eList, 
-                        const labelListList& pointEdgesLi, labelListList& neLi);
-  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  void neighborListEdge
+  (
+    const labelList& list,
+    const edgeList& eList, 
+    const labelListList& pointEdgesLi,
+    labelListList& neLi
+  );
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   // set up pairs for concentration extrapollation on the edge
   void setUpPairsConc();
@@ -171,7 +202,7 @@ private:
   // setup lists needed for mesh relaxation
   void setUpLists();
 
-  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
   template<class Patch>
   vectorField edgeRelaxation
@@ -226,7 +257,8 @@ private:
         forAll(pFaces, j){
           label ind = pNeib[j];
           const point& neibP = saveWallPoints[ind];
-          vector d2 = neibP - curP;     // vector from the current point to its neighbor
+          vector d2 = neibP - curP;     // vector from the current point 
+                                        // to its neighbor
 
           label faceI = pFaces[j]; 
           vector fnn = faceNs[ faceI ]; // face normal

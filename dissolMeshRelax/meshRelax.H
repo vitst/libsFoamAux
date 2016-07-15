@@ -259,6 +259,57 @@ private:
       }
     }
     
+    vectorField savePointNorm1( NN, vector::zero );
+    {
+      pointField faceCs = faceCentres(boundaryPoints, llf);
+      vectorField faceNs = faceNormals(boundaryPoints, llf);
+      
+      scalarList sumWeights( NN, 0.0 );
+      
+      forAll(nepe, i){
+        label  curI = local_wall_WallEdges[i];
+        const point& curP = boundaryPoints[curI];
+        const labelList& pNeib = nepe[i];
+        
+        const labelList& pFaces = plistFaces[curI];
+        forAll(pFaces, j){
+          label ind = pNeib[j];
+          const point& neibP = boundaryPoints[ind];
+          vector d2 = neibP - curP;     // vector from the current point to its neighbor
+
+          label faceI = pFaces[j]; 
+          vector fnn = faceNs[ faceI ]; // face normal
+          fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
+
+          // correction of the normal, otherwise realN = fnn
+          scalar middi = mag(d2)/2.0;   // half distance to neighbor
+          point midpo = curP + d2/2.0;  // midpoint
+          plane pll(midpo, d2);           // plane perpendicular to the edge via midpoint
+          point endNorm = midpo + fnn;  // end of the face normal projected on the inlet
+          point projp = pll.nearestPoint(endNorm); // projection of endNorm onto pll plane
+
+          vector realN = projp - midpo; // normal to the edge between current point
+                                        // and its neighbor in the inlet plane facing
+                                        // outside the fracture (mag(realN)!=1 !!!)
+
+          scalar nw = 1.0 / middi;
+          savePointNorm1[i] += nw * realN;
+          savePointNorm1[i].z()=0;
+          faceToPointSumWeights[i] += nw;
+        }
+      }
+      
+      syncTools::syncPointList(mesh_, global_WallEdges, sumWeights, plusEqOp<scalar>(), 0.0);
+      syncTools::syncPointList(mesh_, global_WallEdges, savePointNorm1, plusEqOp<vector>(), vector::zero);
+      syncTools::syncPointList(mesh_, global_WallEdges, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
+      // normalization
+      forAll(savePointNorm, i){
+        savePointNorm1[i] /= mag( savePointNorm1[i] );
+      }
+    }
+    scalarField aa = mag(savePointNorm ^ savePointNorm1);
+    label mm = findMin(aa);
+    fixedInletEdgePoint = mm;
     // *************************************************************************
     
     while(displ_tol>rlxTol)
@@ -346,11 +397,11 @@ private:
         forAll(pointNorm, i){
           pointNorm[i] /= mag( pointNorm[i] );
         }
-        
-        scalarField aa = savePointNorm & pointNorm;
-        
       }
 
+      if(fixedInletEdgePoint>=0)
+        displacement[fixedInletEdgePoint] = vector::zero;
+      
       vectorField projectedDisplacement = transform(I - pointNorm*pointNorm, displacement);
       
       scalar factor = (itt%q_2edge==0) ? k_2edge : k_1edge;

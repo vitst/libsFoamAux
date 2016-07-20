@@ -335,7 +335,7 @@ private:
       syncTools::syncPointList(mesh_, global_WallEdges, savePointNorm1, plusEqOp<vector>(), vector::zero);
       syncTools::syncPointList(mesh_, global_WallEdges, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
       // normalization
-      forAll(savePointNorm, i){
+      forAll(savePointNorm1, i){
         savePointNorm1[i] /= mag( savePointNorm1[i] );
       }
     }

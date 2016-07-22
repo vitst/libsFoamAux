@@ -747,18 +747,23 @@ relaxPatchMesh(vectorField& pointMotion)
 
   double displ_tol = 1.0;
   int itt = 0;
+  
+  // TODO global parameters
   double rlxTol = 0.000001;
-
+  int q_norm_recalc = 1;
+  double k_1 = 1.0, k_2 = 2.0;
+  int q_2 = 5;
+  
   vectorField pointNorm( N, vector::zero );
   scalarList faceToPointSumWeights( N, 0.0 );
   while(displ_tol>rlxTol)
   {
 
-    //if(itt%q_norm_recalc==0){
+    if(itt%q_norm_recalc==0){
       // set fields to zero
       pointNorm = vector::zero;
       faceToPointSumWeights = 0.0;
-    //}
+    }
       
     // calculate current face centers
     pointField faceCs = faceCentres(newPointsPos, llf);
@@ -792,11 +797,11 @@ relaxPatchMesh(vectorField& pointMotion)
         tol[i] += mag_d * mag(pw[j]);
 
         // this is for normal
-        //if(itt%q_norm_recalc==0){
+        if(itt%q_norm_recalc==0){
           scalar nw = 1.0 / mag_d;
           pointNorm[i] += nw * faceNs[ faceI ];
           faceToPointSumWeights[i] += nw;
-        //}
+        }
       }
 
       // TODO stick to cyclic boundary
@@ -806,7 +811,7 @@ relaxPatchMesh(vectorField& pointMotion)
     syncTools::syncPointList(mesh, meshPoints, displacement, plusEqOp<vector>(), vector::zero);
     syncTools::syncPointList(mesh, meshPoints, tol, plusEqOp<scalar>(), 0.0);
 
-    //if(itt%q_norm_recalc==0){
+    if(itt%q_norm_recalc==0){
       syncTools::syncPointList(mesh, meshPoints, pointNorm, plusEqOp<vector>(), vector::zero);
       syncTools::syncPointList(mesh, meshPoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
 
@@ -816,19 +821,9 @@ relaxPatchMesh(vectorField& pointMotion)
         pointNorm[pointi] /= faceToPointSumWeights[pointi];
         pointNorm[pointi] /= mag(pointNorm[pointi]);
       }
-    //}
+    }
 
     // apply edge boundary for relxation (edges between patches are fixed)
-    /*
-    forAll(local_wall_WallsInletEdgesInternal, i){
-      label ind = local_wall_WallsInletEdgesInternal[i];
-      displacement[ind] = vector::zero;
-    }
-    forAll(local_wall_WallsOutletEdgesInternal, i){
-      label ind = local_wall_WallsOutletEdgesInternal[i];
-      displacement[ind] = vector::zero;
-    }
-    */
     forAll(fixedPoints, i)
     {
       label pointI = fixedPoints[i];
@@ -836,26 +831,12 @@ relaxPatchMesh(vectorField& pointMotion)
     }
     
     
-    
-    
-    
-    
-    
     vectorField projectedDisplacement = transform(I - pointNorm*pointNorm, displacement);
 
     // TODO stick to cyclic boundary
-    //Pout << " pinnedPoints size: " << pinnedPoints.size()
-    //        <<"   itt "<< itt
-    //        <<endl;
-    
     forAll(pinnedPoints, ii)
     {
       label ind = pinnedPoints[ii];
-      
-      //Pout << ind << " pp: " << newPointsPos[ind]
-      //        <<"   n: "<< pinnedPointsNorm[ii]
-      //        <<endl;
-      
       projectedDisplacement[ind] = 
               transform
               (
@@ -863,11 +844,8 @@ relaxPatchMesh(vectorField& pointMotion)
                 projectedDisplacement[ind]
               );
     }
-    //std::exit(0);
     
-
-    //scalar factor = (itt%q_2==0) ? k_2 : k_1;
-    scalar factor = 1.0;
+    scalar factor = (itt%q_2==0) ? k_2 : k_1;
 
     vectorField finalDisplacement = factor * projectedDisplacement;
 
@@ -883,89 +861,10 @@ relaxPatchMesh(vectorField& pointMotion)
 
     itt++;
   }
-  Info << this->patch().name() << "  converged in " << itt 
+  Info << this->patch().name() << "  rlx converged in " << itt 
        << " iterations. Tolerance: " << displ_tol<< endl;
 
   pointMotion = (newPointsPos - this->patch().localPoints());
-  
-  
-  //scalarField cc(dd.size(), 1.0);
-  //syncTools::syncPointList(mesh_, meshPoints, dd, plusEqOp<vector>(), vector::zero);
-  //syncTools::syncPointList(mesh_, meshPoints, cc, plusEqOp<scalar>(), 0.0);
-
-  //forAll(dd, i){
-  //  dd[i] /= cc[i];
-  //}
-
-  
-  /*
-  
-  const vectorField& nHat = this->patch().pointNormals();
-  //vectorField pif = this->patchInternalField() + pointMotion;
-  vectorField pif = pointMotion;
-
-  const pointField ppp = this->patch().localPoints() + pointMotion;
-  label patchID = this->patch().index();
-  const polyMesh& mesh = this->internalField().mesh()();
-  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
-  const polyPatch& pp = refCast<const polyPatch>(bMesh[patchID]);
-  const List<face>& flist = pp.localFaces();
-  const labelListList& plistFaces = pp.pointFaces();
-  const labelList& meshPoints = mesh.boundaryMesh()[patchID].meshPoints();
-
-  vectorField faceNs = faceNormals(ppp, flist);
-  pointField faceCs = faceCentres(ppp, flist);
-  vectorField pointNorm( ppp.size(), vector::zero );
-  scalarList faceToPointSumWeights( ppp.size(), 0.0 );
-
-  forAll(ppp, i)
-  {
-    const point& curP = ppp[i];
-    const labelList& pFaces = plistFaces[i];
-  
-    forAll(pFaces, j)
-    {
-      label faceI = pFaces[j];
-      point& faceC = faceCs[faceI];
-
-      vector d = faceC - curP;
-
-      scalar mag_d = mag(d);
-
-      scalar nw = 1.0 / mag_d;
-      pointNorm[i] += nw * faceNs[ faceI ];
-      faceToPointSumWeights[i] += nw;
-    }
-  }
-  
-  syncTools::syncPointList(mesh, meshPoints, pointNorm, plusEqOp<vector>(), vector::zero);
-  syncTools::syncPointList(mesh, meshPoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
-  
-  forAll(pointNorm, pointi){
-    pointNorm[pointi] /= faceToPointSumWeights[pointi];
-    pointNorm[pointi] /= mag(pointNorm[pointi]);
-  }
-  
-  
-  tmp<vectorField> tvalues =
-  (
-    (
-      pif
-      + 
-      transform(I - 2.0*(nHat*nHat), pif )
-    )/2.0
-  );
-
-  // Get internal field to insert values into
-  //vectorField& iF = const_cast<vectorField&>(this->primitiveField());
-  //this->setInInternalField(iF, tvalues());
-  pointMotion = tvalues; // - this->patchInternalField();
-  
-  //forAll(pointMotion, ii){
-  //  Info<< pif[ii]<<"   "<<pointMotion[ii]<<nl;
-  //}
-  //std::exit(0);
-   */
 }
 
 

@@ -63,7 +63,11 @@ dissolMotionPointPatchVectorField
 )
 :
     fixedValuePointPatchField<vector>(p, iF)
-{}
+{
+  if(debug) {
+    Info << "dissolMotionPointPatchVectorField constructor 0"<<endl;
+  }
+}
 
 
 Foam::
@@ -79,7 +83,11 @@ dissolMotionPointPatchVectorField
     fixedValuePointPatchField<vector>(ptf, p, iF, mapper)
     //timeSeries_(ptf.timeSeries_)
 {
-    //this->operator==(timeSeries_(this->db().time().timeOutputValue()));
+  if(debug) {
+    Info << "dissolMotionPointPatchVectorField constructor 1"<<endl;
+  }
+  
+  //this->operator==(timeSeries_(this->db().time().timeOutputValue()));
 }
 
 
@@ -95,7 +103,29 @@ dissolMotionPointPatchVectorField
     fixedValuePointPatchField<vector>(p, iF)
     //timeSeries_(dict)
 {
-    //this->operator==(timeSeries_(this->db().time().timeOutputValue()));
+  if(debug) {
+    Info << "dissolMotionPointPatchVectorField constructor 2"<<endl;
+  }
+  if (dict.found("value"))
+  {
+    this->operator==
+    (
+      vectorField("value", dict, p.size())
+    );
+  }
+  else
+  {
+    WarningIn(
+        "dissolMotionPointPatchVectorField constructor 2"
+        "("
+        "const pointPatch& p,"
+        "const DimensionedField<vector, pointMesh>& iF,"
+        "const dictionary& dict"
+        ")"
+    ) << "No value defined for " << this->internalField().name()
+        << " on " << this->patch().name()
+        << endl;
+  }  
 }
 
 
@@ -108,7 +138,11 @@ dissolMotionPointPatchVectorField
 :
     fixedValuePointPatchField<vector>(ptf)
     //timeSeries_(ptf.timeSeries_)
-{}
+{
+  if(debug) {
+    Info << "dissolMotionPointPatchVectorField constructor 3"<<endl;
+  }
+}
 
 
 Foam::
@@ -121,13 +155,21 @@ dissolMotionPointPatchVectorField
 :
     fixedValuePointPatchField<vector>(ptf, iF)
     //timeSeries_(ptf.timeSeries_)
-{}
+{
+  if(debug) {
+    Info << "dissolMotionPointPatchVectorField constructor 4"<<endl;
+  }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 {
+  if(debug) {
+    Info << "dissolMotionPointPatchVectorField::updateCoeffs()"<<endl;
+  }
+  
   if (this->updated())
   {
     return;
@@ -142,10 +184,13 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
   
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // TODO here is the rest of relaxation should be implemented
+  Info<<"fixCommonNeighborPatchPoints"<<nl;
   fixCommonNeighborPatchPoints(pointMotion);
   
+  Info<<"relaxEdges"<<nl;
   relaxEdges(pointMotion);
   
+  Info<<"relaxPatchMesh"<<nl;
   relaxPatchMesh(pointMotion);
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
@@ -175,6 +220,8 @@ relaxEdges(vectorField& pointMotion)
 
   const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
   
+  
+  
   forAll(bMesh, patchi)
   {
     if ( (patchi != patchID) ) //bMesh[patchi].size() && 
@@ -203,7 +250,7 @@ relaxEdges(vectorField& pointMotion)
         const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
         const pointField& pfPP = pp.localPoints();
         const labelList& ppMeshPoints = pp.meshPoints();
-        const vectorField& ppPointNormals = pp.pointNormals();
+        //const vectorField& ppPointNormals = pp.pointNormals();  // 3
 
         labelList local_EdgePoints, global_EdgePoints;
         labelList local_pp_EdgePoints;
@@ -397,6 +444,9 @@ relaxEdges(vectorField& pointMotion)
         }
         scalarField aa = mag(currentNorms ^ movedNorms);
         label fixedInletEdgePoint = findMin(aa);
+        
+        Info<< "  fixedInletEdgePoint: " << fixedInletEdgePoint
+                <<endl;
         // *************************************************************************
         
         double rlxTol = 0.000001;
@@ -503,6 +553,8 @@ relaxEdges(vectorField& pointMotion)
           scalar factor = 1.0;
           projectedDisplacement *= factor;
 
+          if(fixedInletEdgePoint>=0)
+            displacement[fixedInletEdgePoint] = vector::zero;
           // stick to cyclic boundary
           /*
           forAll(local_wall_WallsCycEdges1, i){
@@ -531,8 +583,8 @@ relaxEdges(vectorField& pointMotion)
 
           if(itt%1000==0)
           {
-            Info << pp.name() << "  rlx iter " << itt
-                 << "  tolerance: " << displ_tol << endl;
+            Info << pp.name() << "  edge rlx iter " << itt
+                 << " tolerance: " << displ_tol << endl;
           }
 
           itt++;
@@ -642,7 +694,7 @@ relaxPatchMesh(vectorField& pointMotion)
         const polyPatch& cpp = refCast<const polyPatch>(bMesh[patchi]);
         // TODO
         const labelList& ppMeshPoints = cpp.meshPoints();
-        const vectorField& ppPointNormals = cpp.pointNormals();
+        const vectorField& ppPointNormals = cpp.pointNormals(); //1
 
         labelList local_EdgePoints, global_EdgePoints;
         labelList local_pp_EdgePoints;
@@ -657,10 +709,10 @@ relaxPatchMesh(vectorField& pointMotion)
         );
         
         pinnedPoints.append(local_EdgePoints);
-        vectorField locNormals(local_EdgePoints.size());
+        vectorField locNormals(local_EdgePoints.size(), vector::zero);
         forAll(local_EdgePoints, i)
         {
-          locNormals[i] = ppPointNormals[ local_EdgePoints[i] ];
+          locNormals[i] = ppPointNormals[ local_pp_EdgePoints[i] ];
         }
         pinnedPointsNorm.append(locNormals);
       }
@@ -673,7 +725,6 @@ relaxPatchMesh(vectorField& pointMotion)
         const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
         //const pointField& pfPP = pp.localPoints();
         const labelList& ppMeshPoints = pp.meshPoints();
-        //const vectorField& ppPointNormals = pp.pointNormals();
 
         labelList local_EdgePoints, global_EdgePoints;
         labelList local_pp_EdgePoints;
@@ -692,7 +743,6 @@ relaxPatchMesh(vectorField& pointMotion)
     }
   }
   
-  
   int N = newPointsPos.size();
 
   double displ_tol = 1.0;
@@ -703,11 +753,13 @@ relaxPatchMesh(vectorField& pointMotion)
   scalarList faceToPointSumWeights( N, 0.0 );
   while(displ_tol>rlxTol)
   {
+
     //if(itt%q_norm_recalc==0){
       // set fields to zero
       pointNorm = vector::zero;
       faceToPointSumWeights = 0.0;
     //}
+      
     // calculate current face centers
     pointField faceCs = faceCentres(newPointsPos, llf);
     vectorField faceNs = faceNormals(newPointsPos, llf);
@@ -749,7 +801,7 @@ relaxPatchMesh(vectorField& pointMotion)
 
       // TODO stick to cyclic boundary
     }
-
+    
     // synchronizing over the cyclic and processor boundaries
     syncTools::syncPointList(mesh, meshPoints, displacement, plusEqOp<vector>(), vector::zero);
     syncTools::syncPointList(mesh, meshPoints, tol, plusEqOp<scalar>(), 0.0);
@@ -792,9 +844,18 @@ relaxPatchMesh(vectorField& pointMotion)
     vectorField projectedDisplacement = transform(I - pointNorm*pointNorm, displacement);
 
     // TODO stick to cyclic boundary
+    //Pout << " pinnedPoints size: " << pinnedPoints.size()
+    //        <<"   itt "<< itt
+    //        <<endl;
+    
     forAll(pinnedPoints, ii)
     {
       label ind = pinnedPoints[ii];
+      
+      //Pout << ind << " pp: " << newPointsPos[ind]
+      //        <<"   n: "<< pinnedPointsNorm[ii]
+      //        <<endl;
+      
       projectedDisplacement[ind] = 
               transform
               (
@@ -802,6 +863,8 @@ relaxPatchMesh(vectorField& pointMotion)
                 projectedDisplacement[ind]
               );
     }
+    //std::exit(0);
+    
 
     //scalar factor = (itt%q_2==0) ? k_2 : k_1;
     scalar factor = 1.0;
@@ -1125,7 +1188,7 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
         const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
         const pointField& pfPP = pp.localPoints();
         const labelList& ppMeshPoints = pp.meshPoints();
-        const vectorField& ppPointNormals = pp.pointNormals();
+        const vectorField& ppPointNormals = pp.pointNormals();  // 2
 
         labelList local_EdgePoints, global_EdgePoints;
         labelList local_pp_EdgePoints;

@@ -134,12 +134,6 @@ public:
 
         // Access
 
-            //- Return the time series used
-            //const interpolationTable<Type>& timeSeries() const
-            //{
-            //    return timeSeries_;
-            //}
-        
         void relaxEdges
         (
           vectorField&

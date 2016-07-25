@@ -187,10 +187,10 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
   Info<<"fixCommonNeighborPatchPoints"<<nl;
   fixCommonNeighborPatchPoints(pointMotion);
   
-  Info<<"relaxEdges"<<nl;
+  Info<<nl<<"relaxEdges"<<nl;
   relaxEdges(pointMotion);
   
-  Info<<"relaxPatchMesh"<<nl;
+  Info<<nl<<"relaxPatchMesh"<<nl;
   relaxPatchMesh(pointMotion);
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
@@ -222,11 +222,60 @@ relaxEdges(vectorField& pointMotion)
   
   
   
+  // list fixed boundary edges
+  labelList pinnedPoints;
+  vectorField pinnedPointsNorm;
+  forAll(bMesh, patchi)
+  {
+    if ( (patchi != patchID) )
+    {
+      if 
+      (
+        isA<cyclicPolyPatch>(bMesh[patchi]) 
+        ||
+        isA<symmetryPolyPatch>(bMesh[patchi])
+      )
+      {
+        const polyPatch& cpp = refCast<const polyPatch>(bMesh[patchi]);
+        const labelList& ppMeshPoints = cpp.meshPoints();
+        const vectorField& ppPointNormals = cpp.pointNormals(); //1
+
+        labelList local_EdgePoints, global_EdgePoints;
+        labelList local_pp_EdgePoints;
+
+        commonPoints
+        (
+          curMeshPoints,
+          ppMeshPoints,
+          local_EdgePoints,
+          global_EdgePoints,
+          local_pp_EdgePoints
+        );
+        
+        pinnedPoints.append(local_EdgePoints);
+        vectorField locNormals(local_EdgePoints.size(), vector::zero);
+        forAll(local_EdgePoints, i)
+        {
+          locNormals[i] = ppPointNormals[ local_pp_EdgePoints[i] ];
+        }
+        pinnedPointsNorm.append(locNormals);
+      }
+    }
+  }
+
+  //Pout << pinnedPointsNorm << endl;
+  
+  
+  
+  // TODO global variables
+  int q_2edge = 1;
+  double k_1edge = 1.0, k_2edge = 1.2;
+  int q_edge_norm_recalc = 5;
+  
   forAll(bMesh, patchi)
   {
     if ( (patchi != patchID) ) //bMesh[patchi].size() && 
     {
-      //Info<< "patch type:  "<< bMesh[patchi].type()<<endl;
       if (isA<cyclicPolyPatch>(bMesh[patchi]))
       {
         const cyclicPolyPatch& cpp = 
@@ -250,7 +299,7 @@ relaxEdges(vectorField& pointMotion)
         const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
         const pointField& pfPP = pp.localPoints();
         const labelList& ppMeshPoints = pp.meshPoints();
-        //const vectorField& ppPointNormals = pp.pointNormals();  // 3
+        const vectorField& ppPointNormals = pp.pointNormals();  // 3
 
         labelList local_EdgePoints, global_EdgePoints;
         labelList local_pp_EdgePoints;
@@ -268,80 +317,11 @@ relaxEdges(vectorField& pointMotion)
         neighborListEdge(local_EdgePoints, ee, curPointEdges, nepe);
         
         label NN = local_EdgePoints.size();
-        scalarFieldList weights( NN );
-        scalarField sumWeights( NN, 0.0 );
         
-        forAll(nepe, i)
-        {
-          label  curI = local_EdgePoints[i];
-          const point& curP = curPP[curI];
-          const labelList& pNeib = nepe[i];
-
-          scalarField& pw = weights[i];
-          pw.setSize(pNeib.size());
-
-          scalar sumw = 0.0;
-          forAll(pNeib, ii)
-          {
-            label ind = pNeib[ii];
-            const point& neibP = curPP[ind];
-            vector d2 = neibP - curP;
-            scalar magd2 = mag(d2);
-
-            scalar w = 0.0;
-            if( magd2>SMALL) w = 1.0 / magd2;
-
-            pw[ii] = w;
-            sumw += pw[ii];
-          }
-          sumWeights[i] = sumw;
-        }
-
-        syncTools::syncPointList
-        (
-          mesh,
-          global_EdgePoints,
-          sumWeights,
-          plusEqOp<scalar>(),
-          0.0
-        );
-
-        forAll(weights, i)
-        {
-          scalarField& pw = weights[i];
-          scalar &sw = sumWeights[i];
-          forAll(pw, j)
-            if( mag(sw)>SMALL ) pw[j] /= sw;
-        }
-        //return weights;
+        if( NN>0){ //ppMeshPoints.size()==0 ||
         
-
-
-
-
-
-
-
-
-
-
-        double displ_tol = 1.0;
-        int itt = 0;
-        vectorField pointNorm( NN, vector::zero );
-        scalarList faceToPointSumWeights( NN, 0.0 );
-
-        pointField movedPoints = curPP + pointMotion;
-
-        // *************************************************************************
-        // calculate old points normals once
-        //vectorField savePointNorm( NN, vector::zero );
-        vectorField currentNorms( NN, vector::zero );
-
-        {
-          pointField faceCs = faceCentres(curPP, llf);
-          vectorField faceNs = faceNormals(curPP, llf);
-
-          scalarList sumWeights( NN, 0.0 );
+          scalarFieldList weights( NN );
+          scalarField sumWeights( NN, 0.0 );
 
           forAll(nepe, i)
           {
@@ -349,161 +329,88 @@ relaxEdges(vectorField& pointMotion)
             const point& curP = curPP[curI];
             const labelList& pNeib = nepe[i];
 
-            const labelList& pFaces = plistFaces[curI];
-            forAll(pFaces, j){
-              label ind = pNeib[j];
-              const point& neibP = curPP[ind];
-              vector d2 = neibP - curP;     // vector from the current point 
-                                            // to its neighbor
+            scalarField& pw = weights[i];
+            pw.setSize(pNeib.size());
 
-              label faceI = pFaces[j]; 
-              vector fnn = faceNs[ faceI ]; // face normal
-              // TODO urgent!!!
-              fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
-
-              // correction of the normal, otherwise realN = fnn
-              scalar middi = mag(d2)/2.0;   // half distance to neighbor
-              point midpo = curP + d2/2.0;  // midpoint
-              plane pll(midpo, d2);           // plane perpendicular to the edge via midpoint
-              point endNorm = midpo + fnn;  // end of the face normal projected on the inlet
-              point projp = pll.nearestPoint(endNorm); // projection of endNorm onto pll plane
-
-              vector realN = projp - midpo; // normal to the edge between current point
-                                            // and its neighbor in the inlet plane facing
-                                            // outside the fracture (mag(realN)!=1 !!!)
-
-              scalar nw = 1.0 / middi;
-              currentNorms[i] += nw * realN;
-              
-              // TODO urgent!!!
-              currentNorms[i].z()=0;
-              faceToPointSumWeights[i] += nw;
-            }
-          }
-
-          syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
-          syncTools::syncPointList(mesh, global_EdgePoints, currentNorms, plusEqOp<vector>(), vector::zero);
-          syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
-          // normalization
-          forAll(currentNorms, i)
-            currentNorms[i] /= mag( currentNorms[i] );
-        }
-
-        vectorField movedNorms( NN, vector::zero );
-        {
-          pointField faceCs = faceCentres(movedPoints, llf);
-          vectorField faceNs = faceNormals(movedPoints, llf);
-
-          scalarList sumWeights( NN, 0.0 );
-
-          forAll(nepe, i)
-          {
-            label  curI = local_EdgePoints[i];
-            const point& curP = movedPoints[curI];
-            const labelList& pNeib = nepe[i];
-
-            const labelList& pFaces = plistFaces[curI];
-            forAll(pFaces, j)
-            {
-              label ind = pNeib[j];
-              const point& neibP = movedPoints[ind];
-              vector d2 = neibP - curP;     // vector from the current point to its neighbor
-
-              label faceI = pFaces[j]; 
-              vector fnn = faceNs[ faceI ]; // face normal
-              // TODO urgent!!!
-              fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
-
-              // correction of the normal, otherwise realN = fnn
-              scalar middi = mag(d2)/2.0;   // half distance to neighbor
-              point midpo = curP + d2/2.0;  // midpoint
-              plane pll(midpo, d2);           // plane perpendicular to the edge via midpoint
-              point endNorm = midpo + fnn;  // end of the face normal projected on the inlet
-              point projp = pll.nearestPoint(endNorm); // projection of endNorm onto pll plane
-
-              vector realN = projp - midpo; // normal to the edge between current point
-                                            // and its neighbor in the inlet plane facing
-                                            // outside the fracture (mag(realN)!=1 !!!)
-
-              scalar nw = 1.0 / middi;
-              movedNorms[i] += nw * realN;
-              // TODO urgent!!!
-              movedNorms[i].z()=0;
-              faceToPointSumWeights[i] += nw;
-            }
-          }
-
-          syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
-          syncTools::syncPointList(mesh, global_EdgePoints, movedNorms, plusEqOp<vector>(), vector::zero);
-          syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
-          // normalization
-          forAll(movedNorms, i)
-          {
-            movedNorms[i] /= mag( movedNorms[i] );
-          }
-        }
-        scalarField aa = mag(currentNorms ^ movedNorms);
-        label fixedInletEdgePoint = findMin(aa);
-        
-        Info<< "  fixedInletEdgePoint: " << fixedInletEdgePoint
-                <<endl;
-        // *************************************************************************
-        
-        double rlxTol = 0.000001;
-        while(displ_tol>rlxTol)
-        {
-          //if(itt%q_edge_norm_recalc==0){
-            // set fields to zero
-            pointNorm = vector::zero;
-            faceToPointSumWeights = 0.0;
-          //}
-
-          pointField faceCs = faceCentres(movedPoints, llf);
-          vectorField faceNs = faceNormals(movedPoints, llf);
-
-          vectorField displacement(NN, vector::zero);
-          scalarField tol(NN, 0.0);
-          scalarList sumWeights( NN, 0.0 );
-
-          forAll(nepe, i)
-          {
-            label  curI = local_EdgePoints[i];
-            point& curP = movedPoints[curI];
-            const labelList& pNeib = nepe[i];
-
-            const scalarField& curwv = weights[i];
-
+            scalar sumw = 0.0;
             forAll(pNeib, ii)
             {
               label ind = pNeib[ii];
-              point& neibP = movedPoints[ind];
+              const point& neibP = curPP[ind];
               vector d2 = neibP - curP;
+              scalar magd2 = mag(d2);
 
-              scalar mag_d = mag(d2);
+              scalar w = 0.0;
+              if( magd2>SMALL) w = 1.0 / magd2;
 
-              displacement[i] += curwv[ii] * d2;
-              tol[i] += mag_d;
-              sumWeights[i] += 1;
+              pw[ii] = w;
+              sumw += pw[ii];
             }
+            sumWeights[i] = sumw;
+          }
 
-            // stick to cyclic boundary
-            //if( findIndex(local_wall_WallsCycEdges1, curI) != -1 ||
-            //    findIndex(local_wall_WallsCycEdges2, curI) != -1){
-            //  displacement[i].x() = 0.0;
-            //}
+          syncTools::syncPointList
+          (
+            mesh,
+            global_EdgePoints,
+            sumWeights,
+            plusEqOp<scalar>(),
+            0.0
+          );
 
-            //if(itt%q_edge_norm_recalc==0){
+          forAll(weights, i)
+          {
+            scalarField& pw = weights[i];
+            scalar &sw = sumWeights[i];
+            forAll(pw, j)
+              if( mag(sw)>SMALL ) pw[j] /= sw;
+          }
+          //return weights;
+
+
+
+
+
+          double displ_tol = 1.0;
+          int itt = 0;
+          vectorField pointNorm( NN, vector::zero );
+          scalarList faceToPointSumWeights( NN, 0.0 );
+
+          pointField movedPoints = curPP + pointMotion;
+
+          // *************************************************************************
+          // calculate old points normals once
+          //vectorField savePointNorm( NN, vector::zero );
+          vectorField currentNorms( NN, vector::zero );
+
+          {
+            pointField faceCs = faceCentres(curPP, llf);
+            vectorField faceNs = faceNormals(curPP, llf);
+
+            scalarList sumWeights( NN, 0.0 );
+
+            forAll(nepe, i)
+            {
+              label  curI = local_EdgePoints[i];
+              const point& curP = curPP[curI];
+              const labelList& pNeib = nepe[i];
+
+              label curIpp = local_pp_EdgePoints[i];
+              const vector& curNormPP = ppPointNormals[ curIpp ];
+
               const labelList& pFaces = plistFaces[curI];
-              forAll(pFaces, j)
-              {
+              forAll(pFaces, j){
                 label ind = pNeib[j];
-                point& neibP = movedPoints[ind];
-                vector d2 = neibP - curP;     // vector from the current point to its neighbor
+                const point& neibP = curPP[ind];
+                vector d2 = neibP - curP;     // vector from the current point 
+                                              // to its neighbor
 
                 label faceI = pFaces[j]; 
                 vector fnn = faceNs[ faceI ]; // face normal
-                // TODO urgent !!!
-                fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
+
+                // TODO use projection
+                //fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
+                fnn = transform(I - curNormPP*curNormPP, fnn);
 
                 // correction of the normal, otherwise realN = fnn
                 scalar middi = mag(d2)/2.0;   // half distance to neighbor
@@ -517,103 +424,295 @@ relaxEdges(vectorField& pointMotion)
                                               // outside the fracture (mag(realN)!=1 !!!)
 
                 scalar nw = 1.0 / middi;
-                pointNorm[i] += nw * realN;
-                // TODO urgent !!!
-                pointNorm[i].z()=0;
+                currentNorms[i] += nw * realN;
+
+                // TODO use projection
+                //currentNorms[i].z()=0;
+                currentNorms[i] = transform(I - curNormPP*curNormPP, currentNorms[i]);
                 faceToPointSumWeights[i] += nw;
               }
-            //}
-          }
+            }
 
-          syncTools::syncPointList(mesh, global_EdgePoints, displacement, plusEqOp<vector>(), vector::zero);
-          syncTools::syncPointList(mesh, global_EdgePoints, tol, plusEqOp<scalar>(), 0.0);
-          syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
-
-          forAll(pointNorm, i)
-          {
-            displacement[i] /= sumWeights[i];
-          }
-
-          //if(itt%q_edge_norm_recalc==0){
-            syncTools::syncPointList(mesh, global_EdgePoints, pointNorm, plusEqOp<vector>(), vector::zero);
+            syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
+            syncTools::syncPointList(mesh, global_EdgePoints, currentNorms, plusEqOp<vector>(), vector::zero);
             syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
             // normalization
+            forAll(currentNorms, i)
+              currentNorms[i] /= mag( currentNorms[i] );
+          }
+
+          vectorField movedNorms( NN, vector::zero );
+          {
+            pointField faceCs = faceCentres(movedPoints, llf);
+            vectorField faceNs = faceNormals(movedPoints, llf);
+
+            scalarList sumWeights( NN, 0.0 );
+
+            forAll(nepe, i)
+            {
+              label  curI = local_EdgePoints[i];
+              const point& curP = movedPoints[curI];
+              const labelList& pNeib = nepe[i];
+
+              label curIpp = local_pp_EdgePoints[i];
+              const vector& curNormPP = ppPointNormals[ curIpp ];
+
+              const labelList& pFaces = plistFaces[curI];
+              forAll(pFaces, j)
+              {
+                label ind = pNeib[j];
+                const point& neibP = movedPoints[ind];
+                vector d2 = neibP - curP;     // vector from the current point to its neighbor
+
+                label faceI = pFaces[j]; 
+                vector fnn = faceNs[ faceI ]; // face normal
+                // TODO urgent!!!
+                //fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
+                fnn = transform(I - curNormPP*curNormPP, fnn);
+
+                // correction of the normal, otherwise realN = fnn
+                scalar middi = mag(d2)/2.0;   // half distance to neighbor
+                point midpo = curP + d2/2.0;  // midpoint
+                plane pll(midpo, d2);           // plane perpendicular to the edge via midpoint
+                point endNorm = midpo + fnn;  // end of the face normal projected on the inlet
+                point projp = pll.nearestPoint(endNorm); // projection of endNorm onto pll plane
+
+                vector realN = projp - midpo; // normal to the edge between current point
+                                              // and its neighbor in the inlet plane facing
+                                              // outside the fracture (mag(realN)!=1 !!!)
+
+                scalar nw = 1.0 / middi;
+                movedNorms[i] += nw * realN;
+                // TODO use projection
+                //movedNorms[i].z()=0;
+                movedNorms[i] = transform(I - curNormPP*curNormPP, movedNorms[i]);
+                faceToPointSumWeights[i] += nw;
+              }
+            }
+
+            syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
+            syncTools::syncPointList(mesh, global_EdgePoints, movedNorms, plusEqOp<vector>(), vector::zero);
+            syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
+            // normalization
+            forAll(movedNorms, i)
+            {
+              movedNorms[i] /= mag( movedNorms[i] );
+            }
+          }
+          scalarField aa = mag(currentNorms ^ movedNorms);
+
+          // TODO synchronize for periodic
+          label fixedEdgePoint = findMin(aa);
+
+          Info<<nl<< "Patch name:  "<< pp.name() << nl
+                  << "  number of common points " << NN
+                  << "     fixedEdgePoint: " << fixedEdgePoint
+                  <<endl;
+          // *************************************************************************
+
+
+
+          // TODO global var
+          double rlxTol = 0.000001;
+
+          while(displ_tol>rlxTol)
+          {
+            if(itt%q_edge_norm_recalc==0){
+              // set fields to zero
+              pointNorm = vector::zero;
+              faceToPointSumWeights = 0.0;
+            }
+
+            pointField faceCs = faceCentres(movedPoints, llf);
+            vectorField faceNs = faceNormals(movedPoints, llf);
+
+            vectorField displacement(NN, vector::zero);
+            scalarField tol(NN, 0.0);
+            scalarList sumWeights( NN, 0.0 );
+
+            forAll(nepe, i)
+            {
+              label  curI = local_EdgePoints[i];
+              point& curP = movedPoints[curI];
+              const labelList& pNeib = nepe[i];
+
+              const scalarField& curwv = weights[i];
+
+              forAll(pNeib, ii)
+              {
+                label ind = pNeib[ii];
+                point& neibP = movedPoints[ind];
+                vector d2 = neibP - curP;
+
+                scalar mag_d = mag(d2);
+
+                displacement[i] += curwv[ii] * d2;
+                tol[i] += mag_d;
+                sumWeights[i] += 1;
+              }
+
+              // stick to cyclic boundary
+              //if( findIndex(local_wall_WallsCycEdges1, curI) != -1 ||
+              //    findIndex(local_wall_WallsCycEdges2, curI) != -1){
+              //  displacement[i].x() = 0.0;
+              //}
+
+              if(itt%q_edge_norm_recalc==0)
+              {
+
+                label curIpp = local_pp_EdgePoints[i];
+                const vector& curNormPP = ppPointNormals[ curIpp ];
+
+                const labelList& pFaces = plistFaces[curI];
+                forAll(pFaces, j)
+                {
+                  label ind = pNeib[j];
+                  point& neibP = movedPoints[ind];
+                  vector d2 = neibP - curP;     // vector from the current point to its neighbor
+
+                  label faceI = pFaces[j]; 
+                  vector fnn = faceNs[ faceI ]; // face normal
+                  // TODO urgent !!!
+                  //fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
+                  fnn = transform(I - curNormPP*curNormPP, fnn);
+
+                  // correction of the normal, otherwise realN = fnn
+                  scalar middi = mag(d2)/2.0;   // half distance to neighbor
+                  point midpo = curP + d2/2.0;  // midpoint
+                  plane pll(midpo, d2);           // plane perpendicular to the edge via midpoint
+                  point endNorm = midpo + fnn;  // end of the face normal projected on the inlet
+                  point projp = pll.nearestPoint(endNorm); // projection of endNorm onto pll plane
+
+                  vector realN = projp - midpo; // normal to the edge between current point
+                                                // and its neighbor in the inlet plane facing
+                                                // outside the fracture (mag(realN)!=1 !!!)
+
+                  scalar nw = 1.0 / middi;
+                  pointNorm[i] += nw * realN;
+                  // TODO use projection
+                  //pointNorm[i].z()=0;
+                  pointNorm[i] = transform(I - curNormPP*curNormPP, pointNorm[i]);
+                  faceToPointSumWeights[i] += nw;
+                }
+              }
+            }
+
+            syncTools::syncPointList(mesh, global_EdgePoints, displacement, plusEqOp<vector>(), vector::zero);
+            syncTools::syncPointList(mesh, global_EdgePoints, tol, plusEqOp<scalar>(), 0.0);
+            syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
+
             forAll(pointNorm, i)
             {
-              pointNorm[i] /= mag( pointNorm[i] );
+              displacement[i] /= sumWeights[i];
             }
-          //}
 
-          if(fixedInletEdgePoint>=0)
-            displacement[fixedInletEdgePoint] = vector::zero;
-
-          vectorField projectedDisplacement = transform(I - pointNorm*pointNorm, displacement);
-
-          //scalar factor = (itt%q_2edge==0) ? k_2edge : k_1edge;
-          scalar factor = 1.0;
-          projectedDisplacement *= factor;
-
-          if(fixedInletEdgePoint>=0)
-            displacement[fixedInletEdgePoint] = vector::zero;
-          // stick to cyclic boundary
-          /*
-          forAll(local_wall_WallsCycEdges1, i){
-            label ind = local_wall_WallsCycEdges1[i];
-            label loc_ind = findIndex(local_wall_WallEdges, ind);
-            if( loc_ind != -1){
-              projectedDisplacement[loc_ind].x() = 0.0;
+            if(itt%q_edge_norm_recalc==0)
+            {
+              syncTools::syncPointList(mesh, global_EdgePoints, pointNorm, plusEqOp<vector>(), vector::zero);
+              syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
+              // normalization
+              forAll(pointNorm, i)
+              {
+                pointNorm[i] /= mag( pointNorm[i] );
+              }
             }
-          }
-          forAll(local_wall_WallsCycEdges2, i){
-            label ind = local_wall_WallsCycEdges2[i];
-            label loc_ind = findIndex(local_wall_WallEdges, ind);
-            if( loc_ind != -1){
-              projectedDisplacement[loc_ind].x() = 0.0;
+
+            if(fixedEdgePoint>=0)
+              displacement[fixedEdgePoint] = vector::zero;
+
+            vectorField projectedDisplacement = transform(I - pointNorm*pointNorm, displacement);
+
+            scalar factor = (itt%q_2edge==0) ? k_2edge : k_1edge;
+            projectedDisplacement *= factor;
+
+            if(fixedEdgePoint>=0)
+              displacement[fixedEdgePoint] = vector::zero;
+            // stick to cyclic boundary
+
+            //Pout<< "projectedDisplacement:  "<< projectedDisplacement.size()<<endl;
+            /*
+            forAll(pinnedPoints, ii)
+            {
+              Pout<<pinnedPoints[ii] 
+                      << "  "<< projectedDisplacement[pinnedPoints[ii]]
+                      <<"   "<< pinnedPointsNorm[ii] 
+                      << endl;
+              label ind = pinnedPoints[ii];
+              projectedDisplacement[ind] = 
+                      transform
+                      (
+                        I-pinnedPointsNorm[ii]*pinnedPointsNorm[ii],
+                        projectedDisplacement[ind]
+                      );
             }
+             */
+            forAll(projectedDisplacement, ii)
+            {
+              label ind = local_EdgePoints[ii];
+              label pinnedind = findIndex(pinnedPoints, ind);
+
+              if( pinnedind != -1){
+
+              /*
+                Pout<< ii
+                      <<"   "<<pinnedind
+                      <<"   "<<pinnedPoints[pinnedind] 
+                      << "  "<< projectedDisplacement[ii]
+                      <<"   "<< pinnedPointsNorm[pinnedind] 
+                      << endl;
+               */
+
+                projectedDisplacement[ii] = 
+                        transform
+                        (
+                          I-pinnedPointsNorm[pinnedind]*pinnedPointsNorm[pinnedind],
+                          projectedDisplacement[ii]
+                        );
+              }
+            }
+            //std::exit(0);
+
+
+            /*
+            forAll(local_wall_WallsCycEdges1, i){
+              label ind = local_wall_WallsCycEdges1[i];
+              label loc_ind = findIndex(local_wall_WallEdges, ind);
+              if( loc_ind != -1){
+                projectedDisplacement[loc_ind].x() = 0.0;
+              }
+            }
+            forAll(local_wall_WallsCycEdges2, i){
+              label ind = local_wall_WallsCycEdges2[i];
+              label loc_ind = findIndex(local_wall_WallEdges, ind);
+              if( loc_ind != -1){
+                projectedDisplacement[loc_ind].x() = 0.0;
+              }
+            }
+            */
+
+            forAll(local_EdgePoints, i)
+            {
+              label ind = local_EdgePoints[i];
+              movedPoints[ind] += projectedDisplacement[i];
+            }
+
+            //if(projectedDisplacement.size()>0)
+              displ_tol = gAverage( mag(projectedDisplacement/factor)/tol );
+            //else
+            //  displ_tol = gAverage( 0.0 );
+
+            if(itt%1000==0)
+            {
+              Info << pp.name() << "  edge rlx iter " << itt
+                   << " tolerance: " << displ_tol << endl;
+            }
+
+            itt++;
           }
-          */
 
-          forAll(local_EdgePoints, i)
-          {
-            label ind = local_EdgePoints[i];
-            movedPoints[ind] += projectedDisplacement[i];
-          }
+          pointMotion = (movedPoints-curPP);
 
-          displ_tol = gAverage( mag(projectedDisplacement)/tol );
-
-          if(itt%1000==0)
-          {
-            Info << pp.name() << "  edge rlx iter " << itt
-                 << " tolerance: " << displ_tol << endl;
-          }
-
-          itt++;
         }
-        // Pout<<" !!!!!!!!!!!!!!!!HRER444444 "<<endl;
-
-        pointMotion = (movedPoints-curPP);
-        //return (boundaryPoints-wall_patch.localPoints());
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
       }
     }
   }

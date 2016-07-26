@@ -283,6 +283,16 @@ void Foam::nonLinearFvPatchScalarField::updateCoeffs()
   if(debug) {
       Info << "l_T: "<< l_T << endl;
   }
+  
+  // ***************************************************************************
+  
+  vector planeNorm(0,0,1);
+  vector planePoint(0,0,-3);
+  
+  plane limitPlane(planePoint, planeNorm);
+  
+  // ***************************************************************************
+  
 
   Field<scalar>& val = *this;
 

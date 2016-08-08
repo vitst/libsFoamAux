@@ -75,6 +75,7 @@ Contributors/Copyright:
 #define nonLinearFvPatchScalarField_H
 
 #include "mixedFvPatchFields.H"
+#include "plane.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

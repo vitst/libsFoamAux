@@ -286,11 +286,22 @@ void Foam::nonLinearFvPatchScalarField::updateCoeffs()
   
   // ***************************************************************************
   
-  vector planeNorm(0,0,1);
-  vector planePoint(0,0,-3);
+  vector planeNorm(0, 0, 1);
+  vector planePoint(0, 0, -4.5);
   
   plane limitPlane(planePoint, planeNorm);
   
+  //pointField newPointsPos = this->patch().localPoints() + pointMotion;
+  
+  const scalar dt = this->db().time().deltaTValue();
+  //const pointField& localPnts = this->patch().patch().localPoints();
+  const pointField& localFcs = this->patch().patch().faceCentres();
+  const pointField& localFns = this->patch().patch().faceNormals();
+  
+  //label patchID = this->patch().index();
+  //const polyMesh& mesh = this->patch().mesh();
+  //const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+  //const polyPatch& pPatch = refCast<const polyPatch>(bMesh[patchID]);
   // ***************************************************************************
   
 
@@ -322,6 +333,30 @@ void Foam::nonLinearFvPatchScalarField::updateCoeffs()
 
     scalar R    = w * c1 + (1-w) * c2;
     scalar dR   = dw * (c1-c2) + w * (dc1-dc2) + dc2;
+    
+    // ***************************************************************************
+    scalar displ = R * dt;
+    
+    //point newPoint = localFcs[i] + displ * localFns[i];
+    scalar distToInters = limitPlane.normalIntersect(localFcs[i], localFns[i]);
+    
+    scalar theta = 1.0;
+    if(displ > distToInters){
+      theta = distToInters / displ;
+    }
+    
+    if(i<1)
+      Info << localFcs[i] 
+              << "   " << theta 
+              << "   " << displ
+              << "   " << distToInters
+              << "   " << (localFcs[i] + distToInters * localFns[i])
+              << nl;
+    
+    
+    R  *= theta;
+    dR *= theta;
+    // ***************************************************************************
 
     scalar alpha  = del[i] / l_T;
     scalar adR    = alpha * dR;

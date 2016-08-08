@@ -126,6 +126,9 @@ dissolMotionPointPatchVectorField
         << " on " << this->patch().name()
         << endl;
   }  
+  
+  surfWeights = calc_weights_surface();
+  //edgeWeights = calc_weights_edge();
 }
 
 
@@ -175,29 +178,34 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
     return;
   }
   
-  label patchID = this->patch().index();
-  
-  const polyMesh& mesh = this->internalField().mesh()();
+  if( this->db().foundObject<IOdictionary>("transportProperties") )
+  {
+    label patchID = this->patch().index();
+    const scalar dt = this->db().time().deltaTValue();
 
-  vectorField pointMotion;
-  getPointMotion(pointMotion);
-  
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  // TODO here is the rest of relaxation should be implemented
-  Info<<"fixCommonNeighborPatchPoints"<<nl;
-  fixCommonNeighborPatchPoints(pointMotion);
-  
-  Info<<nl<<"relaxEdges"<<nl;
-  relaxEdges(pointMotion);
-  
-  Info<<nl<<"relaxPatchMesh"<<nl;
-  relaxPatchMesh(pointMotion);
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
-  // set the velocity for the point motion
-  this->operator==( pointMotion );
+    const polyMesh& mesh = this->internalField().mesh()();
 
-  fixedValuePointPatchField<vector>::updateCoeffs();
+    vectorField pointMotion;
+    getPointMotion(pointMotion);
+    pointMotion *= dt;
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // TODO here is the rest of relaxation should be implemented
+    Info<<"fixCommonNeighborPatchPoints"<<nl;
+    fixCommonNeighborPatchPoints(pointMotion);
+
+    Info<<nl<<"relaxEdges"<<nl;
+    relaxEdges(pointMotion);
+
+    Info<<nl<<"relaxPatchMesh"<<nl;
+    relaxPatchMesh(pointMotion);
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    // set the velocity for the point motion
+    this->operator==( pointMotion/dt );
+
+    fixedValuePointPatchField<vector>::updateCoeffs();
+  }
 }
 
 void Foam::
@@ -265,8 +273,6 @@ relaxEdges(vectorField& pointMotion)
 
   //Pout << pinnedPointsNorm << endl;
   
-  
-  
   // TODO global variables
   int q_2edge = 1;
   double k_1edge = 1.0, k_2edge = 1.2;
@@ -318,7 +324,7 @@ relaxEdges(vectorField& pointMotion)
         
         label NN = local_EdgePoints.size();
         
-        if( NN>0){ //ppMeshPoints.size()==0 ||
+        //if( NN>0){ //ppMeshPoints.size()==0 ||
         
           scalarFieldList weights( NN );
           scalarField sumWeights( NN, 0.0 );
@@ -349,6 +355,9 @@ relaxEdges(vectorField& pointMotion)
             sumWeights[i] = sumw;
           }
 
+  //Pout << "HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE1     " << NN<< endl;
+  
+  
           syncTools::syncPointList
           (
             mesh,
@@ -358,6 +367,8 @@ relaxEdges(vectorField& pointMotion)
             0.0
           );
 
+  //Pout << "HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE2     " << NN<< endl;
+  
           forAll(weights, i)
           {
             scalarField& pw = weights[i];
@@ -408,8 +419,6 @@ relaxEdges(vectorField& pointMotion)
                 label faceI = pFaces[j]; 
                 vector fnn = faceNs[ faceI ]; // face normal
 
-                // TODO use projection
-                //fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
                 fnn = transform(I - curNormPP*curNormPP, fnn);
 
                 // correction of the normal, otherwise realN = fnn
@@ -426,8 +435,6 @@ relaxEdges(vectorField& pointMotion)
                 scalar nw = 1.0 / middi;
                 currentNorms[i] += nw * realN;
 
-                // TODO use projection
-                //currentNorms[i].z()=0;
                 currentNorms[i] = transform(I - curNormPP*curNormPP, currentNorms[i]);
                 faceToPointSumWeights[i] += nw;
               }
@@ -466,8 +473,6 @@ relaxEdges(vectorField& pointMotion)
 
                 label faceI = pFaces[j]; 
                 vector fnn = faceNs[ faceI ]; // face normal
-                // TODO urgent!!!
-                //fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
                 fnn = transform(I - curNormPP*curNormPP, fnn);
 
                 // correction of the normal, otherwise realN = fnn
@@ -483,8 +488,6 @@ relaxEdges(vectorField& pointMotion)
 
                 scalar nw = 1.0 / middi;
                 movedNorms[i] += nw * realN;
-                // TODO use projection
-                //movedNorms[i].z()=0;
                 movedNorms[i] = transform(I - curNormPP*curNormPP, movedNorms[i]);
                 faceToPointSumWeights[i] += nw;
               }
@@ -503,6 +506,7 @@ relaxEdges(vectorField& pointMotion)
 
           // TODO synchronize for periodic
           label fixedEdgePoint = findMin(aa);
+          Pout << "fixedEdgePoint:  " << fixedEdgePoint << endl;
 
           Info<<nl<< "Patch name:  "<< pp.name() << nl
                   << "  number of common points " << NN
@@ -552,10 +556,6 @@ relaxEdges(vectorField& pointMotion)
               }
 
               // stick to cyclic boundary
-              //if( findIndex(local_wall_WallsCycEdges1, curI) != -1 ||
-              //    findIndex(local_wall_WallsCycEdges2, curI) != -1){
-              //  displacement[i].x() = 0.0;
-              //}
 
               if(itt%q_edge_norm_recalc==0)
               {
@@ -572,8 +572,6 @@ relaxEdges(vectorField& pointMotion)
 
                   label faceI = pFaces[j]; 
                   vector fnn = faceNs[ faceI ]; // face normal
-                  // TODO urgent !!!
-                  //fnn.z() = 0.0;                // projection to the inlet surface ~ & (0,0,1)
                   fnn = transform(I - curNormPP*curNormPP, fnn);
 
                   // correction of the normal, otherwise realN = fnn
@@ -589,8 +587,6 @@ relaxEdges(vectorField& pointMotion)
 
                   scalar nw = 1.0 / middi;
                   pointNorm[i] += nw * realN;
-                  // TODO use projection
-                  //pointNorm[i].z()=0;
                   pointNorm[i] = transform(I - curNormPP*curNormPP, pointNorm[i]);
                   faceToPointSumWeights[i] += nw;
                 }
@@ -628,39 +624,12 @@ relaxEdges(vectorField& pointMotion)
             if(fixedEdgePoint>=0)
               displacement[fixedEdgePoint] = vector::zero;
             // stick to cyclic boundary
-
-            //Pout<< "projectedDisplacement:  "<< projectedDisplacement.size()<<endl;
-            /*
-            forAll(pinnedPoints, ii)
-            {
-              Pout<<pinnedPoints[ii] 
-                      << "  "<< projectedDisplacement[pinnedPoints[ii]]
-                      <<"   "<< pinnedPointsNorm[ii] 
-                      << endl;
-              label ind = pinnedPoints[ii];
-              projectedDisplacement[ind] = 
-                      transform
-                      (
-                        I-pinnedPointsNorm[ii]*pinnedPointsNorm[ii],
-                        projectedDisplacement[ind]
-                      );
-            }
-             */
             forAll(projectedDisplacement, ii)
             {
               label ind = local_EdgePoints[ii];
               label pinnedind = findIndex(pinnedPoints, ind);
 
               if( pinnedind != -1){
-
-              /*
-                Pout<< ii
-                      <<"   "<<pinnedind
-                      <<"   "<<pinnedPoints[pinnedind] 
-                      << "  "<< projectedDisplacement[ii]
-                      <<"   "<< pinnedPointsNorm[pinnedind] 
-                      << endl;
-               */
 
                 projectedDisplacement[ii] = 
                         transform
@@ -670,25 +639,6 @@ relaxEdges(vectorField& pointMotion)
                         );
               }
             }
-            //std::exit(0);
-
-
-            /*
-            forAll(local_wall_WallsCycEdges1, i){
-              label ind = local_wall_WallsCycEdges1[i];
-              label loc_ind = findIndex(local_wall_WallEdges, ind);
-              if( loc_ind != -1){
-                projectedDisplacement[loc_ind].x() = 0.0;
-              }
-            }
-            forAll(local_wall_WallsCycEdges2, i){
-              label ind = local_wall_WallsCycEdges2[i];
-              label loc_ind = findIndex(local_wall_WallEdges, ind);
-              if( loc_ind != -1){
-                projectedDisplacement[loc_ind].x() = 0.0;
-              }
-            }
-            */
 
             forAll(local_EdgePoints, i)
             {
@@ -711,8 +661,14 @@ relaxEdges(vectorField& pointMotion)
           }
 
           pointMotion = (movedPoints-curPP);
+          
+          //forAll(local_EdgePoints, i)
+          //{
+          //  label ind = local_EdgePoints[i];
+          //  Info<< pointMotion[ind] << nl;
+          //}
 
-        }
+        //}
       }
     }
   }
@@ -759,7 +715,7 @@ dissolMotionPointPatchVectorField::
 relaxPatchMesh(vectorField& pointMotion)
 {
   
-  vectorFieldList weights = calc_weights_surface();
+  //vectorFieldList weights = calc_weights_surface();
   
   //const vectorField& nHat = this->patch().pointNormals();
 
@@ -876,7 +832,7 @@ relaxPatchMesh(vectorField& pointMotion)
     {
       point& curP = newPointsPos[i];
       const labelList& pFaces = plistFaces[i];
-      const vectorField& pw = weights[i];
+      const vectorField& pw = surfWeights[i];
 
       forAll(pFaces, j)
       {
@@ -1199,6 +1155,13 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
           global_EdgePoints,
           local_pp_EdgePoints
         );
+        
+        //forAll(local_EdgePoints, i)
+        //{
+        //  label ind = local_EdgePoints[i];
+        //  Info<< "  Befor!!!!!!   " << pointMotion[ind] << nl;
+        //}
+        
     
         //vectorField
         forAll(local_EdgePoints, i)

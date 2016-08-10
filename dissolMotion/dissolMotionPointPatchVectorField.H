@@ -64,7 +64,14 @@ class dissolMotionPointPatchVectorField
 
   vectorFieldList surfWeights;
   //scalarFieldList edgeWeights;
+  
+  vectorField pinnedPointsNorm;
+  labelList pinnedPoints;
+  labelList fixedPoints;
 
+  vectorField pinnedPointsNormE;
+  labelList pinnedPointsE;
+  
 public:
 
     //- Runtime type information

@@ -65,13 +65,12 @@ class dissolMotionPointPatchVectorField
   vectorFieldList surfWeights;
   //scalarFieldList edgeWeights;
   
-  vectorField pinnedPointsNorm;
   labelList pinnedPoints;
   labelList fixedPoints;
+  vectorField pinnedPointsNorm;
 
-  vectorField pinnedPointsNormE;
   labelList pinnedPointsE;
-  
+  vectorField pinnedPointsNormE;
 public:
 
     //- Runtime type information
@@ -141,6 +140,9 @@ public:
     // Member functions
 
         // Access
+        void calc_weights_surface();
+        
+        void make_lists_and_normals();
 
         void relaxEdges
         (
@@ -161,7 +163,7 @@ public:
           const pointField& points,
           const List<face>& flist
         ) const;
-        vectorFieldList calc_weights_surface();
+        
         
         void neighborListEdge
         (

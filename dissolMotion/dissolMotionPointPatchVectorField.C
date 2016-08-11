@@ -127,10 +127,12 @@ dissolMotionPointPatchVectorField
         << endl;
   }  
   
-  surfWeights = calc_weights_surface();
+  calc_weights_surface();
+  //surfWeights = calc_weights_surface();
   //edgeWeights = calc_weights_edge();
+  
+  make_lists_and_normals();
 }
-
 
 Foam::
 dissolMotionPointPatchVectorField::
@@ -164,7 +166,6 @@ dissolMotionPointPatchVectorField
   }
 }
 
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
@@ -194,13 +195,21 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
     Info<<"fixCommonNeighborPatchPoints"<<nl;
     fixCommonNeighborPatchPoints(pointMotion);
 
-    //fixCommonNeighborPatchPoints(pointMotion);
-    
     Info<<nl<<"relaxEdges"<<nl;
     relaxEdges(pointMotion);
 
     Info<<nl<<"relaxPatchMesh"<<nl;
     relaxPatchMesh(pointMotion);
+
+  
+  Info << "pinned: " << pinnedPointsNorm.size() << nl<<nl;
+  Info << "pinnedEE: " << pinnedPointsNormE.size() << nl<<nl;
+  forAll(pinnedPoints, i)
+  {
+    Info<< pinnedPointsNorm[i]<<"  "<<pinnedPointsNormE[i]<<nl;
+  }
+  std::exit(0);
+  
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     // set the velocity for the point motion
@@ -636,6 +645,7 @@ relaxEdges(vectorField& pointMotion)
             {
               label ind = local_EdgePoints[ii];
               label pinnedind = findIndex(pinnedPointsE, ind);
+              //label pinnedind = findIndex(pinnedPoints, ind);
 
               if( pinnedind != -1)
               {
@@ -649,6 +659,7 @@ relaxEdges(vectorField& pointMotion)
                         );
               }
             }
+            
 
             forAll(local_EdgePoints, i)
             {
@@ -978,8 +989,99 @@ relaxPatchMesh(vectorField& pointMotion)
   
 }
 
+void Foam::
+dissolMotionPointPatchVectorField::
+make_lists_and_normals()
+{
+  label patchID = this->patch().index();
+  const polyMesh& mesh = this->internalField().mesh()();
+  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+  const polyPatch& pPatch = refCast<const polyPatch>(bMesh[patchID]);
+  //const List<face>& llf = pPatch.localFaces();
+  //const labelListList& plistFaces = pPatch.pointFaces();
+  const labelList& meshPoints = pPatch.meshPoints();
+  
+  // list fixed boundary edges
+  labelList pinnedPointsLocal;
+  vectorField pinnedPointsNormLocal;
+  labelList fixedPointsLocal;
 
-Foam::vectorFieldList Foam::
+  //labelList pinnedPoints;
+  //vectorField pinnedPointsNorm;
+  forAll(bMesh, patchi)
+  {
+    if ( (patchi != patchID) ) //bMesh[patchi].size() &&
+    {
+      //Info<< "patch type:  "<< bMesh[patchi].type()<<endl;
+      // TODO redesign this if condition
+      if 
+      (
+        isA<cyclicPolyPatch>(bMesh[patchi]) 
+        ||
+        isA<symmetryPolyPatch>(bMesh[patchi])
+      )
+      {
+        const polyPatch& cpp = refCast<const polyPatch>(bMesh[patchi]);
+        // TODO
+        const labelList& ppMeshPoints = cpp.meshPoints();
+        const vectorField& ppPointNormals = cpp.pointNormals(); //1
+
+        labelList local_EdgePoints, global_EdgePoints;
+        labelList local_pp_EdgePoints;
+
+        commonPoints
+        (
+          meshPoints,
+          ppMeshPoints,
+          local_EdgePoints,
+          global_EdgePoints,
+          local_pp_EdgePoints
+        );
+
+        pinnedPointsLocal.append(local_EdgePoints);
+        //pinnedPoints.append(local_EdgePoints);
+        vectorField locNormals(local_EdgePoints.size(), vector::zero);
+        forAll(local_EdgePoints, i)
+        {
+          locNormals[i] = ppPointNormals[ local_pp_EdgePoints[i] ];
+        }
+        pinnedPointsNormLocal.append(locNormals);
+        //pinnedPointsNorm.append(locNormals);
+      }
+      else if (isA<processorPolyPatch>(bMesh[patchi]))
+      {
+        // skip
+      }
+      else
+      {
+        const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
+        const labelList& ppMeshPoints = pp.meshPoints();
+
+        labelList local_EdgePoints, global_EdgePoints;
+        labelList local_pp_EdgePoints;
+
+        commonPoints
+        (
+          meshPoints,
+          ppMeshPoints,
+          local_EdgePoints,
+          global_EdgePoints,
+          local_pp_EdgePoints
+        );
+
+        //fixedPoints.append(local_EdgePoints);
+        fixedPointsLocal.append(local_EdgePoints);
+      }
+    }
+  }
+
+  pinnedPoints = pinnedPointsLocal;
+  pinnedPointsNorm = pinnedPointsNormLocal;
+  fixedPoints = fixedPointsLocal;
+}
+
+
+void Foam::
 dissolMotionPointPatchVectorField::
 calc_weights_surface()
 {
@@ -1053,7 +1155,7 @@ calc_weights_surface()
     }
   }
 
-  return weights;
+  surfWeights = weights;
 }
 
 /*

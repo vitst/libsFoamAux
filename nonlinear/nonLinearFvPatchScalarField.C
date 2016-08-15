@@ -341,7 +341,8 @@ void Foam::nonLinearFvPatchScalarField::updateCoeffs()
     scalar distToInters = limitPlane.normalIntersect(localFcs[i], localFns[i]);
     
     scalar theta = 1.0;
-    if(displ > distToInters){
+    if(displ > distToInters)
+    {
       theta = distToInters / displ;
     }
     

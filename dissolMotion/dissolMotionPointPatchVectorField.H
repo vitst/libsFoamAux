@@ -68,9 +68,6 @@ class dissolMotionPointPatchVectorField
   labelList pinnedPoints;
   labelList fixedPoints;
   vectorField pinnedPointsNorm;
-
-  labelList pinnedPointsE;
-  vectorField pinnedPointsNormE;
 public:
 
     //- Runtime type information

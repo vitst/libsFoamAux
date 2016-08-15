@@ -52,6 +52,9 @@ License
 //#include "pyramidPointFaceRef.H"
 //#include "triPointRef.H"
 
+#include "timeSelector.H"
+#include "argList.H"
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::
@@ -132,6 +135,16 @@ dissolMotionPointPatchVectorField
   //edgeWeights = calc_weights_edge();
   
   make_lists_and_normals();
+  
+  /*
+  for(int i=0; i<5; i++)
+  {
+    Info<<i<<" "<<surfWeights[i]<<"  "<<pinnedPointsNorm[i]<<nl;
+  }
+  std::exit(0);
+  */
+  
+  
 }
 
 Foam::
@@ -189,6 +202,12 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
     vectorField pointMotion;
     getPointMotion(pointMotion);
     pointMotion *= dt;
+    
+    Info<<"PPPoint motion: "<<nl;
+    for(int i = 0; i<10; i++)
+    {
+      Info<< pointMotion[i] << nl;
+    }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // TODO the rest of relaxation should be implemented
@@ -200,17 +219,12 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 
     Info<<nl<<"relaxPatchMesh"<<nl;
     relaxPatchMesh(pointMotion);
-
-  
-  Info << "pinned: " << pinnedPointsNorm.size() << nl<<nl;
-  Info << "pinnedEE: " << pinnedPointsNormE.size() << nl<<nl;
-  forAll(pinnedPoints, i)
-  {
-    Info<< pinnedPointsNorm[i]<<"  "<<pinnedPointsNormE[i]<<nl;
-  }
-  std::exit(0);
-  
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Info<<"Aftern: "<<nl;
+    for(int i = 0; i<10; i++)
+    {
+      Info<< pointMotion[i] << nl;
+    }
 
     // set the velocity for the point motion
     this->operator==( pointMotion/dt );
@@ -238,57 +252,6 @@ relaxEdges(vectorField& pointMotion)
   const labelListList& plistFaces = curPatch.pointFaces();
 
   const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
-  
-  
-  
-  // list fixed boundary edges
-  if(pinnedPointsE.size()==0)
-  {
-    labelList pinnedPointsLocal;
-    vectorField pinnedPointsNormLocal;
-    forAll(bMesh, patchi)
-    {
-      if ( (patchi != patchID) )
-      {
-        if 
-        (
-          isA<cyclicPolyPatch>(bMesh[patchi]) 
-          ||
-          isA<symmetryPolyPatch>(bMesh[patchi])
-        )
-        {
-          const polyPatch& cpp = refCast<const polyPatch>(bMesh[patchi]);
-          const labelList& ppMeshPoints = cpp.meshPoints();
-          const vectorField& ppPointNormals = cpp.pointNormals(); //1
-
-          labelList local_EdgePoints, global_EdgePoints;
-          labelList local_pp_EdgePoints;
-
-          commonPoints
-          (
-            curMeshPoints,
-            ppMeshPoints,
-            local_EdgePoints,
-            global_EdgePoints,
-            local_pp_EdgePoints
-          );
-
-          pinnedPointsLocal.append(local_EdgePoints);
-          vectorField locNormals(local_EdgePoints.size(), vector::zero);
-          forAll(local_EdgePoints, i)
-          {
-            locNormals[i] = ppPointNormals[ local_pp_EdgePoints[i] ];
-          }
-          pinnedPointsNormLocal.append(locNormals);
-        }
-      }
-    }
-    pinnedPointsE = pinnedPointsLocal;
-    pinnedPointsNormE = pinnedPointsNormLocal;
-  }
-
-  //Pout << pinnedPointsNorm << endl;
-  Pout<< "FFF:  " << pinnedPointsNormE[0] << "   " << pinnedPointsE.size() <<endl;
   
   // TODO global variables
   int q_2edge = 1;
@@ -644,8 +607,8 @@ relaxEdges(vectorField& pointMotion)
             forAll(projectedDisplacement, ii)
             {
               label ind = local_EdgePoints[ii];
-              label pinnedind = findIndex(pinnedPointsE, ind);
-              //label pinnedind = findIndex(pinnedPoints, ind);
+              //label pinnedind = findIndex(pinnedPointsE, ind);
+              label pinnedind = findIndex(pinnedPoints, ind);
 
               if( pinnedind != -1)
               {
@@ -654,7 +617,7 @@ relaxEdges(vectorField& pointMotion)
                 projectedDisplacement[ii] = 
                         transform
                         (
-                          I-pinnedPointsNormE[pinnedind]*pinnedPointsNormE[pinnedind],
+                          I-pinnedPointsNorm[pinnedind]*pinnedPointsNorm[pinnedind],
                           projectedDisplacement[ii]
                         );
               }
@@ -690,7 +653,7 @@ relaxEdges(vectorField& pointMotion)
           //}
 
         //}
-          Pout<< "EEE:   " << curPP[0] << "   " << pointMotion[0] <<endl;
+          Pout<< "EEE111:   " << curPP[0] << "   " << pointMotion[0] <<endl;
       }
     }
   }
@@ -745,89 +708,6 @@ relaxPatchMesh(vectorField& pointMotion)
   const List<face>& llf = pPatch.localFaces();
   const labelListList& plistFaces = pPatch.pointFaces();
   const labelList& meshPoints = pPatch.meshPoints();
-  
-  // list fixed boundary edges
-  if(pinnedPoints.size()==0)
-  {
-    labelList pinnedPointsLocal;
-    vectorField pinnedPointsNormLocal;
-    labelList fixedPointsLocal;
-  
-    //labelList pinnedPoints;
-    //vectorField pinnedPointsNorm;
-    forAll(bMesh, patchi)
-    {
-      if ( (patchi != patchID) ) //bMesh[patchi].size() &&
-      {
-        //Info<< "patch type:  "<< bMesh[patchi].type()<<endl;
-        // TODO redesign this if condition
-        if 
-        (
-          isA<cyclicPolyPatch>(bMesh[patchi]) 
-          ||
-          isA<symmetryPolyPatch>(bMesh[patchi])
-        )
-        {
-          const polyPatch& cpp = refCast<const polyPatch>(bMesh[patchi]);
-          // TODO
-          const labelList& ppMeshPoints = cpp.meshPoints();
-          const vectorField& ppPointNormals = cpp.pointNormals(); //1
-
-          labelList local_EdgePoints, global_EdgePoints;
-          labelList local_pp_EdgePoints;
-
-          commonPoints
-          (
-            meshPoints,
-            ppMeshPoints,
-            local_EdgePoints,
-            global_EdgePoints,
-            local_pp_EdgePoints
-          );
-
-          pinnedPointsLocal.append(local_EdgePoints);
-          //pinnedPoints.append(local_EdgePoints);
-          vectorField locNormals(local_EdgePoints.size(), vector::zero);
-          forAll(local_EdgePoints, i)
-          {
-            locNormals[i] = ppPointNormals[ local_pp_EdgePoints[i] ];
-          }
-          pinnedPointsNormLocal.append(locNormals);
-          //pinnedPointsNorm.append(locNormals);
-        }
-        else if (isA<processorPolyPatch>(bMesh[patchi]))
-        {
-          // skip
-        }
-        else
-        {
-          const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
-          const labelList& ppMeshPoints = pp.meshPoints();
-
-          labelList local_EdgePoints, global_EdgePoints;
-          labelList local_pp_EdgePoints;
-
-          commonPoints
-          (
-            meshPoints,
-            ppMeshPoints,
-            local_EdgePoints,
-            global_EdgePoints,
-            local_pp_EdgePoints
-          );
-
-          //fixedPoints.append(local_EdgePoints);
-          fixedPointsLocal.append(local_EdgePoints);
-        }
-      }
-    }
-    
-    pinnedPoints = pinnedPointsLocal;
-    pinnedPointsNorm = pinnedPointsNormLocal;
-    fixedPoints = fixedPointsLocal;
-  }
-  
-  Pout<< "AAA:  " << pinnedPointsNorm[0] << "   "<< pinnedPoints.size() <<endl;
   
   int N = newPointsPos.size();
 
@@ -967,8 +847,8 @@ relaxPatchMesh(vectorField& pointMotion)
 
   pointMotion = (newPointsPos - this->patch().localPoints());
   
-  Pout<<nl<< "BBB1:  " << this->patch().localPoints()[0] << "   " << pointMotion[0] <<endl;
   /*
+  Pout<<nl<< "BBB1:  " << this->patch().localPoints()[0] << "   " << pointMotion[0] <<endl;
   forAll(pinnedPoints, ii)
   {
     label ind = pinnedPoints[ii];
@@ -993,9 +873,39 @@ void Foam::
 dissolMotionPointPatchVectorField::
 make_lists_and_normals()
 {
+  const Foam::Time& time = this->db().time();
+  Foam::Time timeTmp(Foam::Time::controlDictName, time.rootPath(), time.caseName());
+  //Foam::instantList timeDirs = Foam::timeSelector::select(time.times());
+  Foam::instantList timeDirs = time.times();
+  timeTmp.setTime(timeDirs[0], 0);
+  if( timeTmp.timeName()=="constant" )
+  {
+    timeTmp.setTime(timeDirs[1], 0);
+  }
+  
+  // in case 0 time does not exist
+  if( timeTmp.timeName()!="0" ){
+    SeriousErrorIn("meshRelax")
+            <<"There is no 0 time directory! "
+            "If you run in parallel please check a decomposition."
+            <<exit(FatalError);
+  }
+  
+  Foam::fvMesh meshTmp
+  (
+    Foam::IOobject
+    (
+      Foam::fvMesh::defaultRegion,
+      timeTmp.timeName(),
+      timeTmp,
+      Foam::IOobject::MUST_READ
+    )
+  );
+  
+  
   label patchID = this->patch().index();
-  const polyMesh& mesh = this->internalField().mesh()();
-  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+  //const polyMesh& mesh = this->internalField().mesh()();
+  const polyBoundaryMesh& bMesh = meshTmp.boundaryMesh();
   const polyPatch& pPatch = refCast<const polyPatch>(bMesh[patchID]);
   //const List<face>& llf = pPatch.localFaces();
   //const labelListList& plistFaces = pPatch.pointFaces();
@@ -1085,15 +995,43 @@ void Foam::
 dissolMotionPointPatchVectorField::
 calc_weights_surface()
 {
+  const Foam::Time& time = this->db().time();
+  Foam::Time timeTmp(Foam::Time::controlDictName, time.rootPath(), time.caseName());
+  //Foam::instantList timeDirs = Foam::timeSelector::select(time.times());
+  Foam::instantList timeDirs = time.times();
+  timeTmp.setTime(timeDirs[0], 0);
+  if( timeTmp.timeName()=="constant" )
+  {
+    timeTmp.setTime(timeDirs[1], 0);
+  }
+  
+  // in case 0 time does not exist
+  if( timeTmp.timeName()!="0" ){
+    SeriousErrorIn("meshRelax")
+            <<"There is no 0 time directory! "
+            "If you run in parallel please check a decomposition."
+            <<exit(FatalError);
+  }
+  
+  Foam::fvMesh meshTmp
+  (
+    Foam::IOobject
+    (
+      Foam::fvMesh::defaultRegion,
+      timeTmp.timeName(),
+      timeTmp,
+      Foam::IOobject::MUST_READ
+    )
+  );
+  
   label patchID = this->patch().index();
-  const polyMesh& mesh = this->internalField().mesh()();
-  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+  //const polyMesh& mesh = this->internalField().mesh()();
+  const polyBoundaryMesh& bMesh = meshTmp.boundaryMesh();
   const polyPatch& pp = refCast<const polyPatch>(bMesh[patchID]);
   const List<face>& flist = pp.localFaces();
   const labelListList& plistFaces = pp.pointFaces();
-  const labelList& meshPoints = mesh.boundaryMesh()[patchID].meshPoints();
+  const labelList& meshPoints = meshTmp.boundaryMesh()[patchID].meshPoints();
   
-
   const pointField& boundaryPoints = pp.localPoints();
   const pointField& faceCs = pp.faceCentres();
 
@@ -1135,7 +1073,7 @@ calc_weights_surface()
     sumWeights[i] = sumw;
   }
 
-  syncTools::syncPointList( mesh, meshPoints, sumWeights, plusEqOp<vector>(), vector::zero);
+  syncTools::syncPointList( meshTmp, meshPoints, sumWeights, plusEqOp<vector>(), vector::zero);
 
   forAll(weights, i)
   {
@@ -1330,7 +1268,6 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
                     <<" displ: "<< pointMotion[pointI]
                     <<" normal: "<< nrm
                     <<" pp s "<<pinnedPoints.size()
-                    <<" pp E "<<pinnedPointsE.size()
                     << endl;
           }
           
@@ -1392,9 +1329,11 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
         }
       }
       
+      /*
       Info<< "patch type: "<< bMesh[patchi].type()
               << " name: "<< bMesh[patchi].name()
               <<" KKK: "<< pointMotion[0] << endl;
+      */
       
     }
   }

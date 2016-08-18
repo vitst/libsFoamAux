@@ -671,11 +671,14 @@ relaxEdges(vectorField& pointMotion)
           
           forAll(local_EdgePoints, i)
           {
+            label curIpp = local_pp_EdgePoints[i];
             label ind = local_EdgePoints[i];
             Pout<<"ind1111: "<< ind << "  "
                     << curPP[ind]
                     << "  "
-                    << pointMotion[ind] << nl;
+                    << pointMotion[ind] 
+                    << "  " << ppPointNormals[ curIpp ]
+                    << nl;
           }
 
         //}

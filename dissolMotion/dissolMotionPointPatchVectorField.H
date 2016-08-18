@@ -68,6 +68,7 @@ class dissolMotionPointPatchVectorField
   labelList pinnedPoints;
   labelList fixedPoints;
   vectorField pinnedPointsNorm;
+  
 public:
 
     //- Runtime type information
@@ -177,6 +178,10 @@ public:
         );
 
         void fixCommonNeighborPatchPoints
+        (
+          vectorField&
+        );
+        void fixPinnedPoints
         (
           vectorField&
         );

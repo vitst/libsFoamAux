@@ -669,17 +669,19 @@ relaxEdges(vectorField& pointMotion)
           
           fixPinnedPoints(pointMotion);
           
+          /*
           forAll(local_EdgePoints, i)
           {
             label curIpp = local_pp_EdgePoints[i];
             label ind = local_EdgePoints[i];
-            Pout<<"ind1111: "<< ind << "  "
+            Pout<<"ind: "<< ind << "  "
                     << curPP[ind]
                     << "  "
                     << pointMotion[ind] 
                     << "  " << ppPointNormals[ curIpp ]
                     << nl;
           }
+           */
 
         //}
           //Pout<< "EEE111:   " << curPP[0] << "   " << pointMotion[0] <<endl;
@@ -1272,9 +1274,11 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
   
   forAll(bMesh, patchi)
   {
+    Info<< "WWWWW patch type:  "<< bMesh[patchi].type() 
+            << "  " << bMesh[patchi].name()
+            <<endl;
     if (bMesh[patchi].size() && (patchi != patchID) )
     {
-      //Info<< "patch type:  "<< bMesh[patchi].type()<<endl;
       if(
               isA<cyclicPolyPatch>(bMesh[patchi]) 
               ||
@@ -1346,6 +1350,15 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
           local_pp_EdgePoints
         );
         
+        if(local_EdgePoints.size()>0)
+        {
+          Pout<< "BBBBBpatch type: "<< bMesh[patchi].type()
+                  << " name: "<< bMesh[patchi].name()
+                  <<" KKK: "<< pointMotion[local_EdgePoints[0]]
+                  <<"  "<< ppPointNormals[ local_pp_EdgePoints[0] ]
+                  << endl;
+        }
+        
         //vectorField
         forAll(local_EdgePoints, i)
         {
@@ -1363,25 +1376,38 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
 
           scalar cosa = 0.0;
           
-          if( mag(pointMotion[pointI])*mag(AA) > SMALL )
+          if( mag(pointMotion[pointI]) > VSMALL && mag(AA) > VSMALL )
           {
             cosa = 
               (pointMotion[pointI] & AA) / (mag(pointMotion[pointI])*mag(AA));
           }
           
-          if( mag(cosa)>SMALL )
+          if( mag(cosa)>VSMALL )
           {
             scalar L = mag(pointMotion[pointI]) / cosa;
             pointMotion[pointI] = L * AA / mag(AA);
           }
         }
+        
+        if(local_EdgePoints.size()>0)
+        {
+          Pout<< "AAAAApatch type: "<< bMesh[patchi].type()
+                  << " name: "<< bMesh[patchi].name()
+                  <<" KKK: "<< pointMotion[local_EdgePoints[0]]
+                  <<"  "<< ppPointNormals[ local_pp_EdgePoints[0] ]
+                  << endl;
+        }
+        
+      
       }
       
       /*
       Info<< "patch type: "<< bMesh[patchi].type()
               << " name: "<< bMesh[patchi].name()
-              <<" KKK: "<< pointMotion[0] << endl;
-      */
+              <<" KKK: "<< pointMotion[local_EdgePoints[0]] << endl;
+       */
+      
+      
       
     }
   }

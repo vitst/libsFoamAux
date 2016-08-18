@@ -63,11 +63,15 @@ class dissolMotionPointPatchVectorField
     // Private data
 
   vectorFieldList surfWeights;
-  //scalarFieldList edgeWeights;
+
   
   labelList pinnedPoints;
   labelList fixedPoints;
   vectorField pinnedPointsNorm;
+  
+  labelList rlxEdgePoints;
+  vectorField rlxEdgePointNorms;
+  scalarFieldList rlxEdgeWeights;
   
 public:
 

@@ -66,12 +66,15 @@ class dissolMotionPointPatchVectorField
 
   
   labelList pinnedPoints;
-  labelList fixedPoints;
   vectorField pinnedPointsNorm;
   
-  labelList rlxEdgePoints;
-  vectorField rlxEdgePointNorms;
+  //labelList rlxEdgePoints;
+  labelList fixedPoints;
+  labelList globalFixedPoints;
+  //vectorField rlxEdgePointNorms;
   scalarFieldList rlxEdgeWeights;
+  
+  labelListList nepe;
   
 public:
 
@@ -142,6 +145,8 @@ public:
     // Member functions
 
         // Access
+        void fixed_p_edges(labelList&, vectorField&);
+        
         void calc_weights_surface();
         
         void make_lists_and_normals();

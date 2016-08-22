@@ -372,10 +372,6 @@ relaxEdges(vectorField& pointMotion)
             plusEqOp<scalar>(),
             0.0
           );
-        Pout<<"22!!! patch type:  "<< bMesh[patchi].type()
-                <<" "<<bMesh[patchi].name()
-                <<endl;
-
           forAll(weights, i)
           {
             scalarField& pw = weights[i];
@@ -385,6 +381,10 @@ relaxEdges(vectorField& pointMotion)
           }
           //return weights;
 
+
+        Pout<<"22!!! patch type:  "<< bMesh[patchi].type()
+                <<" "<<bMesh[patchi].name()
+                <<endl;
 
           // * * * * * * * * * * *  * * * * * * * * * * *  * * * * * * * * * * *
           fixed_p_edges(fixedEdgePoint, pointMotion);

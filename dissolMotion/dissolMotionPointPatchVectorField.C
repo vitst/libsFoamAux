@@ -271,7 +271,10 @@ relaxEdges(vectorField& pointMotion)
   // TODO global variables
   int q_2edge = 1;
   double k_1edge = 1.0, k_2edge = 1.2;
-  int q_edge_norm_recalc = 5;
+  int q_edge_norm_recalc = 1;
+  
+  
+  labelList fixedEdgePoint;
   
   forAll(bMesh, patchi)
   {
@@ -296,7 +299,9 @@ relaxEdges(vectorField& pointMotion)
       }
       else
       {
-        //Info<<nl<< "!!!!!!!!!!!!!!!!!!!!!!!!!!!! patch type:  "<< bMesh[patchi].type()<<nl<<endl;
+        Pout<<"Patch type:  "<< bMesh[patchi].type()
+                <<" NAME "<<bMesh[patchi].name()
+                <<endl;
         const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
         //const pointField& pfPP = pp.localPoints();
         const labelList& ppMeshPoints = pp.meshPoints();
@@ -305,6 +310,10 @@ relaxEdges(vectorField& pointMotion)
         labelList local_EdgePoints, global_EdgePoints;
         labelList local_pp_EdgePoints;
     
+        Pout<<" 77!!! patch type:  "<< bMesh[patchi].type()
+                <<" "<<bMesh[patchi].name()
+                <<endl;
+        
         commonPoints
         (
           curMeshPoints,
@@ -314,21 +323,26 @@ relaxEdges(vectorField& pointMotion)
           local_pp_EdgePoints
         );
         
-        labelListList nepe;
-        neighborListEdge(local_EdgePoints, ee, curPointEdges, nepe);
+        Pout<<" 1!!! patch type:  "<< bMesh[patchi].type()
+                <<" "<<bMesh[patchi].name()
+                <<" gl.size "<<global_EdgePoints.size()
+                <<endl;
+        
+        labelListList nepe1;
+        neighborListEdge(local_EdgePoints, ee, curPointEdges, nepe1);
         
         label NN = local_EdgePoints.size();
         
-        if( NN>0){ //ppMeshPoints.size()==0 ||
+        //if( NN>0){ //ppMeshPoints.size()==0 ||
         
           scalarFieldList weights( NN );
           scalarField sumWeights( NN, 0.0 );
 
-          forAll(nepe, i)
+          forAll(nepe1, i)
           {
             label  curI = local_EdgePoints[i];
             const point& curP = curPP[curI];
-            const labelList& pNeib = nepe[i];
+            const labelList& pNeib = nepe1[i];
 
             scalarField& pw = weights[i];
             pw.setSize(pNeib.size());
@@ -358,6 +372,9 @@ relaxEdges(vectorField& pointMotion)
             plusEqOp<scalar>(),
             0.0
           );
+        Pout<<"22!!! patch type:  "<< bMesh[patchi].type()
+                <<" "<<bMesh[patchi].name()
+                <<endl;
 
           forAll(weights, i)
           {
@@ -369,24 +386,34 @@ relaxEdges(vectorField& pointMotion)
           //return weights;
 
 
+          // * * * * * * * * * * *  * * * * * * * * * * *  * * * * * * * * * * *
+          fixed_p_edges(fixedEdgePoint, pointMotion);
+          // * * * * * * * * * * *  * * * * * * * * * * *  * * * * * * * * * * *
+
+        Pout<<"3333333 patch type:  "<< bMesh[patchi].type()
+                <<" "<<bMesh[patchi].name()
+                <<endl;
+        std::exit(0);
+        //}
+      }
+    }
+  }
+          Pout<<nl
+                  << "  fixedEdgePoint: " << fixedEdgePoint
+                  << "  fixedPointsSize: " << fixedPoints.size()
+                  << "  pointPos: " << curPP[fixedPoints[fixedEdgePoint[0]]]
+                  << "  pointMotion: " << pointMotion[fixedPoints[fixedEdgePoint[0]]]
+                  <<endl;
+          
+          int NN = fixedPoints.size();
+          
           double displ_tol = 1.0;
           int itt = 0;
           vectorField pointNorm( NN, vector::zero );
           scalarList faceToPointSumWeights( NN, 0.0 );
 
           pointField movedPoints = curPP + pointMotion;
-
-          // * * * * * * * * * * *  * * * * * * * * * * *  * * * * * * * * * * *
-          labelList fixedEdgePoint;
-          fixed_p_edges(fixedEdgePoint, pointMotion);
-          
-          Pout<<nl<< "1919 patchName:  "<< pp.name() << nl
-                  << "  number of common points " << NN
-                  << "     fixedEdgePoint: " << fixedEdgePoint
-                  <<endl;
-          // * * * * * * * * * * *  * * * * * * * * * * *  * * * * * * * * * * *
-
-
+  
           // TODO global var
           double rlxTol = 0.000001;
 
@@ -406,13 +433,15 @@ relaxEdges(vectorField& pointMotion)
             scalarField tol(NN, 0.0);
             scalarList sumWeights( NN, 0.0 );
 
-            forAll(nepe, i)
+            //forAll(nepe, i)
+            forAll(fixedPoints, i)
             {
-              label  curI = local_EdgePoints[i];
+              //label  curI = local_EdgePoints[i];
+              label  curI = fixedPoints[i];
               point& curP = movedPoints[curI];
               const labelList& pNeib = nepe[i];
 
-              const scalarField& curwv = weights[i];
+              const scalarField& curwv = rlxEdgeWeights[i]; //weights[i];
 
               forAll(pNeib, ii)
               {
@@ -432,8 +461,9 @@ relaxEdges(vectorField& pointMotion)
               if(itt%q_edge_norm_recalc==0)
               {
 
-                label curIpp = local_pp_EdgePoints[i];
-                const vector& curNormPP = ppPointNormals[ curIpp ];
+                //label curIpp = local_pp_EdgePoints[i];
+                //const vector& curNormPP = ppPointNormals[ curIpp ];
+                const vector curNormPP(1,0,0);
 
                 const labelList& pFaces = plistFaces[curI];
                 forAll(pFaces, j)
@@ -465,9 +495,12 @@ relaxEdges(vectorField& pointMotion)
               }
             }
 
-            syncTools::syncPointList(mesh, global_EdgePoints, displacement, plusEqOp<vector>(), vector::zero);
-            syncTools::syncPointList(mesh, global_EdgePoints, tol, plusEqOp<scalar>(), 0.0);
-            syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
+            //syncTools::syncPointList(mesh, global_EdgePoints, displacement, plusEqOp<vector>(), vector::zero);
+            //syncTools::syncPointList(mesh, global_EdgePoints, tol, plusEqOp<scalar>(), 0.0);
+            //syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
+            syncTools::syncPointList(mesh, globalFixedPoints, displacement, plusEqOp<vector>(), vector::zero);
+            syncTools::syncPointList(mesh, globalFixedPoints, tol, plusEqOp<scalar>(), 0.0);
+            syncTools::syncPointList(mesh, globalFixedPoints, sumWeights, plusEqOp<scalar>(), 0.0);
 
             forAll(pointNorm, i)
             {
@@ -476,18 +509,21 @@ relaxEdges(vectorField& pointMotion)
 
             if(itt%q_edge_norm_recalc==0)
             {
-              syncTools::syncPointList(mesh, global_EdgePoints, pointNorm, plusEqOp<vector>(), vector::zero);
-              syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
+              //syncTools::syncPointList(mesh, global_EdgePoints, pointNorm, plusEqOp<vector>(), vector::zero);
+              //syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
+              syncTools::syncPointList(mesh, globalFixedPoints, pointNorm, plusEqOp<vector>(), vector::zero);
+              syncTools::syncPointList(mesh, globalFixedPoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
               // normalization
               forAll(pointNorm, i)
               {
                 pointNorm[i] /= mag( pointNorm[i] );
               }
             }
+            
 
             forAll(fixedEdgePoint, i1)
             {
-              displacement[fixedEdgePoint[i1]] = vector::zero;
+              //displacement[fixedEdgePoint[i1]] = vector::zero;
             }
 
             vectorField projectedDisplacement = 
@@ -520,9 +556,9 @@ relaxEdges(vectorField& pointMotion)
             */
             
 
-            forAll(local_EdgePoints, i)
+            forAll(fixedPoints, i)
             {
-              label ind = local_EdgePoints[i];
+              label ind = fixedPoints[i];
               movedPoints[ind] += projectedDisplacement[i];
             }
 
@@ -533,7 +569,7 @@ relaxEdges(vectorField& pointMotion)
 
             if(itt%1000==0)
             {
-              Info << pp.name() << "  edge rlx iter " << itt
+              Info << "  edge rlx iter " << itt
                    << " tolerance: " << displ_tol << endl;
             }
 
@@ -558,11 +594,6 @@ relaxEdges(vectorField& pointMotion)
           }
            */
 
-        }
-          //Pout<< "EEE111:   " << curPP[0] << "   " << pointMotion[0] <<endl;
-      }
-    }
-  }
   
 }
 
@@ -1023,6 +1054,12 @@ make_lists_and_normals()
   //const labelListList& plistFaces = pPatch.pointFaces();
   const labelList& meshPoints = pPatch.meshPoints();
   
+  
+  const pointField& curPP  = pPatch.localPoints();
+  const labelListList& curPointEdges = pPatch.pointEdges();
+  const edgeList& ee = pPatch.edges();
+ 
+  
   // list fixed boundary edges
   //labelList pinnedPointsLocal;
   //vectorField pinnedPointsNormLocal;
@@ -1093,6 +1130,65 @@ make_lists_and_normals()
 
         fixedPoints.append(local_EdgePoints);
         //fixedPointsLocal.append(local_EdgePoints);
+        globalFixedPoints.append(global_EdgePoints);
+        
+        // * * * * * * * * * * * * 
+
+        labelListList nepeLocal;
+        neighborListEdge(local_EdgePoints, ee, curPointEdges, nepeLocal);
+
+        label NN = local_EdgePoints.size();
+
+        scalarFieldList weights( NN );
+        scalarField sumWeights( NN, 0.0 );
+
+        forAll(nepeLocal, i)
+        {
+          label  curI = local_EdgePoints[i];
+          const point& curP = curPP[curI];
+          const labelList& pNeib = nepeLocal[i];
+
+          scalarField& pw = weights[i];
+          pw.setSize(pNeib.size());
+
+          scalar sumw = 0.0;
+          forAll(pNeib, ii)
+          {
+            label ind = pNeib[ii];
+            const point& neibP = curPP[ind];
+            vector d2 = neibP - curP;
+            scalar magd2 = mag(d2);
+
+            scalar w = 0.0;
+            if( magd2>SMALL) w = 1.0 / magd2;
+
+            pw[ii] = w;
+            sumw += pw[ii];
+          }
+          sumWeights[i] = sumw;
+        }
+        
+        syncTools::syncPointList
+        (
+          meshTmp,
+          global_EdgePoints,
+          sumWeights,
+          plusEqOp<scalar>(),
+          0.0
+        );
+
+        forAll(weights, i)
+        {
+          scalarField& pw = weights[i];
+          scalar &sw = sumWeights[i];
+          forAll(pw, j)
+            if( mag(sw)>SMALL ) pw[j] /= sw;
+        }
+
+        rlxEdgeWeights.append(weights);
+        nepe.append(nepeLocal);
+        // * * * * * * * * * * * * 
+        
       }
     }
   }

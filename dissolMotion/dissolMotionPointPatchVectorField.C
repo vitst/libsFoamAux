@@ -269,13 +269,14 @@ relaxEdges(vectorField& pointMotion)
   const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
   
   // TODO global variables
-  int q_2edge = 1;
+  int q_2edge = 10;
   double k_1edge = 1.0, k_2edge = 1.2;
   int q_edge_norm_recalc = 1;
   
   
   labelList fixedEdgePoint;
   
+  /*
   forAll(bMesh, patchi)
   {
     if ( (patchi != patchID) ) //bMesh[patchi].size() && 
@@ -398,14 +399,19 @@ relaxEdges(vectorField& pointMotion)
       }
     }
   }
-          Pout<<nl
-                  << "  fixedEdgePoint: " << fixedEdgePoint
-                  << "  fixedPointsSize: " << fixedPoints.size()
-                  << "  pointPos: " << curPP[fixedPoints[fixedEdgePoint[0]]]
-                  << "  pointMotion: " << pointMotion[fixedPoints[fixedEdgePoint[0]]]
+  */
+  fixed_p_edges(fixedEdgePoint, pointMotion);
+  
+          int NN = fixedPoints.size();
+          if(fixedEdgePoint.size()>0)
+            Pout  << " fixEdgePoint: " << fixedEdgePoint
+                  << " fixPointsSize: " << fixedPoints.size()
+                  << " pntPos: " << curPP[fixedPoints[fixedEdgePoint[0]]]
+                  << " pntMotion: " << pointMotion[fixedPoints[fixedEdgePoint[0]]]
                   <<endl;
           
-          int NN = fixedPoints.size();
+          
+          
           
           double displ_tol = 1.0;
           int itt = 0;
@@ -649,9 +655,16 @@ fixed_p_edges(labelList& fixedPEdges, vectorField& pointMotion)
           global_EdgePoints,
           local_pp_EdgePoints
         );
-
+        
         if(local_EdgePoints.size()>0)
-        {
+          Pout<<"Patch type:  "<< bMesh[patchi].type()
+            <<" "<<bMesh[patchi].name()
+            <<" lep "<<local_EdgePoints.size()
+            <<" gep "<<global_EdgePoints.size()
+            <<endl;
+
+        //if(local_EdgePoints.size()>0)
+        //{
           labelListList nepe11;
           neighborListEdge(local_EdgePoints, ee, curPointEdges, nepe11);
 
@@ -779,14 +792,15 @@ fixed_p_edges(labelList& fixedPEdges, vectorField& pointMotion)
 
           // TODO synchronize for processor
           label fixedEdgePoint = findMin(aa);
-          Pout<<nl<< "111Patch name:  "<< pp.name() << nl
-                  << "  number of common points " << NN
-                  << "     fixedEdgePoint: " << fixedEdgePoint
-                  <<endl;
+          //Pout<<nl<< " 111Patch name:  "<< pp.name() << nl
+          //        << "  number of common points " << NN
+          //        << "     fixedEdgePoint: " << fixedEdgePoint
+          //        <<endl;
           // *************************************************************************
           //fixedPEdges.append( local_EdgePoints[fixedEdgePoint] );
-          fixedPEdges.append( fixedEdgePoint );
-        }
+          if(fixedEdgePoint>=0)
+            fixedPEdges.append( fixedEdgePoint );
+        //}
       }
     }
   }
@@ -976,7 +990,7 @@ relaxPatchMesh(vectorField& pointMotion)
 
     itt++;
   }
-  Info << this->patch().name() << "  rlx converged in 11 " << itt 
+  Info << this->patch().name() << "  rlx converged in " << itt 
        << " iterations. Tolerance: " << displ_tol<< endl;
 
   pointMotion = (newPointsPos - this->patch().localPoints());
@@ -1440,9 +1454,11 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
   
   forAll(bMesh, patchi)
   {
+    /*
     Info<< "WWWWW patch type:  "<< bMesh[patchi].type() 
             << "  " << bMesh[patchi].name()
             <<endl;
+     */
     if (bMesh[patchi].size() && (patchi != patchID) )
     {
       if(
@@ -1555,6 +1571,7 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
           }
         }
         
+        /*
         if(local_EdgePoints.size()>0)
         {
           Pout<< "AAAAApatch type: "<< bMesh[patchi].type()
@@ -1563,6 +1580,7 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
                   <<"  "<< ppPointNormals[ local_pp_EdgePoints[0] ]
                   << endl;
         }
+         */
         
       
       }

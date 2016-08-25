@@ -58,13 +58,25 @@ typedef List<scalarField> scalarFieldList;
 
 class dissolMotionPointPatchVectorField
 :
-    public fixedValuePointPatchField<vector>
+  public fixedValuePointPatchField<vector>
 {
-    // Private data
+  // Private data
+  // parameters
+  scalar rlxTol;
+  
+  int q_norm_recalc;
+  scalar k_1, k_2;
+  int q_2;
+  
+  int q_norm_recalc_edge;
+  scalar k_1edge, k_2edge;
+  int q_2edge;
+  
+  bool pinnedPoint;
 
+  // fields
   vectorFieldList surfWeights;
 
-  
   labelList pinnedPoints;
   vectorField pinnedPointsNorm;
   

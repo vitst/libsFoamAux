@@ -98,6 +98,13 @@ protected:
     scalar Cth; // threshold concentration
     
     scalar n1, n2; // power low for the dissolution kinetics
+    
+    // parameters which define whether 
+    // there is a plane limiting dissolution or not
+    bool limitingPlane;
+    vector refNorm;
+    point refPoint;
+    
 public:
 
     //- Runtime type information

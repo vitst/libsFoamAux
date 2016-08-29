@@ -83,7 +83,7 @@ class dissolMotionPointPatchVectorField
   //labelList rlxEdgePoints;
   labelList fixedPoints;
   labelList globalFixedPoints;
-  //vectorField rlxEdgePointNorms;
+  vectorField fixedPointNorms;
   scalarFieldList rlxEdgeWeights;
   
   labelListList nepe;

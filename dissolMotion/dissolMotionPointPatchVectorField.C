@@ -496,11 +496,67 @@ relaxEdges(vectorField& pointMotion)
 
 
 
+  labelList loc_corners;
+  labelList loc_corners_fP;
+  labelListList frecBin(curPP.size());
+  forAll(fixedPoints, i)
+  {
+    labelList& fpl = frecBin[fixedPoints[i]];
+    frecBin[fixedPoints[i]].append(i);
+  }
+  forAll(frecBin, i)
+  {
+    labelList& fpl = frecBin[i];
+    if(fpl.size()>1)
+    {
+      loc_corners.append(i);
+    }
+  }
+  vectorField loc_corners_norms(loc_corners.size());
+  forAll(loc_corners,i)
+  {
+    labelList& fpl = frecBin[loc_corners[i]];
+    
+    forAll(fpl, j)
+    {
+      label crnp = fpl[j];
+      vector crnv = fixedPointNorms[crnp];
+      if(j==0)
+      {
+        loc_corners_norms[i] = crnv;
+      }
+      else
+      {
+        loc_corners_norms[i] = loc_corners_norms[i] ^ crnv;
+      }
+    }
+  }
+  
+  // fix corners
+  forAll(loc_corners, i)
+  {
+    pointMotion[loc_corners[i]] = 
+            pointMotion[loc_corners[i]] 
+            & 
+            (loc_corners_norms[i] * loc_corners_norms[i]);
+    
+    Info<< "Corners: "<<loc_corners[i]
+          <<"  loc_corners_norms "<<loc_corners_norms[i]
+            << "  pM: " << pointMotion[loc_corners[i]]
+            <<nl;
+  }
+  Info<<nl;
+  
+  //std::exit(0);
+  
+  
+
   vectorField pointNorm( NN, vector::zero );
   scalarList faceToPointSumWeights( NN, 0.0 );
 
   pointField movedPoints = curPP + pointMotion;
-
+  
+  
   double displ_tol = 1.0;
   int itt = 0;
   while(displ_tol>rlxTol)
@@ -548,8 +604,7 @@ relaxEdges(vectorField& pointMotion)
       {
 
         //label curIpp = local_pp_EdgePoints[i];
-        //const vector& curNormPP = ppPointNormals[ curIpp ];
-        const vector curNormPP(1,0,0);
+        const vector& curNormPP = fixedPointNorms [ i ];
 
         const labelList& pFaces = plistFaces[curI];
         forAll(pFaces, j)
@@ -581,9 +636,6 @@ relaxEdges(vectorField& pointMotion)
       }
     }
 
-    //syncTools::syncPointList(mesh, global_EdgePoints, displacement, plusEqOp<vector>(), vector::zero);
-    //syncTools::syncPointList(mesh, global_EdgePoints, tol, plusEqOp<scalar>(), 0.0);
-    //syncTools::syncPointList(mesh, global_EdgePoints, sumWeights, plusEqOp<scalar>(), 0.0);
     syncTools::syncPointList(mesh, globalFixedPoints, displacement, plusEqOp<vector>(), vector::zero);
     syncTools::syncPointList(mesh, globalFixedPoints, tol, plusEqOp<scalar>(), 0.0);
     syncTools::syncPointList(mesh, globalFixedPoints, sumWeights, plusEqOp<scalar>(), 0.0);
@@ -595,8 +647,6 @@ relaxEdges(vectorField& pointMotion)
 
     if(itt%q_norm_recalc_edge==0)
     {
-      //syncTools::syncPointList(mesh, global_EdgePoints, pointNorm, plusEqOp<vector>(), vector::zero);
-      //syncTools::syncPointList(mesh, global_EdgePoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
       syncTools::syncPointList(mesh, globalFixedPoints, pointNorm, plusEqOp<vector>(), vector::zero);
       syncTools::syncPointList(mesh, globalFixedPoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
       // normalization
@@ -615,33 +665,22 @@ relaxEdges(vectorField& pointMotion)
     vectorField projectedDisplacement = 
             transform(I - pointNorm*pointNorm, displacement);
 
+    forAll(loc_corners, i)
+    {
+      labelList& fpl = frecBin[loc_corners[i]];
+      forAll(fpl, j)
+      {
+        label lid = fpl[j];
+        projectedDisplacement[lid] = vector::zero;
+      }
+    }
+    
     scalar factor = (itt%q_2edge==0) ? k_2edge : k_1edge;
     projectedDisplacement *= factor;
 
     // stick to cyclic boundary
     //fixPinnedPoints(projectedDisplacement);
-    /*
-    forAll(projectedDisplacement, ii)
-    {
-      label ind = local_EdgePoints[ii];
-      //label pinnedind = findIndex(pinnedPointsE, ind);
-      label pinnedind = findIndex(pinnedPoints, ind);
-
-      if( pinnedind != -1)
-      {
-        //Info<< "AAAAAAAAAAAAAAAAAAAAA:   " << pinnedind << "   " << ii <<endl;
-
-        projectedDisplacement[ii] = 
-                transform
-                (
-                  I-pinnedPointsNorm[pinnedind]*pinnedPointsNorm[pinnedind],
-                  projectedDisplacement[ii]
-                );
-      }
-    }
-    */
-
-
+    
     forAll(fixedPoints, i)
     {
       label ind = fixedPoints[i];
@@ -665,22 +704,6 @@ relaxEdges(vectorField& pointMotion)
   pointMotion = (movedPoints-curPP);
 
   fixPinnedPoints(pointMotion);
-
-  /*
-  forAll(local_EdgePoints, i)
-  {
-    label curIpp = local_pp_EdgePoints[i];
-    label ind = local_EdgePoints[i];
-    Pout<<"ind: "<< ind << "  "
-            << curPP[ind]
-            << "  "
-            << pointMotion[ind] 
-            << "  " << ppPointNormals[ curIpp ]
-            << nl;
-  }
-   */
-
-  
 }
 
 void Foam::
@@ -936,6 +959,60 @@ relaxPatchMesh(vectorField& pointMotion)
   const labelList& meshPoints = pPatch.meshPoints();
   
   int N = newPointsPos.size();
+  
+  /*
+  // + + + + + + +  + + + + + + +  + + + + + + +  + + + + + + +  + + + + + + + 
+  vectorFieldList updW(N);
+  vectorField sumUpdW( N );
+
+  // update weights
+  vectorField faceNs = faceNormals(newPointsPos, llf);
+  forAll(updW, i)
+  {
+    const labelList& pFaces = plistFaces[i];
+    const vectorField& pw = surfWeights[i];
+    vectorField& updPW = updW[i];
+
+    updPW.setSize(pFaces.size());
+    vector sumw = vector::zero;
+    forAll(pFaces, j)
+    {
+      label faceI = pFaces[j];
+
+      updPW[j] = 
+              transform
+              (
+                I-faceNs[ faceI ]*faceNs[ faceI ],
+                pw[j]
+              );
+      sumw += updPW[j];
+      //Info<<" FF: "<< pw[j] <<"  NEWFF "<<updPW[j]<<"  faceN "<<faceNs[ faceI ]<<nl;
+    }
+    sumUpdW[i] = sumw;
+    //Info<<nl;
+  }
+  //std::exit(0);
+
+  syncTools::syncPointList(mesh, meshPoints, sumUpdW, plusEqOp<vector>(), vector::zero);
+
+  forAll(updW, i)
+  {
+    vectorField& uw = updW[i];
+    vector &suw = sumUpdW[i];
+    forAll(uw, j)
+    {
+      vector &uuw = uw[j];
+      for(int ii=0; ii<3; ii++)
+      {
+        if( mag(suw[ii])>SMALL )
+        {
+          uuw[ii] /= suw[ii];
+        }
+      }
+    }
+  }
+  // + + + + + + +  + + + + + + +  + + + + + + +  + + + + + + +  + + + + + + + 
+  */
 
   vectorField pointNorm( N, vector::zero );
   scalarList faceToPointSumWeights( N, 0.0 );
@@ -957,12 +1034,14 @@ relaxPatchMesh(vectorField& pointMotion)
     // create a displacement field for points
     vectorField displacement(N, vector::zero);
     scalarField tol(N, 0.0);
-
+    
+    
     forAll(newPointsPos, i)
     {
       point& curP = newPointsPos[i];
       const labelList& pFaces = plistFaces[i];
       const vectorField& pw = surfWeights[i];
+      //const vectorField& puw = updW[i];
 
       forAll(pFaces, j)
       {
@@ -972,14 +1051,27 @@ relaxPatchMesh(vectorField& pointMotion)
         vector d = faceC - curP;
 
         scalar mag_d = mag(d);
+        
+        /*
+        vector newW = 
+                transform
+                (
+                  I-faceNs[ faceI ]*faceNs[ faceI ],
+                  pw[j]
+                );
+        */
 
         vector disp;
+        //disp.x() = d.x() * puw[j].x(); //* newW.x();
+        //disp.y() = d.y() * puw[j].y() ; //* newW.y();
+        //disp.z() = d.z() * puw[j].z() ; //* newW.z();
         disp.x() = d.x() * pw[j].x();
         disp.y() = d.y() * pw[j].y();
         disp.z() = d.z() * pw[j].z();
         displacement[i] += disp;
 
-        tol[i] += mag_d * mag(pw[j]);
+        //tol[i] += mag_d * mag(pw[j]);
+        tol[i] += mag( disp );
 
         // this is for normal
         if(itt%q_norm_recalc==0)
@@ -991,21 +1083,8 @@ relaxPatchMesh(vectorField& pointMotion)
       }
 
       // TODO stick to cyclic boundary
-      /*
-      label iii = findIndex(pinnedPoints, i);
-      if( iii != -1 )
-      {
-        displacement[i] = 
-                transform
-                (
-                  I-pinnedPointsNorm[iii]*pinnedPointsNorm[iii],
-                  displacement[i]
-                );
-        
-      }
-       */
     }
-    
+
     // synchronizing over the cyclic and processor boundaries
     syncTools::syncPointList(mesh, meshPoints, displacement, plusEqOp<vector>(), vector::zero);
     syncTools::syncPointList(mesh, meshPoints, tol, plusEqOp<scalar>(), 0.0);
@@ -1184,14 +1263,12 @@ make_lists_and_normals()
           local_pp_EdgePoints
         );
 
-        //pinnedPointsLocal.append(local_EdgePoints);
         pinnedPoints.append(local_EdgePoints);
         vectorField locNormals(local_EdgePoints.size(), vector::zero);
         forAll(local_EdgePoints, i)
         {
           locNormals[i] = ppPointNormals[ local_pp_EdgePoints[i] ];
         }
-        //pinnedPointsNormLocal.append(locNormals);
         pinnedPointsNorm.append(locNormals);
       }
       else if (isA<processorPolyPatch>(bMesh[patchi]))
@@ -1202,6 +1279,7 @@ make_lists_and_normals()
       {
         const polyPatch& pp = refCast<const polyPatch>(bMesh[patchi]);
         const labelList& ppMeshPoints = pp.meshPoints();
+        const vectorField& ppPointNormals = pp.pointNormals(); //2
 
         labelList local_EdgePoints, global_EdgePoints;
         labelList local_pp_EdgePoints;
@@ -1216,7 +1294,14 @@ make_lists_and_normals()
         );
 
         fixedPoints.append(local_EdgePoints);
-        //fixedPointsLocal.append(local_EdgePoints);
+        
+        vectorField locNormals(local_EdgePoints.size(), vector::zero);
+        forAll(local_EdgePoints, i)
+        {
+          locNormals[i] = ppPointNormals[ local_pp_EdgePoints[i] ];
+        }
+        
+        fixedPointNorms.append(locNormals);
         globalFixedPoints.append(global_EdgePoints);
         
         // * * * * * * * * * * * * 
@@ -1329,7 +1414,7 @@ calc_weights_surface()
   
   const pointField& boundaryPoints = pp.localPoints();
   const pointField& faceCs = pp.faceCentres();
-
+  
   vectorFieldList weights( boundaryPoints.size() );
   vectorField sumWeights( boundaryPoints.size() );
 
@@ -1357,7 +1442,7 @@ calc_weights_surface()
           w[ii] = 1.0 / mag( d[ii] );
         }
         else{
-          w[ii] = 0.0;
+          w[ii] = 1.0;
         }
       }
 
@@ -1370,10 +1455,17 @@ calc_weights_surface()
 
   syncTools::syncPointList( meshTmp, meshPoints, sumWeights, plusEqOp<vector>(), vector::zero);
 
+  scalarField cc(boundaryPoints.size(), 1.0);
+  syncTools::syncPointList(meshTmp, meshPoints, cc, plusEqOp<scalar>(), 0.0);
+
+  const vectorField& faceNs = pp.faceNormals();
+
+  // TODO!!! Re weights
   forAll(weights, i)
   {
     vectorField& pw = weights[i];
     vector &sw = sumWeights[i];
+    const labelList& pFaces = plistFaces[i];
     forAll(pw, j)
     {
       vector &ppw = pw[j];
@@ -1383,92 +1475,26 @@ calc_weights_surface()
         {
           ppw[ii] /= sw[ii];
         }
-        if( ii==2 )
-        {
-          ppw[ii] = 0.0;
-        }
+        //ppw[ii] = 1.0 / cc[i];
       }
+      
+      label faceI = pFaces[j];
 
+      pw[j] = 
+              transform
+              (
+                I-faceNs[ faceI ]*faceNs[ faceI ],
+                pw[j]
+              );
+      //pw[j] /= mag(pw[j]);
     }
+    //Info<<" i "<<i<<"  pw "<<pw<<nl;
   }
+  
+  //std::exit(0);
 
   surfWeights = weights;
 }
-
-/*
-Foam::scalarFieldList Foam::
-dissolMotionPointPatchVectorField::
-calc_edge_weights(const fvMesh& meshTmp, const Patch& patchIO_)
-{
-  label patchID = this->patch().index();
-  const polyMesh& mesh = this->internalField().mesh()();
-  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
-  const polyPatch& patch_ = refCast<const polyPatch>(bMesh[patchID]);
-  const List<face>& flist = patch_.localFaces();
-  const labelListList& plistFaces = patch_.pointFaces();
-  const labelList& meshPoints = mesh.boundaryMesh()[patchID].meshPoints();
-  
-
-  const pointField& boundaryPoints = patch_.localPoints();
-  const pointField& faceCs = patch_.faceCentres();
-  
-  
-  
-  
-  const labelList& wallsTo  = patch_.meshPoints();
-  const labelList& meshPoints = patchIO_.meshPoints();
-  labelList local_wall_WallEdges, global_WallEdges;
-  commonPoints(wallsTo, meshPoints, local_wall_WallEdges, global_WallEdges);
-
-  const labelListList& pointEdgesLi = patch_.pointEdges();
-  const edgeList& ee = patch_.edges();
-  labelListList nepe;
-  neighborListEdge(local_wall_WallEdges, ee, pointEdgesLi, nepe);
-
-  label NN = local_wall_WallEdges.size();
-  scalarFieldList weights( NN );
-  scalarField sumWeights( NN, 0.0 );
-
-  forAll(nepe, i){
-    label  curI = local_wall_WallEdges[i];
-    point& curP = boundaryPoints[curI];
-    const labelList& pNeib = nepe[i];
-
-    scalarField& pw = weights[i];
-    pw.setSize(pNeib.size());
-
-    scalar sumw = 0.0;
-    forAll(pNeib, ii){
-      label ind = pNeib[ii];
-      point& neibP = boundaryPoints[ind];
-      vector d2 = neibP - curP;
-      scalar magd2 = mag(d2);
-
-      scalar w = 0.0;
-      if( magd2>SMALL) w = 1.0 / magd2;
-
-      pw[ii] = w;
-      sumw += pw[ii];
-    }
-    sumWeights[i] = sumw;
-  }
-
-  syncTools::syncPointList(meshTmp, global_WallEdges, sumWeights, plusEqOp<scalar>(), 0.0);
-
-  forAll(weights, i){
-    scalarField& pw = weights[i];
-    scalar &sw = sumWeights[i];
-    forAll(pw, j){
-      if( mag(sw)>SMALL ) pw[j] /= sw;
-    }
-  }
-
-  return weights;
-}
-*/
-
-
-
 
 Foam::vectorField Foam::
 dissolMotionPointPatchVectorField::

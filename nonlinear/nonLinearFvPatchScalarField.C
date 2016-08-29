@@ -433,15 +433,15 @@ void Foam::nonLinearFvPatchScalarField::updateCoeffs()
     scalar dR   = dw * (c1-c2) + w * (dc1-dc2) + dc2;
     
     // ***************************************************************************
-    scalar displ = R * dt;
-    
-    //point newPoint = localFcs[i] + displ * localFns[i];
-    scalar distToInters = limitPlane.normalIntersect(localFcs[i], localFns[i]);
-    
     scalar theta = 1.0;
-    if( limitingPlane && (displ > distToInters) )
+    if( limitingPlane )
     {
-      theta = distToInters / displ;
+      scalar displ = R * dt;
+      scalar distToInters = limitPlane.normalIntersect(localFcs[i], localFns[i]);
+      if((displ > distToInters))
+      {
+        theta = distToInters / displ;
+      }
     }
     R  *= theta;
     dR *= theta;

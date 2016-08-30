@@ -948,6 +948,12 @@ void Foam::
 dissolMotionPointPatchVectorField::
 relaxPatchMesh(vectorField& pointMotion)
 {
+  vector n(0,1,1);
+  vector v(0.25,0.25,0.25);
+  Info<<" da "<<transform(I - n*n, v)<<nl;
+  std::exit(0);
+  
+  
   pointField newPointsPos = this->patch().localPoints() + pointMotion;
   
   label patchID = this->patch().index();

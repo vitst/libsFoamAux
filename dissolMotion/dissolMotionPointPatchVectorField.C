@@ -472,36 +472,39 @@ relaxEdges(vectorField& pointMotion)
   
   // current patch geometry
   const pointField& curPP  = curPatch.localPoints();
-  const labelList& curMeshPoints = curPatch.meshPoints();
-  const labelListList& curPointEdges = curPatch.pointEdges();
-  const edgeList& ee = curPatch.edges();
+  //const labelList& curMeshPoints = curPatch.meshPoints();
+  //const labelListList& curPointEdges = curPatch.pointEdges();
+  //const edgeList& ee = curPatch.edges();
   
   const List<face>& llf = curPatch.localFaces();
   const labelListList& plistFaces = curPatch.pointFaces();
 
-  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+  //const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
   
   labelList fixedEdgePoint;
   
   fixed_p_edges(fixedEdgePoint, pointMotion);
   
   int NN = fixedPoints.size();
+  
+  /*
   if(fixedEdgePoint.size()>0)
     Pout  << " fixEdgePoint: " << fixedEdgePoint
           << " fixPointsSize: " << fixedPoints.size()
           << " pntPos: " << curPP[fixedPoints[fixedEdgePoint[0]]]
           << " pntMotion: " << pointMotion[fixedPoints[fixedEdgePoint[0]]]
           <<endl;
+   */
 
 
 
 
   labelList loc_corners;
-  labelList loc_corners_fP;
+  //labelList loc_corners_fP;
   labelListList frecBin(curPP.size());
   forAll(fixedPoints, i)
   {
-    labelList& fpl = frecBin[fixedPoints[i]];
+    //labelList& fpl = frecBin[fixedPoints[i]];
     frecBin[fixedPoints[i]].append(i);
   }
   forAll(frecBin, i)
@@ -540,13 +543,13 @@ relaxEdges(vectorField& pointMotion)
             & 
             (loc_corners_norms[i] * loc_corners_norms[i]);
     
+    /*
     Info<< "Corners: "<<loc_corners[i]
           <<"  loc_corners_norms "<<loc_corners_norms[i]
             << "  pM: " << pointMotion[loc_corners[i]]
             <<nl;
+     */
   }
-  Info<<nl;
-  
   //std::exit(0);
   
   
@@ -700,6 +703,8 @@ relaxEdges(vectorField& pointMotion)
 
     itt++;
   }
+  Info << nl << "Edge relaxation done in " << itt
+       << " iterations. Tolerance: " << displ_tol << endl;
 
   pointMotion = (movedPoints-curPP);
 
@@ -759,12 +764,14 @@ fixed_p_edges(labelList& fixedPEdges, vectorField& pointMotion)
           local_pp_EdgePoints
         );
         
+        /*
         if(local_EdgePoints.size()>0)
           Pout<<"Patch type:  "<< bMesh[patchi].type()
             <<" "<<bMesh[patchi].name()
             <<" lep "<<local_EdgePoints.size()
             <<" gep "<<global_EdgePoints.size()
             <<endl;
+         */
 
         //if(local_EdgePoints.size()>0)
         //{
@@ -948,12 +955,6 @@ void Foam::
 dissolMotionPointPatchVectorField::
 relaxPatchMesh(vectorField& pointMotion)
 {
-  vector n(0,1,1);
-  vector v(0.25,0.25,0.25);
-  Info<<" da "<<transform(I - n*n, v)<<nl;
-  std::exit(0);
-  
-  
   pointField newPointsPos = this->patch().localPoints() + pointMotion;
   
   label patchID = this->patch().index();
@@ -1142,14 +1143,14 @@ relaxPatchMesh(vectorField& pointMotion)
 
     if(itt%1000==0)
     {
-      Info << this->patch().name() << "  rlx iter " << itt
+      Info << "  " << this->patch().name() << "  rlx iter " << itt
            << "  tolerance: " << displ_tol << endl;
     }
 
     itt++;
   }
-  Info << this->patch().name() << "  rlx converged in " << itt 
-       << " iterations. Tolerance: " << displ_tol<< endl;
+  Info << nl << this->patch().name() << "  rlx converged in " << itt 
+       << " iterations. Tolerance: " << displ_tol<< nl << endl;
 
   pointMotion = (newPointsPos - this->patch().localPoints());
   
@@ -1181,8 +1182,6 @@ relaxPatchMesh(vectorField& pointMotion)
   }
    */
   //std::exit(0);
-  
-  
 }
 
 void Foam::
@@ -1637,6 +1636,7 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
           local_pp_EdgePoints
         );
         
+        /*
         if(local_EdgePoints.size()>0)
         {
           Pout<< "BBBBBpatch type: "<< bMesh[patchi].type()
@@ -1645,6 +1645,7 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
                   <<"  "<< ppPointNormals[ local_pp_EdgePoints[0] ]
                   << endl;
         }
+        */
         
         //vectorField
         forAll(local_EdgePoints, i)

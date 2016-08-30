@@ -346,7 +346,6 @@ dissolMotionPointPatchVectorField
   {
     Info<<i<<" "<<surfWeights[i]<<"  "<<pinnedPointsNorm[i]<<nl;
   }
-  std::exit(0);
   */
   
 }

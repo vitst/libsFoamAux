@@ -284,6 +284,7 @@ Foam::nonLinearFvPatchScalarField::nonLinearFvPatchScalarField
   {
     this->mixedFvPatchScalarField::updateCoeffs();
   }
+  
 
   /*
   Field<scalar>::operator=

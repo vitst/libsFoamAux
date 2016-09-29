@@ -43,6 +43,7 @@ License
 //#include "fixedNormalSlipPointPatchField.H"
 
 #include "plane.H"
+#include "face.H"
 #include "syncTools.H"
 
 //#include "triSurface.H"
@@ -325,8 +326,6 @@ dissolMotionPointPatchVectorField
       << endl;
   }
 
-  
-  
   if(debug) 
   {
     Info << "dissolMotionPointPatchVectorField constructor 2 "
@@ -340,13 +339,6 @@ dissolMotionPointPatchVectorField
             "make_lists_and_normals"<<nl;
   }
   make_lists_and_normals();
-  
-  /*
-  for(int i=0; i<5; i++)
-  {
-    Info<<i<<" "<<surfWeights[i]<<"  "<<pinnedPointsNorm[i]<<nl;
-  }
-  */
   
 }
 
@@ -432,32 +424,48 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
     {
       Info<< pointMotion[i] << nl;
     }
-    */
+    if(Pstream::myProcNo()==3)
+      Pout<< "QQQQQQQQ: fixedPoints[74]: "<< fixedPoints[74]
+              <<" pointMotion[fp74]: "<<pointMotion[fixedPoints[74]]
+              <<" pointMotion[2507]: "<<pointMotion[2507]
+              <<nl<<nl;
+     */
+    
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // TODO the rest of relaxation should be implemented
     Info<<"fixCommonNeighborPatchPoints"<<nl;
     fixCommonNeighborPatchPoints(pointMotion);
 
+    /*
+    if(Pstream::myProcNo()==3)
+      Pout<< "FFFFFFFFF: fixedPoints[74]: "<< fixedPoints[74]
+              <<" pointMotion[fp74]: "<<pointMotion[fixedPoints[74]]
+              <<" pointMotion[2507]: "<<pointMotion[2507]
+              <<nl<<nl;
+    */
+    
     Info<<nl<<"relaxEdges"<<nl;
     relaxEdges(pointMotion);
 
     Info<<nl<<"relaxPatchMesh"<<nl;
     relaxPatchMesh(pointMotion);
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
     /*
     Info<<"Aftern: "<<nl;
     for(int i = 0; i<10; i++)
     {
       Info<< pointMotion[i] << nl;
     }
-    */
+     */
+    
 
     // set the velocity for the point motion
     this->operator==( pointMotion/dt );
 
-    fixedValuePointPatchField<vector>::updateCoeffs();
   }
+  fixedValuePointPatchField<vector>::updateCoeffs();
 }
 
 void Foam::
@@ -493,8 +501,14 @@ relaxEdges(vectorField& pointMotion)
           << " pntPos: " << curPP[fixedPoints[fixedEdgePoint[0]]]
           << " pntMotion: " << pointMotion[fixedPoints[fixedEdgePoint[0]]]
           <<endl;
-   */
 
+  if(Pstream::myProcNo()==3)
+    Pout<< "AAAAAAAA: fixedPoints[74]: "<< fixedPoints[74]
+            <<" pointMotion[fp74]: "<<pointMotion[fixedPoints[74]]
+            <<" curPP[2507]: "<<curPP[2507]
+            <<" pointMotion[2507]: "<<pointMotion[2507]
+            <<nl<<nl;
+  */
 
 
 
@@ -534,6 +548,14 @@ relaxEdges(vectorField& pointMotion)
     }
   }
   
+  /*
+  if(Pstream::myProcNo()==3)
+    Pout<< "CCCCCCCC: "<<loc_corners.size()
+            <<" pointMotion[fp74]: "<<pointMotion[fixedPoints[74]]
+            <<" curPP[2507]: "<<curPP[2507]
+            <<" pointMotion[2507]: "<<pointMotion[2507]
+            <<nl<<nl;
+   */
   // fix corners
   forAll(loc_corners, i)
   {
@@ -543,6 +565,12 @@ relaxEdges(vectorField& pointMotion)
             (loc_corners_norms[i] * loc_corners_norms[i]);
     
     /*
+    if(Pstream::myProcNo()==3)
+      Pout<< "Corners: "<<loc_corners[i]
+          <<"  loc_corners_norms "<<loc_corners_norms[i]
+            << "  pM : " << pointMotion[loc_corners[i]]
+            <<nl<<nl;
+    / *
     Info<< "Corners: "<<loc_corners[i]
           <<"  loc_corners_norms "<<loc_corners_norms[i]
             << "  pM: " << pointMotion[loc_corners[i]]
@@ -551,13 +579,18 @@ relaxEdges(vectorField& pointMotion)
   }
   //std::exit(0);
   
-  
-
   vectorField pointNorm( NN, vector::zero );
   scalarList faceToPointSumWeights( NN, 0.0 );
 
-  pointField movedPoints = curPP + pointMotion;
+  /*
+  if(Pstream::myProcNo()==3)
+    Pout<< "DDDDDDDD: "<<loc_corners.size()
+            <<" pointMotion[2507]: "<<pointMotion[2507]
+            <<" curPP[2507]: "<<curPP[2507]
+            <<nl<<nl;
+   */
   
+  pointField movedPoints = curPP + pointMotion;
   
   double displ_tol = 1.0;
   int itt = 0;
@@ -580,7 +613,6 @@ relaxEdges(vectorField& pointMotion)
     //forAll(nepe, i)
     forAll(fixedPoints, i)
     {
-      //label  curI = local_EdgePoints[i];
       label  curI = fixedPoints[i];
       point& curP = movedPoints[curI];
       const labelList& pNeib = nepe[i];
@@ -597,8 +629,26 @@ relaxEdges(vectorField& pointMotion)
 
         displacement[i] += curwv[ii] * d2;
         tol[i] += mag_d;
-        sumWeights[i] += 1;
+        sumWeights[i] += 1.0;
       }
+      
+      /*
+      if(itt%1000==0 && i>72 && i<76)
+      {
+        if(Pstream::myProcNo()==3)
+          Pout<<i<<"  beforeSync: "<<displacement[i]
+                  <<"  curP " << curP
+                  <<"  pointMotion: "<<pointMotion[curI]
+                  <<"  neP1 " << movedPoints[pNeib[0]]
+                  <<"  neP2 " << movedPoints[pNeib[1]]
+                  <<"  pNei " <<  pNeib
+                  //<<"  curw " <<  curwv 
+                  //<< " tolr "<< tol[i] 
+                  << "            itt "<< itt
+                  <<nl;
+      }
+      */
+      
 
       // stick to cyclic boundary
 
@@ -642,6 +692,20 @@ relaxEdges(vectorField& pointMotion)
     syncTools::syncPointList(mesh, globalFixedPoints, tol, plusEqOp<scalar>(), 0.0);
     syncTools::syncPointList(mesh, globalFixedPoints, sumWeights, plusEqOp<scalar>(), 0.0);
 
+    /*
+    if(itt%1000==0)
+    {
+      int iii = findMax(displacement);
+      if(iii>=0)
+        Pout<<" afterSyncMax: "<<max(displacement)<<"  "
+                << displacement[0]<< "  "
+                << iii << "  "
+                << sumWeights[iii] << "  "
+                << movedPoints[iii]
+                <<nl;
+    }
+    */
+    
     forAll(pointNorm, i)
     {
       displacement[i] /= sumWeights[i];
@@ -680,6 +744,14 @@ relaxEdges(vectorField& pointMotion)
     scalar factor = (itt%q_2edge==0) ? k_2edge : k_1edge;
     projectedDisplacement *= factor;
 
+    /*
+    for(int i=0; i<3; i++){
+      if(projectedDisplacement.size()>0)
+        Info<<"i="<<i<<"  pr: "<<projectedDisplacement[i]
+                <<"  pm: "<< pointMotion[i]
+                <<endl;
+    }
+    */
     // stick to cyclic boundary
     //fixPinnedPoints(projectedDisplacement);
     
@@ -688,17 +760,22 @@ relaxEdges(vectorField& pointMotion)
       label ind = fixedPoints[i];
       movedPoints[ind] += projectedDisplacement[i];
     }
+    
 
     //if(projectedDisplacement.size()>0)
-      displ_tol = gAverage( mag(projectedDisplacement/factor)/tol );
+      displ_tol = gAverage( mag(projectedDisplacement) ) /factor/ gAverage( mag(tol) );
     //else
     //  displ_tol = gAverage( 0.0 );
-
+      
+      
+    /*
     if(itt%1000==0)
     {
+      Pout<<" maxDDD: "<<max(projectedDisplacement)<<nl;
       Info << "  edge rlx iter " << itt
            << " tolerance: " << displ_tol << endl;
     }
+    */
 
     itt++;
   }
@@ -708,6 +785,19 @@ relaxEdges(vectorField& pointMotion)
   pointMotion = (movedPoints-curPP);
 
   fixPinnedPoints(pointMotion);
+  
+  /*
+  forAll(fixedPoints, i)
+  {
+    Info<< " pntPos: " << curPP[fixedPoints[i]]
+        << "  pntMotion: " << pointMotion[fixedPoints[i]]
+        << nl
+        << "     norms: "<< fixedPointNorms[i]
+        << "  weight: " << rlxEdgeWeights[i]
+        <<endl;
+  }
+  */
+  
 }
 
 void Foam::
@@ -1663,13 +1753,13 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
 
           scalar cosa = 0.0;
           
-          if( mag(pointMotion[pointI]) > VSMALL && mag(AA) > VSMALL )
+          if( mag(pointMotion[pointI]) > SMALL && mag(AA) > SMALL )
           {
             cosa = 
               (pointMotion[pointI] & AA) / (mag(pointMotion[pointI])*mag(AA));
           }
           
-          if( mag(cosa)>VSMALL )
+          if( mag(cosa)>SMALL && mag(AA) > SMALL)
           {
             scalar L = mag(pointMotion[pointI]) / cosa;
             pointMotion[pointI] = L * AA / mag(AA);
@@ -1756,6 +1846,9 @@ getPointMotion( vectorField& pointMotion )
   (
     mesh.boundaryMesh()[patchID], fvmesh_
   );
+  
+  //scalarField pointCface11 = C.boundaryField()[patchID];
+  
   scalarField pointCface = -C.boundaryField()[patchID].snGrad();
   vectorField pointNface = mesh.boundaryMesh()[patchID].faceNormals();
   scalarField motionC    = patchInterpolator.faceToPointInterpolate(pointCface);
@@ -1766,6 +1859,30 @@ getPointMotion( vectorField& pointMotion )
   
   // set the velocity for the point motion
   pointMotion = l_T * motionC * motionN;
+  
+  /*
+  vectorField fCC = mesh.boundaryMesh()[patchID].faceCentres();
+  //const List<face>& fp = mesh.boundaryMesh()[patchID].localFaces();
+  Info<<nl<<"  concentration: "<<nl;
+  for(int i = 0; i<10; i++)
+  {
+    Info<< i << " " << pointCface[i] << "   " << pointNface[i] 
+            << "  " << pointCface11[i] 
+            << "  " << fCC[i] 
+            << nl;
+  }
+  const pointField& curPP  = mesh.boundaryMesh()[patchID].localPoints();
+  Info<<nl<<"  points: "<<nl;
+  for(int i = 0; i<10; i++)
+  {
+    Info<< i << " "<< curPP[i]
+            << "  "<< motionC
+            << nl;
+  }
+  
+  Info<<nl<<nl;
+  */
+  
 }
 
 void Foam::dissolMotionPointPatchVectorField::write

@@ -443,7 +443,9 @@ void Foam::nonLinearFvPatchScalarField::updateCoeffs()
       {
         theta = distToInters / displ;
       }
+    //Info << nl << "    teta " << theta << "  " << distToInters << "  " << displ << nl;
     }
+    if(theta<SMALL) theta = 0.0;
     R  *= theta;
     dR *= theta;
     // ***************************************************************************

@@ -768,18 +768,18 @@ relaxEdges(vectorField& pointMotion)
     //  displ_tol = gAverage( 0.0 );
       
       
-    /*
+    
     if(itt%1000==0)
     {
-      Pout<<" maxDDD: "<<max(projectedDisplacement)<<nl;
+      //Pout<<" maxDDD: "<<max(projectedDisplacement)<<nl;
       Info << "  edge rlx iter " << itt
            << " tolerance: " << displ_tol << endl;
     }
-    */
+    
 
     itt++;
   }
-  Info << nl << "Edge relaxation done in " << itt
+  Info << nl << "  Edge relaxation done in " << itt
        << " iterations. Tolerance: " << displ_tol << endl;
 
   pointMotion = (movedPoints-curPP);
@@ -1238,7 +1238,7 @@ relaxPatchMesh(vectorField& pointMotion)
 
     itt++;
   }
-  Info << nl << this->patch().name() << "  rlx converged in " << itt 
+  Info << nl << "  " << this->patch().name() << "  rlx converged in " << itt 
        << " iterations. Tolerance: " << displ_tol<< nl << endl;
 
   pointMotion = (newPointsPos - this->patch().localPoints());

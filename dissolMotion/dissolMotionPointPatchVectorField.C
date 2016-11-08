@@ -450,6 +450,7 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 
     Info<<nl<<"relaxPatchMesh"<<nl;
     relaxPatchMesh(pointMotion);
+    
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
     /*
@@ -590,8 +591,17 @@ relaxEdges(vectorField& pointMotion)
             <<nl<<nl;
    */
   
+  if(debug) 
+  {
+    Info << "  Number of corner points "<< loc_corners.size() << nl;
+  }
+  
   pointField movedPoints = curPP + pointMotion;
   
+  if(debug) 
+  {
+    Info << "  Relaxation loop:"<< nl;
+  }
   double displ_tol = 1.0;
   int itt = 0;
   while(displ_tol>rlxTol)
@@ -761,21 +771,20 @@ relaxEdges(vectorField& pointMotion)
       movedPoints[ind] += projectedDisplacement[i];
     }
     
+    scalar gAmpD = gAverage( mag(projectedDisplacement) );
+    scalar gAmt  = gAverage( mag(tol) );
 
-    //if(projectedDisplacement.size()>0)
-      displ_tol = gAverage( mag(projectedDisplacement) ) /factor/ gAverage( mag(tol) );
-    //else
-    //  displ_tol = gAverage( 0.0 );
+    if(gAmt>SMALL)
+      displ_tol = gAmpD /factor/ gAmt;
+    else
+      displ_tol = 0.0;
       
-      
-    
     if(itt%1000==0)
     {
       //Pout<<" maxDDD: "<<max(projectedDisplacement)<<nl;
       Info << "  edge rlx iter " << itt
            << " tolerance: " << displ_tol << endl;
     }
-    
 
     itt++;
   }
@@ -1110,6 +1119,10 @@ relaxPatchMesh(vectorField& pointMotion)
   // + + + + + + +  + + + + + + +  + + + + + + +  + + + + + + +  + + + + + + + 
   */
 
+  if(debug) 
+  {
+    Info << "    Relaxation loop: "<< nl;
+  }
   vectorField pointNorm( N, vector::zero );
   scalarList faceToPointSumWeights( N, 0.0 );
   double displ_tol = 1.0;
@@ -1230,12 +1243,20 @@ relaxPatchMesh(vectorField& pointMotion)
 
     displ_tol = gAverage( mag(finalDisplacement/factor)/tol );
 
+    if(debug) 
+    {
+      Info <<"    "<< itt << "  Displ_tol: "<< displ_tol << nl;
+      if(itt==3)
+        break;
+      
+    }
+    
     if(itt%1000==0)
     {
       Info << "  " << this->patch().name() << "  rlx iter " << itt
            << "  tolerance: " << displ_tol << endl;
     }
-
+    
     itt++;
   }
   Info << nl << "  " << this->patch().name() << "  rlx converged in " << itt 
@@ -1655,11 +1676,16 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
     if (bMesh[patchi].size() && (patchi != patchID) )
     {
       if(
-              isA<cyclicPolyPatch>(bMesh[patchi]) 
-              ||
-              isA<symmetryPolyPatch>(bMesh[patchi])
+        isA<cyclicPolyPatch>(bMesh[patchi]) 
+        ||
+        isA<symmetryPolyPatch>(bMesh[patchi])
         )
       {
+        if(debug) 
+        {
+          Info << "  This is cyclic or symmetry patch, so it is skipped"<<nl;
+        }
+
         /*
         const polyPatch& cpp = 
             refCast<const polyPatch>(bMesh[patchi]);
@@ -1704,6 +1730,10 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
       }
       else if (isA<processorPolyPatch>(bMesh[patchi]))
       {
+        if(debug) 
+        {
+          Info << "  This is processor patch, so it is skipped"<<nl;
+        }
         // skip
       }
       else
@@ -1735,6 +1765,14 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
                   << endl;
         }
         */
+        
+        if(debug) 
+        {
+          Info << "  This is "<<bMesh[patchi].name()
+                  <<" patch, of type "<<bMesh[patchi].type()<<nl;
+          Info << "  Number of common points is " << local_EdgePoints.size()<<nl;
+        }
+        
         
         //vectorField
         forAll(local_EdgePoints, i)

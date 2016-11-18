@@ -419,6 +419,12 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
     pointMotion *= dt;
     
     /*
+    vectorField faceMotion;
+    getPointMotion(faceMotion);
+    faceMotion *= dt;
+     */
+    
+    /*
     Info<<"PPPoint motion: "<<nl;
     for(int i = 0; i<10; i++)
     {
@@ -435,7 +441,7 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // TODO the rest of relaxation should be implemented
     Info<<"fixCommonNeighborPatchPoints"<<nl;
-    fixCommonNeighborPatchPoints(pointMotion);
+    //fixCommonNeighborPatchPoints(pointMotion);
 
     /*
     if(Pstream::myProcNo()==3)
@@ -449,7 +455,11 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
     relaxEdges(pointMotion);
 
     Info<<nl<<"relaxPatchMesh"<<nl;
+    calc_weights_surface();
     relaxPatchMesh(pointMotion);
+    
+    //calc_point_weights_surface();
+    //relaxPatchMeshPoints(pointMotion);
     
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
@@ -464,6 +474,23 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 
     // set the velocity for the point motion
     this->operator==( pointMotion/dt );
+    
+    /*
+    faceMotion /= dt;
+    
+    label patchID = this->patch().index();
+    const polyMesh& mesh = this->internalField().mesh()();
+    //- set-up interpolator
+    const fvMesh& fvmesh_ = refCast<const fvMesh>(mesh);
+    coupledPatchInterpolation patchInterpolator
+    (
+      mesh.boundaryMesh()[patchID], fvmesh_
+    );
+    vectorField pointMotion = 
+            patchInterpolator.faceToPointInterpolate(faceMotion);
+    
+    this->operator==( pointMotion );
+     */
 
   }
   fixedValuePointPatchField<vector>::updateCoeffs();
@@ -771,8 +798,14 @@ relaxEdges(vectorField& pointMotion)
       movedPoints[ind] += projectedDisplacement[i];
     }
     
-    scalar gAmpD = gAverage( mag(projectedDisplacement) );
-    scalar gAmt  = gAverage( mag(tol) );
+    // To avoid WARNING message
+    // @TODO need to be checked for correctness
+    scalar gAmpD = 0.0;
+    scalar gAmt  = 0.0;
+    if(projectedDisplacement.size()>0){
+      gAmpD = gAverage( mag(projectedDisplacement) );
+      gAmt  = gAverage( mag(tol) );
+    }
 
     if(gAmt>SMALL)
       displ_tol = gAmpD /factor/ gAmt;
@@ -1245,10 +1278,9 @@ relaxPatchMesh(vectorField& pointMotion)
 
     if(debug) 
     {
-      Info <<"    "<< itt << "  Displ_tol: "<< displ_tol << nl;
-      if(itt==3)
-        break;
-      
+      //Info <<"    "<< itt << "  Displ_tol: "<< displ_tol << nl;
+      //if(itt==0)
+      //  break;
     }
     
     if(itt%1000==0)
@@ -1293,6 +1325,229 @@ relaxPatchMesh(vectorField& pointMotion)
    */
   //std::exit(0);
 }
+
+
+
+void Foam::
+dissolMotionPointPatchVectorField::
+relaxPatchMeshPoints(vectorField& pointMotion)
+{
+  pointField newPointsPos = this->patch().localPoints() + pointMotion;
+  
+  label patchID = this->patch().index();
+  const polyMesh& mesh = this->internalField().mesh()();
+  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+  const polyPatch& pPatch = refCast<const polyPatch>(bMesh[patchID]);
+  const List<face>& llf = pPatch.localFaces();
+  const labelListList& plistFaces = pPatch.pointFaces();
+  //const labelListList& flistFaces = pPatch.faceFaces();
+  const labelList& meshPoints = pPatch.meshPoints();
+  
+  int N = newPointsPos.size();
+  
+  const pointField& boundaryPoints = pPatch.localPoints();
+  
+  //const pointField&  faceCs = pPatch.faceCentres();
+  //const vectorField& faceNs = pPatch.faceNormals();
+  
+  if(debug) 
+  {
+    Info << "    Relaxation loop (only points): "<< nl;
+  }
+  vectorField pointNorm( N, vector::zero );
+  scalarList faceToPointSumWeights( N, 0.0 );
+  double displ_tol = 1.0;
+  int itt = 0;
+  while(displ_tol>rlxTol)
+  {
+
+    if(itt%q_norm_recalc==0){
+      // set fields to zero
+      pointNorm = vector::zero;
+      faceToPointSumWeights = 0.0;
+    }
+      
+    // calculate current face centers
+    pointField faceCs = faceCentres(newPointsPos, llf);
+    vectorField faceNs = faceNormals(newPointsPos, llf);
+
+    // create a displacement field for points
+    vectorField displacement(N, vector::zero);
+    scalarField tol(N, 0.0);
+    
+    // !!!!!!!!!!!!!!!!!!!!!!!! @HERE
+    forAll(newPointsPos, i)
+    {
+      point& curP = newPointsPos[i];
+      const labelList& pFaces = plistFaces[i];
+      const vectorField& pw = surfWeights[i];
+      //const vectorField& puw = updW[i];
+
+      // recalculate normals
+      if(itt%q_norm_recalc==0)
+      {
+        forAll(pFaces, j)
+        {
+          label faceI = pFaces[j];
+          point& faceC = faceCs[faceI];
+
+          vector d = faceC - curP;
+
+          scalar mag_d = mag(d);
+
+          scalar nw = 1.0 / mag_d;
+          pointNorm[i] += nw * faceNs[ faceI ];
+          faceToPointSumWeights[i] += nw;
+        }
+      }
+
+      
+      forAll(pFaces, j)
+      {
+        label faceI = pFaces[j];
+        point& faceC = faceCs[faceI];
+
+        vector d = faceC - curP;
+
+        scalar mag_d = mag(d);
+        
+        /*
+        vector newW = 
+                transform
+                (
+                  I-faceNs[ faceI ]*faceNs[ faceI ],
+                  pw[j]
+                );
+        */
+
+        vector disp;
+        //disp.x() = d.x() * puw[j].x(); //* newW.x();
+        //disp.y() = d.y() * puw[j].y() ; //* newW.y();
+        //disp.z() = d.z() * puw[j].z() ; //* newW.z();
+        disp.x() = d.x() * pw[j].x();
+        disp.y() = d.y() * pw[j].y();
+        disp.z() = d.z() * pw[j].z();
+        displacement[i] += disp;
+
+        //tol[i] += mag_d * mag(pw[j]);
+        tol[i] += mag( disp );
+
+        // this is for normal
+        if(itt%q_norm_recalc==0)
+        {
+          scalar nw = 1.0 / mag_d;
+          pointNorm[i] += nw * faceNs[ faceI ];
+          faceToPointSumWeights[i] += nw;
+        }
+      }
+      
+      
+      // TODO stick to cyclic boundary
+    }
+
+    // synchronizing over the cyclic and processor boundaries
+    syncTools::syncPointList(mesh, meshPoints, displacement, plusEqOp<vector>(), vector::zero);
+    syncTools::syncPointList(mesh, meshPoints, tol, plusEqOp<scalar>(), 0.0);
+
+    if(itt%q_norm_recalc==0){
+      syncTools::syncPointList(mesh, meshPoints, pointNorm, plusEqOp<vector>(), vector::zero);
+      syncTools::syncPointList(mesh, meshPoints, faceToPointSumWeights, plusEqOp<scalar>(), 0.0);
+
+      // normalization
+      forAll(pointNorm, pointi)
+      {
+        pointNorm[pointi] /= faceToPointSumWeights[pointi];
+        pointNorm[pointi] /= mag(pointNorm[pointi]);
+      }
+    }
+
+    // apply edge boundary for relxation (edges between patches are fixed)
+    forAll(fixedPoints, i)
+    {
+      label pointI = fixedPoints[i];
+      displacement[ pointI ] = vector::zero;
+    }
+    
+    fixPinnedPoints(displacement);
+    
+    vectorField projectedDisplacement = transform(I - pointNorm*pointNorm, displacement);
+
+    // TODO stick to cyclic boundary
+    /*
+    forAll(pinnedPoints, ii)
+    {
+      label ind = pinnedPoints[ii];
+      projectedDisplacement[ind] = 
+              transform
+              (
+                I-pinnedPointsNorm[ii]*pinnedPointsNorm[ii],
+                projectedDisplacement[ind]
+              );
+    }
+    */
+    
+    scalar factor = (itt%q_2==0) ? k_2 : k_1;
+
+    vectorField finalDisplacement = factor * projectedDisplacement;
+
+    newPointsPos += finalDisplacement;
+
+    displ_tol = gAverage( mag(finalDisplacement/factor)/tol );
+
+    if(debug) 
+    {
+      //Info <<"    "<< itt << "  Displ_tol: "<< displ_tol << nl;
+      //if(itt==0)
+      //  break;
+    }
+    
+    if(itt%1000==0)
+    {
+      Info << "  " << this->patch().name() << "  rlx iter " << itt
+           << "  tolerance: " << displ_tol << endl;
+    }
+    
+    itt++;
+  }
+  Info << nl << "  " << this->patch().name() << "  rlx converged in " << itt 
+       << " iterations. Tolerance: " << displ_tol<< nl << endl;
+
+  pointMotion = (newPointsPos - this->patch().localPoints());
+  
+  fixPinnedPoints(pointMotion);
+  
+  scalarField cc(pointMotion.size(), 1.0);
+  syncTools::syncPointList(mesh, meshPoints, pointMotion, plusEqOp<vector>(), vector::zero);
+  syncTools::syncPointList(mesh, meshPoints, cc, plusEqOp<scalar>(), 0.0);
+
+  forAll(pointMotion, i){
+    pointMotion[i] /= cc[i];
+  }
+
+  /*
+  Pout<<nl<< "BBB1:  " << this->patch().localPoints()[0] << "   " << pointMotion[0] <<endl;
+  forAll(pinnedPoints, ii)
+  {
+    label ind = pinnedPoints[ii];
+    
+    //if(  this->patch().localPoints()[ind].x() < 1
+    //  && this->patch().localPoints()[ind].x() > 0
+    //)
+    if(ind==4884 || ind==5139)
+    {
+      Pout<<ind<<"  "
+              << this->patch().localPoints()[ind] << "  "
+              << pointMotion[ind]<<endl;
+    }
+  }
+   */
+  //std::exit(0);
+}
+
+
+
+
+
 
 void Foam::
 dissolMotionPointPatchVectorField::
@@ -1553,11 +1808,13 @@ calc_weights_surface()
       vector w = vector::zero;
 
       for(int ii=0; ii<3; ii++){
-        if(mag(d[ii])>SMALL){
+        if(mag(d[ii])>SMALL)
+        {
           w[ii] = 1.0 / mag( d[ii] );
         }
-        else{
-          w[ii] = 1.0;
+        else
+        {
+          w[ii] = GREAT;
         }
       }
 
@@ -1590,17 +1847,23 @@ calc_weights_surface()
         {
           ppw[ii] /= sw[ii];
         }
+        else
+        {
+          ppw[ii] = GREAT;
+        }
         //ppw[ii] = 1.0 / cc[i];
       }
       
       label faceI = pFaces[j];
 
+      /*
       pw[j] = 
               transform
               (
                 I-faceNs[ faceI ]*faceNs[ faceI ],
                 pw[j]
               );
+       */
       //pw[j] /= mag(pw[j]);
     }
     //Info<<" i "<<i<<"  pw "<<pw<<nl;
@@ -1610,6 +1873,119 @@ calc_weights_surface()
 
   surfWeights = weights;
 }
+
+
+void Foam::
+dissolMotionPointPatchVectorField::
+calc_point_weights_surface()
+{
+  label patchID = this->patch().index();
+  const polyMesh& mesh = this->internalField().mesh()();
+  
+  const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+  const polyPatch& pPatch = refCast<const polyPatch>(bMesh[patchID]);
+  const List<face>& llf = pPatch.localFaces();
+  const labelListList& plistFaces = pPatch.pointFaces();
+  const labelListList& flistFaces = pPatch.faceFaces();
+  const labelListList& plistEdges = pPatch.pointEdges();
+  const labelList& meshPoints = pPatch.meshPoints();
+  
+  const edgeList& edges = pPatch.edges();
+
+  const pointField& boundaryPoints = pPatch.localPoints();
+  
+  const pointField&  faceCs = pPatch.faceCentres();
+  const vectorField& faceNs = pPatch.faceNormals();
+  
+  vectorFieldList weights( boundaryPoints.size() );
+  vectorField sumWeights( boundaryPoints.size() );
+
+  scalarField cc(boundaryPoints.size(), 1.0);
+  syncTools::syncPointList(mesh, meshPoints, cc, plusEqOp<scalar>(), 0.0);
+  
+  forAll(boundaryPoints, i)
+  {
+    point curP = boundaryPoints[i];
+
+    const labelList& pEdges = plistEdges[i];
+
+    vectorField& pw = weights[i];
+    pw.setSize(pEdges.size());
+
+    vector sumw = vector::zero;
+    forAll(pEdges, j)
+    {
+      label edgeI = pEdges[j];
+      
+      label nPoint = edges[edgeI].otherVertex(i);
+      
+      point neiP = boundaryPoints[nPoint];
+
+      vector d = neiP - curP;
+
+      vector w = vector::zero;
+
+      for(int ii=0; ii<3; ii++){
+        if(mag(d[ii])>SMALL){
+          w[ii] = 1.0 / mag( d[ii] );
+        }
+        else{
+          //w[ii] = 1.0;
+          w[ii] = GREAT;
+        }
+      }
+
+      pw[j] = w / cc[nPoint];
+      sumw += pw[j];
+    }
+    // sum of all distances to face centres
+    sumWeights[i] = sumw;
+  }
+
+  syncTools::syncPointList( mesh, meshPoints, sumWeights, plusEqOp<vector>(), vector::zero);
+  
+
+  // @TODO!!! Review weights
+  forAll(weights, i)
+  {
+    vectorField& pw = weights[i];
+    vector &sw = sumWeights[i];
+    //const labelList& pEdges = plistEdges[i];
+    forAll(pw, j)
+    {
+      vector &ppw = pw[j];
+      for(int ii=0; ii<3; ii++)
+      {
+        if( mag(sw[ii])>SMALL )
+        {
+          ppw[ii] /= sw[ii];
+        }
+        else
+        {
+          ppw[ii] *= GREAT;
+        }
+        //ppw[ii] *= 1.0 / cc[i];
+      }
+      
+      /*
+      pw[j] = 
+              transform
+              (
+                I-faceNs[ faceI ]*faceNs[ faceI ],
+                pw[j]
+              );
+       */
+      //pw[j] /= mag(pw[j]);
+    }
+    //Info<<" i "<<i<<"  pw "<<pw<<nl;
+  }
+  
+  //std::exit(0);
+
+  surfPointWeights = weights;
+}
+
+
 
 Foam::vectorField Foam::
 dissolMotionPointPatchVectorField::
@@ -1889,6 +2265,7 @@ getPointMotion( vectorField& pointMotion )
   
   scalarField pointCface = -C.boundaryField()[patchID].snGrad();
   vectorField pointNface = mesh.boundaryMesh()[patchID].faceNormals();
+  
   scalarField motionC    = patchInterpolator.faceToPointInterpolate(pointCface);
   vectorField motionN    = patchInterpolator.faceToPointInterpolate(pointNface);
   

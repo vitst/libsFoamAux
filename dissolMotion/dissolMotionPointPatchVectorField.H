@@ -76,6 +76,8 @@ class dissolMotionPointPatchVectorField
 
   // fields
   vectorFieldList surfWeights;
+  
+  vectorFieldList surfPointWeights;
 
   labelList pinnedPoints;
   vectorField pinnedPointsNorm;
@@ -161,6 +163,8 @@ public:
         
         void calc_weights_surface();
         
+        void calc_point_weights_surface();
+        
         void make_lists_and_normals();
 
         void relaxEdges
@@ -169,6 +173,10 @@ public:
         );
         
         void relaxPatchMesh
+        (
+          vectorField&
+        );
+        void relaxPatchMeshPoints
         (
           vectorField&
         );

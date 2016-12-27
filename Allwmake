@@ -1,8 +1,14 @@
 #!/bin/bash
 
 for d in */ ; do
-  [[ $d == "coupledPatchInterpolation/" ]] && continue
-  echo ""
-  echo "Directory $d"
-  wmake libso $d
+  if [ -d ${d}/Make ]; then
+    echo "Making library $d"
+    wmake libso $d
+  fi
+  if [ -f ${d}/Allwmake ]; then
+    echo "Making library $d"
+    pushd $d
+    Allwmake
+    popd
+  fi
 done

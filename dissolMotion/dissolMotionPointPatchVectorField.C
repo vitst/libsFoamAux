@@ -331,14 +331,18 @@ dissolMotionPointPatchVectorField
     Info << "dissolMotionPointPatchVectorField constructor 2 "
             "calc_weights_surface"<<nl;
   }
-  calc_weights_surface();
+  
+  if( !weightsCalculated )
+    calc_weights_surface();
   
   if(debug) 
   {
     Info << "dissolMotionPointPatchVectorField constructor 2 "
             "make_lists_and_normals"<<nl;
   }
-  make_lists_and_normals();
+  
+  if( !listsCalculated )
+    make_lists_and_normals();
   
 }
 
@@ -441,7 +445,7 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // TODO the rest of relaxation should be implemented
     Info<<"fixCommonNeighborPatchPoints"<<nl;
-    //fixCommonNeighborPatchPoints(pointMotion);
+    fixCommonNeighborPatchPoints(pointMotion);
 
     /*
     if(Pstream::myProcNo()==3)
@@ -724,7 +728,7 @@ relaxEdges(vectorField& pointMotion)
         }
       }
     }
-
+    
     syncTools::syncPointList(mesh, globalFixedPoints, displacement, plusEqOp<vector>(), vector::zero);
     syncTools::syncPointList(mesh, globalFixedPoints, tol, plusEqOp<scalar>(), 0.0);
     syncTools::syncPointList(mesh, globalFixedPoints, sumWeights, plusEqOp<scalar>(), 0.0);
@@ -802,17 +806,18 @@ relaxEdges(vectorField& pointMotion)
     // @TODO need to be checked for correctness
     scalar gAmpD = 0.0;
     scalar gAmt  = 0.0;
-    if(projectedDisplacement.size()>0){
+    //if(projectedDisplacement.size()>0){
       gAmpD = gAverage( mag(projectedDisplacement) );
       gAmt  = gAverage( mag(tol) );
-    }
+    //}
+    
 
     if(gAmt>SMALL)
       displ_tol = gAmpD /factor/ gAmt;
     else
       displ_tol = 0.0;
       
-    if(itt%1000==0)
+    if(itt%1==0)
     {
       //Pout<<" maxDDD: "<<max(projectedDisplacement)<<nl;
       Info << "  edge rlx iter " << itt
@@ -1738,6 +1743,8 @@ make_lists_and_normals()
   //pinnedPoints = pinnedPointsLocal;
   //pinnedPointsNorm = pinnedPointsNormLocal;
   //fixedPoints = fixedPointsLocal;
+  
+  listsCalculated = true;
 }
 
 
@@ -1872,6 +1879,7 @@ calc_weights_surface()
   //std::exit(0);
 
   surfWeights = weights;
+  weightsCalculated = true;
 }
 
 
@@ -2252,16 +2260,12 @@ getPointMotion( vectorField& pointMotion )
   const volScalarField& C = 
     this->db().objectRegistry::lookupObject<volScalarField>("C");
   
-  //const vectorField& motionN = this->patch().pointNormals();
-
   //- set-up interpolator
   const fvMesh& fvmesh_ = refCast<const fvMesh>(mesh);
   coupledPatchInterpolation patchInterpolator
   (
     mesh.boundaryMesh()[patchID], fvmesh_
   );
-  
-  //scalarField pointCface11 = C.boundaryField()[patchID];
   
   scalarField pointCface = -C.boundaryField()[patchID].snGrad();
   vectorField pointNface = mesh.boundaryMesh()[patchID].faceNormals();
@@ -2274,30 +2278,6 @@ getPointMotion( vectorField& pointMotion )
   
   // set the velocity for the point motion
   pointMotion = l_T * motionC * motionN;
-  
-  /*
-  vectorField fCC = mesh.boundaryMesh()[patchID].faceCentres();
-  //const List<face>& fp = mesh.boundaryMesh()[patchID].localFaces();
-  Info<<nl<<"  concentration: "<<nl;
-  for(int i = 0; i<10; i++)
-  {
-    Info<< i << " " << pointCface[i] << "   " << pointNface[i] 
-            << "  " << pointCface11[i] 
-            << "  " << fCC[i] 
-            << nl;
-  }
-  const pointField& curPP  = mesh.boundaryMesh()[patchID].localPoints();
-  Info<<nl<<"  points: "<<nl;
-  for(int i = 0; i<10; i++)
-  {
-    Info<< i << " "<< curPP[i]
-            << "  "<< motionC
-            << nl;
-  }
-  
-  Info<<nl<<nl;
-  */
-  
 }
 
 void Foam::dissolMotionPointPatchVectorField::write
@@ -2305,29 +2285,28 @@ void Foam::dissolMotionPointPatchVectorField::write
   Ostream& os
 ) const
 {
-    fixedValuePointPatchField<vector>::write(os);
-    //timeSeries_.write(os);
-    os.writeKeyword("rlxTol")<< rlxTol << token::END_STATEMENT << nl;
-    os.writeKeyword("q_norm_recalc")<<q_norm_recalc<<token::END_STATEMENT<<nl;
-    os.writeKeyword("k_1")<< k_1 << token::END_STATEMENT << nl;
-    os.writeKeyword("k_2")<< k_2 << token::END_STATEMENT << nl;
-    os.writeKeyword("q_2")<< q_2 << token::END_STATEMENT << nl;
-    os.writeKeyword("q_norm_recalc_edge")<<q_norm_recalc_edge
-            <<token::END_STATEMENT<<nl;
-    os.writeKeyword("k_1edge")<< k_1edge << token::END_STATEMENT << nl;
-    os.writeKeyword("k_2edge")<< k_2edge << token::END_STATEMENT << nl;
-    os.writeKeyword("q_2edge")<< q_2edge << token::END_STATEMENT << nl;
-    
-    os.writeKeyword("pinnedPoint")<< pinnedPoint << token::END_STATEMENT << nl;
+  fixedValuePointPatchField<vector>::write(os);
+  os.writeKeyword("rlxTol")<< rlxTol << token::END_STATEMENT << nl;
+  os.writeKeyword("q_norm_recalc")<<q_norm_recalc<<token::END_STATEMENT<<nl;
+  os.writeKeyword("k_1")<< k_1 << token::END_STATEMENT << nl;
+  os.writeKeyword("k_2")<< k_2 << token::END_STATEMENT << nl;
+  os.writeKeyword("q_2")<< q_2 << token::END_STATEMENT << nl;
+  os.writeKeyword("q_norm_recalc_edge")<<q_norm_recalc_edge
+          <<token::END_STATEMENT<<nl;
+  os.writeKeyword("k_1edge")<< k_1edge << token::END_STATEMENT << nl;
+  os.writeKeyword("k_2edge")<< k_2edge << token::END_STATEMENT << nl;
+  os.writeKeyword("q_2edge")<< q_2edge << token::END_STATEMENT << nl;
+
+  os.writeKeyword("pinnedPoint")<< pinnedPoint << token::END_STATEMENT << nl;
 }
 
 namespace Foam
 {
-makePointPatchTypeField
-(
+  makePointPatchTypeField
+  (
     pointPatchVectorField,
     dissolMotionPointPatchVectorField
-);
+  );
 }
 
 

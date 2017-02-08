@@ -61,7 +61,8 @@ class dissolMotionPointPatchVectorField
   public fixedValuePointPatchField<vector>
 {
   // Private data
-  // parameters
+  
+  // read parameters
   scalar rlxTol;
   
   int q_norm_recalc;
@@ -74,6 +75,9 @@ class dissolMotionPointPatchVectorField
   
   bool pinnedPoint;
 
+  // auxiliary parameters
+  bool listsCalculated, weightsCalculated;
+  
   // fields
   vectorFieldList surfWeights;
   

@@ -76,7 +76,7 @@ class dissolMotionPointPatchVectorField
   bool pinnedPoint;
 
   // auxiliary parameters
-  bool listsCalculated, weightsCalculated;
+  bool listsUpdated, weightsUpdated;
   
   // fields
   vectorFieldList surfWeights;
@@ -228,11 +228,30 @@ public:
           labelList&
         );
         
+        // set / get
+        bool getListsUpdated()
+        {
+          return listsUpdated;
+        }
+        bool setListsUpdated(bool v)
+        {
+          listsUpdated = v;
+        }
+        
+        bool getWeightsUpdated()
+        {
+          return weightsUpdated;
+        }
+        bool setWeightsUpdated(bool v)
+        {
+          weightsUpdated = v;
+        }
+        
 
         // Evaluation functions
 
-            //- Update the coefficients associated with the patch field
-            virtual void updateCoeffs();
+          //- Update the coefficients associated with the patch field
+          virtual void updateCoeffs();
 
 
         //- Write

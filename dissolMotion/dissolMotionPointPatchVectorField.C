@@ -82,6 +82,8 @@ dissolMotionPointPatchVectorField
   {
     Info << "dissolMotionPointPatchVectorField constructor 0"<<endl;
   }
+  this->setListsUpdated(false);
+  this->setWeightsUpdated(false);
 }
 
 
@@ -112,6 +114,8 @@ dissolMotionPointPatchVectorField
     Info << "dissolMotionPointPatchVectorField constructor 1"<<endl;
   }
   
+  this->setListsUpdated(false);
+  this->setWeightsUpdated(false);
   //this->operator==(timeSeries_(this->db().time().timeOutputValue()));
 }
 
@@ -326,24 +330,8 @@ dissolMotionPointPatchVectorField
       << endl;
   }
 
-  if(debug) 
-  {
-    Info << "dissolMotionPointPatchVectorField constructor 2 "
-            "calc_weights_surface"<<nl;
-  }
-  
-  if( !weightsCalculated )
-    calc_weights_surface();
-  
-  if(debug) 
-  {
-    Info << "dissolMotionPointPatchVectorField constructor 2 "
-            "make_lists_and_normals"<<nl;
-  }
-  
-  if( !listsCalculated )
-    make_lists_and_normals();
-  
+  this->setListsUpdated(false);
+  this->setWeightsUpdated(false);
 }
 
 Foam::
@@ -369,6 +357,8 @@ dissolMotionPointPatchVectorField
   {
     Info << "dissolMotionPointPatchVectorField constructor 3"<<endl;
   }
+  this->setListsUpdated(false);
+  this->setWeightsUpdated(false);
 }
 
 
@@ -395,24 +385,45 @@ dissolMotionPointPatchVectorField
   if(debug) {
     Info << "dissolMotionPointPatchVectorField constructor 4"<<endl;
   }
+  this->setListsUpdated(false);
+  this->setWeightsUpdated(false);
 }
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 {
-  if(debug) 
-  {
-    Info << "dissolMotionPointPatchVectorField::updateCoeffs()"<<endl;
-  }
-  
   if (this->updated())
   {
     return;
   }
   
+  if(debug) 
+  {
+    Info << "dissolMotionPointPatchVectorField::updateCoeffs()"<<endl;
+  }
+  
   if( this->db().foundObject<IOdictionary>("transportProperties") )
   {
+    if(debug) 
+    {
+      Info << "dissolMotionPointPatchVectorField::updateCoeffs() "
+              "calc_weights_surface"<<nl;
+    }
+
+    if( !this->getWeightsUpdated() )
+      calc_weights_surface();
+
+    if(debug) 
+    {
+      Info << "dissolMotionPointPatchVectorField::updateCoeffs() "
+              "make_lists_and_normals"<<nl;
+    }
+
+    if( !this->getListsUpdated() )
+      make_lists_and_normals();
+    
+    
     //label patchID = this->patch().index();
     const scalar dt = this->db().time().deltaTValue();
 
@@ -1744,7 +1755,7 @@ make_lists_and_normals()
   //pinnedPointsNorm = pinnedPointsNormLocal;
   //fixedPoints = fixedPointsLocal;
   
-  listsCalculated = true;
+  this->setListsUpdated(true);
 }
 
 
@@ -1879,7 +1890,7 @@ calc_weights_surface()
   //std::exit(0);
 
   surfWeights = weights;
-  weightsCalculated = true;
+  this->setWeightsUpdated(true);
 }
 
 

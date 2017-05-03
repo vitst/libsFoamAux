@@ -1754,6 +1754,13 @@ make_lists_and_normals()
   //pinnedPoints = pinnedPointsLocal;
   //pinnedPointsNorm = pinnedPointsNormLocal;
   //fixedPoints = fixedPointsLocal;
+
+/*  
+  forAll(pinnedPoints, i)
+    Pout<<"pinnedPoints: " << pinnedPoints[i] << "  " 
+          << pinnedPointsNorm[i] << "  " 
+          << curPP[pinnedPoints[i]]<< "  " << surfWeights[pinnedPoints[i]] << endl;
+ */
   
   this->setListsUpdated(true);
 }
@@ -1870,6 +1877,7 @@ calc_weights_surface()
           ppw[ii] = GREAT;
         }
         //ppw[ii] = 1.0 / cc[i];
+        if(ii==1) ppw[ii] = 0.0;
       }
       
       label faceI = pFaces[j];

@@ -828,7 +828,7 @@ relaxEdges(vectorField& pointMotion)
     else
       displ_tol = 0.0;
       
-    if(itt%1==0)
+    if(itt%100==0)
     {
       //Pout<<" maxDDD: "<<max(projectedDisplacement)<<nl;
       Info << "  edge rlx iter " << itt

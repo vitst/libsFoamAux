@@ -1,9 +1,15 @@
 #!/bin/bash
 
+echo "Cleaning all libraries"
 for d in */ ; do
-  echo ""
-  echo "Enter directory $d"
-  cd $d
-  wclean
-  cd ..
+  if [ -d ${d}/Make ]; then
+    wclean $d
+  fi
+  if [ -f ${d}/Allwmake ]; then
+    echo "Making library $d"
+    pushd $d
+    Allwclean
+    popd
+  fi
 done
+

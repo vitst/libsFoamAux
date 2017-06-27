@@ -61,19 +61,23 @@ class dissolMotionPointPatchVectorField
   public fixedValuePointPatchField<vector>
 {
   // Private data
+  scalar scaleMotion;
   
   // read parameters
   scalar rlxTol;
   
+  bool surfaceRlx;
   int q_norm_recalc;
   scalar k_1, k_2;
   int q_2;
   
+  bool edgeRlx;
   int q_norm_recalc_edge;
   scalar k_1edge, k_2edge;
   int q_2edge;
   
   bool pinnedPoint;
+
 
   // auxiliary parameters
   bool listsUpdated, weightsUpdated;
@@ -233,7 +237,7 @@ public:
         {
           return listsUpdated;
         }
-        bool setListsUpdated(bool v)
+        void setListsUpdated(bool v)
         {
           listsUpdated = v;
         }
@@ -242,11 +246,30 @@ public:
         {
           return weightsUpdated;
         }
-        bool setWeightsUpdated(bool v)
+        void setWeightsUpdated(bool v)
         {
           weightsUpdated = v;
         }
-        
+
+        bool getSurfaceRlx()
+        {
+          return surfaceRlx;
+        }
+        void setSurfaceRlx(bool v)
+        {
+          Info<<"surfaceRlx in dissolMotion boundary is set to: "<< v << nl;
+          surfaceRlx = v;
+        }
+  
+        bool getEdgeRlx()
+        {
+          return edgeRlx;
+        }
+        void setEdgeRlx(bool v)
+        {
+          Info<<"edgeRlx in dissolMotion boundary is set to: "<< v << nl;
+          edgeRlx = v;
+        }
 
         // Evaluation functions
 

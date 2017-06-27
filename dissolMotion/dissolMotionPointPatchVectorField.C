@@ -67,11 +67,14 @@ dissolMotionPointPatchVectorField
 )
 :
   fixedValuePointPatchField<vector>(p, iF),
+  scaleMotion(1.0),
   rlxTol(1e-6),
+  surfaceRlx(true),
   q_norm_recalc(1),
   k_1(1.0),
   k_2(1.0),
   q_2(1),
+  edgeRlx(true),
   q_norm_recalc_edge(1),
   k_1edge(1.0),
   k_2edge(1.0),
@@ -98,11 +101,14 @@ dissolMotionPointPatchVectorField
 )
 :
   fixedValuePointPatchField<vector>(ptf, p, iF, mapper),
+  scaleMotion(ptf.scaleMotion),
   rlxTol(ptf.rlxTol),
+  surfaceRlx(ptf.surfaceRlx),
   q_norm_recalc(ptf.q_norm_recalc),
   k_1(ptf.k_1),
   k_2(ptf.k_2),
   q_2(ptf.q_2),
+  edgeRlx(ptf.edgeRlx),
   q_norm_recalc_edge(ptf.q_norm_recalc_edge),
   k_1edge(ptf.k_1edge),
   k_2edge(ptf.k_2edge),
@@ -157,6 +163,24 @@ dissolMotionPointPatchVectorField
   }
   
   
+  if (!dict.readIfPresent<scalar>("scaleMotion", scaleMotion))
+  {
+    scaleMotion = 1.0;
+    WarningIn
+    (
+      "dissolMotionPointPatchVectorField constructor 2"
+      "("
+      "const fvPatch& p,"
+      "const DimensionedField<Type, volMesh>& iF,"
+      "const dictionary& dict"
+      ")"
+    )
+      << "No value defined for scaleMotion"
+      << " on " << this->patch().name() << " therefore using "
+      << scaleMotion
+      << endl;
+  }
+
   if (!dict.readIfPresent<scalar>("rlxTol", rlxTol))
   {
     rlxTol = 1.0e-6;
@@ -174,6 +198,24 @@ dissolMotionPointPatchVectorField
       << rlxTol
       << endl;
   }
+
+  if (!dict.readIfPresent<bool>("surfaceRlx", surfaceRlx))
+  {
+    surfaceRlx = true;
+    WarningIn
+    (
+      "dissolMotionPointPatchVectorField constructor 2"
+      "("
+      "const fvPatch& p,"
+      "const DimensionedField<scalar, volMesh>& iF,"
+      "const dictionary& dict"
+      ")"
+    )
+      << "No value defined for surfaceRlx"
+      << " on " << this->patch().name() << " therefore using true"
+      << endl;
+  }
+
   if (!dict.readIfPresent<int>("q_norm_recalc", q_norm_recalc))
   {
     q_norm_recalc = 1;
@@ -244,6 +286,22 @@ dissolMotionPointPatchVectorField
   }
 
 
+  if (!dict.readIfPresent<bool>("edgeRlx", edgeRlx))
+  {
+    edgeRlx = true;
+    WarningIn
+    (
+      "dissolMotionPointPatchVectorField constructor 2"
+      "("
+      "const fvPatch& p,"
+      "const DimensionedField<scalar, volMesh>& iF,"
+      "const dictionary& dict"
+      ")"
+    )
+      << "No value defined for edgeRlx"
+      << " on " << this->patch().name() << " therefore using true"
+      << endl;
+  }
   if (!dict.readIfPresent<int>("q_norm_recalc_edge", q_norm_recalc_edge))
   {
     q_norm_recalc_edge = 1;
@@ -342,11 +400,14 @@ dissolMotionPointPatchVectorField
 )
 :
   fixedValuePointPatchField<vector>(ptf),
+  scaleMotion(ptf.scaleMotion),
   rlxTol(ptf.rlxTol),
+  surfaceRlx(ptf.surfaceRlx),
   q_norm_recalc(ptf.q_norm_recalc),
   k_1(ptf.k_1),
   k_2(ptf.k_2),
   q_2(ptf.q_2),
+  edgeRlx(ptf.edgeRlx),
   q_norm_recalc_edge(ptf.q_norm_recalc_edge),
   k_1edge(ptf.k_1edge),
   k_2edge(ptf.k_2edge),
@@ -371,11 +432,14 @@ dissolMotionPointPatchVectorField
 )
 :
   fixedValuePointPatchField<vector>(ptf, iF),
+  scaleMotion(ptf.scaleMotion),
   rlxTol(ptf.rlxTol),
+  surfaceRlx(ptf.surfaceRlx),
   q_norm_recalc(ptf.q_norm_recalc),
   k_1(ptf.k_1),
   k_2(ptf.k_2),
   q_2(ptf.q_2),
+  edgeRlx(ptf.edgeRlx),
   q_norm_recalc_edge(ptf.q_norm_recalc_edge),
   k_1edge(ptf.k_1edge),
   k_2edge(ptf.k_2edge),
@@ -431,7 +495,8 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
 
     vectorField pointMotion;
     getPointMotion(pointMotion);
-    pointMotion *= dt;
+
+    pointMotion *= (dt * scaleMotion);
     
     /*
     vectorField faceMotion;
@@ -466,12 +531,17 @@ void Foam::dissolMotionPointPatchVectorField::updateCoeffs()
               <<nl<<nl;
     */
     
-    Info<<nl<<"relaxEdges"<<nl;
-    relaxEdges(pointMotion);
-
-    Info<<nl<<"relaxPatchMesh"<<nl;
-    calc_weights_surface();
-    relaxPatchMesh(pointMotion);
+    if(edgeRlx)
+    {
+      Info<<nl<<"relaxEdges"<<nl;
+      relaxEdges(pointMotion);
+    }
+    if(surfaceRlx)
+    {
+      Info<<nl<<"relaxPatchMesh"<<nl;
+      calc_weights_surface();
+      relaxPatchMesh(pointMotion);
+    }
     
     //calc_point_weights_surface();
     //relaxPatchMeshPoints(pointMotion);
@@ -2305,11 +2375,16 @@ void Foam::dissolMotionPointPatchVectorField::write
 ) const
 {
   fixedValuePointPatchField<vector>::write(os);
+
+  os.writeKeyword("scaleMotion")<< scaleMotion << token::END_STATEMENT << nl;
   os.writeKeyword("rlxTol")<< rlxTol << token::END_STATEMENT << nl;
+
+  os.writeKeyword("surfaceRlx")<< surfaceRlx << token::END_STATEMENT << nl;
   os.writeKeyword("q_norm_recalc")<<q_norm_recalc<<token::END_STATEMENT<<nl;
   os.writeKeyword("k_1")<< k_1 << token::END_STATEMENT << nl;
   os.writeKeyword("k_2")<< k_2 << token::END_STATEMENT << nl;
   os.writeKeyword("q_2")<< q_2 << token::END_STATEMENT << nl;
+  os.writeKeyword("edgeRlx")<< edgeRlx << token::END_STATEMENT << nl;
   os.writeKeyword("q_norm_recalc_edge")<<q_norm_recalc_edge
           <<token::END_STATEMENT<<nl;
   os.writeKeyword("k_1edge")<< k_1edge << token::END_STATEMENT << nl;

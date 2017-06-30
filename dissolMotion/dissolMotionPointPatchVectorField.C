@@ -1579,6 +1579,7 @@ make_lists_and_normals()
     timeTmp.setTime(timeDirs[1], 0);
   }
   
+/*
   // in case 0 time does not exist
   if( timeTmp.timeName()!="0" ){
     SeriousErrorIn("meshRelax")
@@ -1586,6 +1587,7 @@ make_lists_and_normals()
             "If you run in parallel please check a decomposition."
             <<exit(FatalError);
   }
+*/
   
   Foam::fvMesh meshTmp
   (
@@ -1780,6 +1782,7 @@ calc_weights_surface()
     timeTmp.setTime(timeDirs[1], 0);
   }
   
+/*
   // in case 0 time does not exist
   if( timeTmp.timeName()!="0" ){
     SeriousErrorIn("meshRelax")
@@ -1787,6 +1790,7 @@ calc_weights_surface()
             "If you run in parallel please check a decomposition."
             <<exit(FatalError);
   }
+*/
   
   Foam::fvMesh meshTmp
   (

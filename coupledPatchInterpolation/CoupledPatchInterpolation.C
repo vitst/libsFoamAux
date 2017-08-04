@@ -95,7 +95,8 @@ void CoupledPatchInterpolation<Patch>::makeFaceToPointWeights() const
 
         forAll(curFaces, facei)
         {
-          pw[facei] = 1.0/mag(faces[curFaces[facei]].centre(points) - points[pointi]);
+          pw[facei] = 
+              1.0/mag(faces[curFaces[facei]].centre(points) - points[pointi]);
           sumwloc += pw[facei];
         }
         sumw[pointi] = sumwloc;
@@ -174,7 +175,8 @@ void CoupledPatchInterpolation<Patch>::clearWeights()
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Patch>
-CoupledPatchInterpolation<Patch>::CoupledPatchInterpolation(const Patch& p, const fvMesh& mesh)
+CoupledPatchInterpolation<Patch>::
+CoupledPatchInterpolation(const Patch& p, const fvMesh& mesh)
 :
     patch_(p),
     mesh_(mesh),
@@ -245,7 +247,11 @@ tmp<Field<Type> > CoupledPatchInterpolation<Patch>::faceToPointInterpolate
         pointValue[pointi] = tvalue;
     }
     
-    syncTools::syncPointList( mesh_, patch_.meshPoints(), pointValue, plusEqOp<Type>(), pTraits<Type>::zero);
+    syncTools::syncPointList( mesh_, 
+                              patch_.meshPoints(), 
+                              pointValue, 
+                              plusEqOp<Type>(), 
+                              pTraits<Type>::zero);
     
     // normalization
     const scalarList& sumw = faceToPointSumWeights();

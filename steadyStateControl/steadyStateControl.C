@@ -86,7 +86,11 @@ bool Foam::steadyStateControl::criteriaSatisfied()
             }
         }
     }
-    mesh_.clearSolverPerformanceDict();
+    
+    // clear dictionary
+    dictionary& dict = const_cast<dictionary&>(mesh_.solverPerformanceDict());
+    dict.clear();
+
     initialised_ = false;
 
 

@@ -61,19 +61,16 @@ bool Foam::steadyStateControl::criteriaSatisfied()
     forAllConstIter(dictionary, solverDict, iter)
     {
         const word& variableName = iter().keyword();
-        const label fieldI = applyToField(variableName);
-        if (fieldI != -1)
+        const label fieldi = applyToField(variableName);
+        if (fieldi != -1)
         {
             scalar lastResidual = 0;
             const scalar residual =
                 this->maxResidual(variableName, iter().stream(), lastResidual);
 
-            //const List<solverPerformance> sp(iter().stream());
-            //const scalar residual = sp.first().initialResidual();
-
             checked = true;
 
-            bool absCheck = residual < residualControl_[fieldI].absTol;
+            bool absCheck = residual < residualControl_[fieldi].absTol;
             achieved = achieved && absCheck;
 
             if (debug)
@@ -81,12 +78,16 @@ bool Foam::steadyStateControl::criteriaSatisfied()
                 Info<< algorithmName_ << " solution statistics:";
 
                 Info<< "    " << variableName << ": tolerance = " << residual
-                    << " (" << residualControl_[fieldI].absTol << ")"
+                    << " (" << residualControl_[fieldi].absTol << ")"
                     << endl;
             }
         }
     }
-    mesh_.clearSolverPerformanceDict();
+    
+    // clear dictionary
+    dictionary& dict = const_cast<dictionary&>(mesh_.solverPerformanceDict());
+    dict.clear();
+
     initialised_ = false;
 
 
@@ -105,11 +106,8 @@ void Foam::steadyStateControl::maxTypeResidual
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
     if (mesh_.foundObject<fieldType>(fieldName))
     {
-        //fieldType& pointVelocity = const_cast<fieldType&>(
-        //  mesh_.objectRegistry::lookupObject<fieldType>( fieldName )
-        //);
-	fieldType& field = const_cast<fieldType&>(
-		mesh_.lookupObject<fieldType>( fieldName )
+	    fieldType& field = const_cast<fieldType&>(
+		    mesh_.lookupObject<fieldType>( fieldName )
 	);
 
         const List<SolverPerformance<Type> > sp(data);
@@ -118,28 +116,16 @@ void Foam::steadyStateControl::maxTypeResidual
         reduce(sz, sumOp<int>());
         Type nF = gSumCmptProd( field, field ) / static_cast<double>(sz);
 
-	//Type finiR = sp.first().initialResidual();
-	//Type liniR = sp.last().initialResidual();
-	//
 	scalar norm = mag(nF);
 
 	for (direction cmpt=0; cmpt < nF.size(); cmpt++){
 	  nF[cmpt] = sqrt( nF[cmpt] );
-	  //finiR[cmpt] *= tmpNF;
-	  //liniR[cmpt] *= tmpNF;
 	}
         nF = nF/norm;
 
-	//finiR /= norm;
-	//liniR /= norm;
-	//firstRes = cmptMax(finiR);
-	//lastRes = cmptMax(liniR);
-	//
         firstRes = cmptMax( cmptMultiply(sp.first().initialResidual(), nF) );
         lastRes  = cmptMax( cmptMultiply(sp.last().initialResidual(),  nF) );
 
-        //firstRes = cmptMax(sp.first().initialResidual());
-        //lastRes = cmptMax(sp.last().initialResidual());
     }
 }
 
@@ -153,7 +139,6 @@ Foam::scalar Foam::steadyStateControl::maxResidual
 {
     scalar firstRes = 0;
 
-    //maxTypeResidual<scalar>(fieldName, data, firstRes, lastRes);
     if(mesh_.foundObject<volScalarField>(fieldName)){
       const List< SolverPerformance<scalar> > sp(data);
       firstRes = sp.first().initialResidual();

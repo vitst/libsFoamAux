@@ -1,0 +1,10 @@
+#!/bin/bash
+# Make symbolic links
+
+mkdir -p ../lnInclude
+cd ../lnInclude
+for H in ../libsFoamAux/*/*.H; do
+    ln -s $H
+done
+
+ln -s ../libsFoamAux/coupledPatchInterpolation/CoupledPatchInterpolation.C

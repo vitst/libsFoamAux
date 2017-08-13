@@ -1,9 +1,9 @@
 # libsFoamAux: Auxiliary libraries for OpenFOAM.
 
-Notes:  Patches to OF source no longer needed (after commit c084134)
-        Source common to official and extended code streams
-        Forks to accomodate extended source will be in developPlus
-        Script mkInclude makes symbolic links
+Notes:  Patches to OF source no longer needed (after commit c084134)  
+        Source common to official and extended code streams  
+        Forks to accomodate extended source will be in developPlus  
+        Script mkInclude makes symbolic links  
         
 
 steadyStateControl: User library. Based on the simpleControl class
@@ -14,26 +14,22 @@ steadyStateControl iterates to convergence without updating the timestamp or wri
 Files: steadyStateControl.H
        steadyStateControl.C
 
-
 dissolMeshRelax: User library for mesh relaxation
 
 Files: dissolMotionPointPatchVectorField.H
        dissolMotionPointPatchVectorField.C
 
-
 coupledPatchInterpolation: User library for face to point interpolation
-    over a coupled patch
+over a coupled patch
 
 Files: coupledPatchInterpolation.H
        CoupledPatchInterpolation.H
        CoupledPatchInterpolation.C
 
-
 OFstreamMod: User library adds support for appending to an existing file
 
 Files: OFstreamMod.H
        OFstreamMod.C
-
 
 boundaryConditions: Templates for coded boundary conditions
 

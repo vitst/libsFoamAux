@@ -15,15 +15,9 @@ plane limitPlane(refPoint, refNorm);
 const scalar dt = this->db().time().deltaTValue();
 const pointField& localFcs = this->patch().patch().faceCentres();
 const pointField& localFns = this->patch().patch().faceNormals();
-const IOdictionary& IOd = this->db().objectRegistry::template
-                 lookupObject<IOdictionary>("transportProperties");
-scalar l_T = 1.0;
-if( !IOd.readIfPresent<scalar>("l_T", l_T) )
-{
-  SeriousErrorIn("nonLinearFvPatchScalarField::updateCoeffs()")
-      << "There is no l_T parameter in transportProperties dictionary"
-      << exit(FatalError);
-}
+const IOdictionary& IOd
+        = this->db().lookupObject<IOdictionary>("transportProperties");
+       scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
 
 //  Update coefficients
 
@@ -59,11 +53,11 @@ forAll(field, i)
   R  *= theta;
   dR *= theta;
 
-  scalar alpha  = del[i] / l_T;
+  scalar alpha  = del[i] / lR;
   scalar adR    = alpha * dR;
   frac[i]   = adR / ( 1 + adR );
   refVal[i] = fi;
-  refGr[i]  = -R / l_T;
+  refGr[i]  = -R / lR;
 }
 
 this->refValue() = pTraits<scalar>::one * refVal;

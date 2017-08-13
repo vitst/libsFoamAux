@@ -2340,15 +2340,9 @@ getPointMotion( vectorField& pointMotion )
   
   const polyMesh& mesh = this->internalField().mesh()();
 
-  scalar l_T = 0.0;
-  const IOdictionary& iod = this->db().objectRegistry::template 
-                            lookupObject<IOdictionary>("transportProperties");
-  if( !iod.readIfPresent<scalar>("l_T", l_T) )
-  {
-    SeriousErrorIn("dissolMotionPointPatchVectorField::updateCoeffs()")
-            <<"There is no l_T parameter in transportProperties dictionary"
-            <<exit(FatalError);
-  }
+  const IOdictionary& IOd
+        = this->db().lookupObject<IOdictionary>("transportProperties");
+  scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
 
   const volScalarField& C = 
     this->db().objectRegistry::lookupObject<volScalarField>("C");
@@ -2370,7 +2364,7 @@ getPointMotion( vectorField& pointMotion )
   forAll(motionN, ii) motionN[ii]/=mag(motionN[ii]);
   
   // set the velocity for the point motion
-  pointMotion = l_T * motionC * motionN;
+  pointMotion = lR * motionC * motionN;
 }
 
 void Foam::dissolMotionPointPatchVectorField::write

@@ -25,7 +25,22 @@ Class
     Foam::normalMotionSlipPointPatchVectorField
 
 Description
-    slip with user-specified normal
+    This patch can be used for the mesh motion using velocityLaplacian 
+    dynamic mesh solver. It should be used along with 
+    normalMotionSlipPointPatchVectorField for cellMotionU volume filed. 
+    It saves face displacement at the begin of laplace solver. At the end it
+    interpolates displacement to the point field.
+
+    \heading Patch usage
+
+    Example of the boundary condition specification:
+    \verbatim
+    patchName
+    {
+        type            normalMotionSlip;
+        value           uniform (0 0 0);
+    }
+    \endverbatim
 
 SourceFiles
     normalMotionSlipPointPatchVectorField.C
@@ -98,41 +113,6 @@ public:
             const DimensionedField<vector, pointMesh>&,
             const pointPatchFieldMapper&
         );
-
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<vector>> clone() const
-        {
-            return autoPtr<pointPatchField<vector>>
-            (
-                new normalMotionSlipPointPatchVectorField
-                (
-                    *this
-                )
-            );
-        }
-
-        //- Construct as copy setting internal field reference
-        normalMotionSlipPointPatchVectorField
-        (
-            const normalMotionSlipPointPatchVectorField&,
-            const DimensionedField<vector, pointMesh>&
-        );
-
-        //- Construct and return a clone setting internal field reference
-        virtual autoPtr<pointPatchField<vector>> clone
-        (
-            const DimensionedField<vector, pointMesh>& iF
-        ) const
-        {
-            return autoPtr<pointPatchField<vector>>
-            (
-                new normalMotionSlipPointPatchVectorField
-                (
-                    *this,
-                    iF
-                )
-            );
-        }
 
     // Member functions
         //- Update the coefficients associated with the patch field

@@ -24,9 +24,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "normalMotionSlipFvPatchVectorField.H"
+#include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "symmTransformField.H"
-#include "addToRunTimeSelectionTable.H"
 
 #include "normalMotionSlipPointPatchVectorField.H"
 
@@ -35,8 +35,8 @@ License
 Foam::normalMotionSlipFvPatchVectorField::
 normalMotionSlipFvPatchVectorField
 (
-  const fvPatch& p,
-  const DimensionedField<vector, volMesh>& iF
+    const fvPatch& p,
+    const DimensionedField<vector, volMesh>& iF
 )
 :
     fixedValueFvPatchVectorField(p, iF)
@@ -51,7 +51,7 @@ normalMotionSlipFvPatchVectorField
     const dictionary& dict
 )
 :
-  fixedValueFvPatchVectorField(p, iF)
+    fixedValueFvPatchVectorField(p, iF)
 {
   fvPatchVectorField::operator=(vectorField("value", dict, p.size()));
 }
@@ -59,87 +59,68 @@ normalMotionSlipFvPatchVectorField
 Foam::normalMotionSlipFvPatchVectorField::
 normalMotionSlipFvPatchVectorField
 (
-  const normalMotionSlipFvPatchVectorField& ptf,
-  const fvPatch& p,
-  const DimensionedField<vector, volMesh>& iF,
-  const fvPatchFieldMapper& mapper
+    const normalMotionSlipFvPatchVectorField& ptf,
+    const fvPatch& p,
+    const DimensionedField<vector, volMesh>& iF,
+    const fvPatchFieldMapper& mapper
 )
 :
     fixedValueFvPatchVectorField(ptf, p, iF, mapper)
-{}
-
-Foam::normalMotionSlipFvPatchVectorField::
-normalMotionSlipFvPatchVectorField
-(
-  const normalMotionSlipFvPatchVectorField& mwvpvf
-)
-:
-    fixedValueFvPatchVectorField(mwvpvf)
-{}
-
-Foam::normalMotionSlipFvPatchVectorField::
-normalMotionSlipFvPatchVectorField
-(
-  const normalMotionSlipFvPatchVectorField& mwvpvf,
-  const DimensionedField<vector, volMesh>& iF
-)
-:
-  fixedValueFvPatchVectorField(mwvpvf, iF)
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
   
 void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
 {
-  if(debug) 
-  {
-    Info<<"   normalMotionSlipFvPatchVectorField::updateCoeffs"<<nl;
-  }
-  
-  if (updated())
-  {
-      return;
-  }
+    if(debug) 
+    {
+        Info<<"   normalMotionSlipFvPatchVectorField::updateCoeffs"<<nl;
+    }
 
-  const vectorField& n = this->patch().nf();
-  const label& patchID = this->patch().index();
+    if (updated())
+    {
+        return;
+    }
 
-  const pointVectorField& pmU = 
-          this->db().objectRegistry::lookupObject<pointVectorField>
-          (
-            "pointMotionU"
-          );
+    const vectorField& n = this->patch().nf();
+    const label& patchID = this->patch().index();
 
-  const Foam::normalMotionSlipPointPatchVectorField& pmuBC =
-          refCast<const Foam::normalMotionSlipPointPatchVectorField>
-          (
-            pmU.boundaryField()[patchID]
-          );
+    const pointVectorField& pmU = 
+            this->db().objectRegistry::lookupObject<pointVectorField>
+            (
+                "pointMotionU"
+            );
+
+    const Foam::normalMotionSlipPointPatchVectorField& pmuBC =
+            refCast<const Foam::normalMotionSlipPointPatchVectorField>
+            (
+                pmU.boundaryField()[patchID]
+            );
 
 
-  vectorField::operator=
-  ( 
-    pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField())
-  );
+    vectorField::operator=
+    ( 
+        pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField())
+    );
 
-  fixedValueFvPatchVectorField::updateCoeffs();
+    fixedValueFvPatchVectorField::updateCoeffs();
 }
 
 void Foam::normalMotionSlipFvPatchVectorField::write(Ostream& os) const
 {
-  fvPatchVectorField::write(os);
-  writeEntry("value", os);
+    fvPatchVectorField::write(os);
+    writeEntry("value", os);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-  makePatchTypeField
-  (
-    fvPatchVectorField,
-    normalMotionSlipFvPatchVectorField
-  );
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        normalMotionSlipFvPatchVectorField
+    );
 }
 
 // ************************************************************************* //

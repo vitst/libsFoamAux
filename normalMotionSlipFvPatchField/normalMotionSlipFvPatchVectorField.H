@@ -24,15 +24,7 @@ License
 Class
     Foam::normalMotionSlipFvPatchVectorField
 
-Group
-    grpWallBoundaryConditions
-
 Description
-
-
-This *modified* boundary condition was created by Louis Gagnon ( louis.gagnon@polimi.it )
-and is intented to be used as a moving wall boundary condition for AMI interface cases
-
 
     This boundary condition provides a velocity condition for cases with
     moving walls.  In addition, it should also be applied to 'moving' walls
@@ -41,24 +33,14 @@ and is intented to be used as a moving wall boundary condition for AMI interface
 
     \heading Patch usage
 
-    \table
-        Property     | Description             | Required    | Default value
-        U            | velociy field name      | no          | U
-    \endtable
-
     Example of the boundary condition specification:
     \verbatim
-    myPatch
+    patchName
     {
         type            normalMotionSlip;
-        U               U;
-        value           uniform 0; // initial value
+        value           uniform (0 0 0);   // initial value
     }
     \endverbatim
-
-SeeAlso
-    Foam::fixedValueFvPatchVectorField
-    Foam::MRFZone
 
 SourceFiles
     normalMotionSlipFvPatchVectorField.C
@@ -83,83 +65,52 @@ namespace Foam
 
 class normalMotionSlipFvPatchVectorField
 :
-  public fixedValueFvPatchVectorField
+    public fixedValueFvPatchVectorField
 {
-// Private data
+    // Private data
+  
   
 public:
 
-//- Runtime type information
-TypeName("normalMotionSlip");
+    //- Runtime type information
+    TypeName("normalMotionSlip");
 
-// Constructors
+    
+    // Constructors
 
-  //- Construct from patch and internal field
-  normalMotionSlipFvPatchVectorField
-  (
-    const fvPatch&,
-    const DimensionedField<vector, volMesh>&
-  );
+        //- Construct from patch and internal field
+        normalMotionSlipFvPatchVectorField
+        (
+          const fvPatch&,
+          const DimensionedField<vector, volMesh>&
+        );
 
-  //- Construct from patch, internal field and dictionary
-  normalMotionSlipFvPatchVectorField
-  (
-    const fvPatch&,
-    const DimensionedField<vector, volMesh>&,
-    const dictionary&
-  );
+        //- Construct from patch, internal field and dictionary
+        normalMotionSlipFvPatchVectorField
+        (
+          const fvPatch&,
+          const DimensionedField<vector, volMesh>&,
+          const dictionary&
+        );
 
-  //- Construct by mapping given normalMotionSlipFvPatchVectorField
-  //  onto a new patch
-  normalMotionSlipFvPatchVectorField
-  (
-    const normalMotionSlipFvPatchVectorField&,
-    const fvPatch&,
-    const DimensionedField<vector, volMesh>&,
-    const fvPatchFieldMapper&
-  );
+        //- Construct by mapping given normalMotionSlipFvPatchVectorField
+        //  onto a new patch
+        normalMotionSlipFvPatchVectorField
+        (
+          const normalMotionSlipFvPatchVectorField&,
+          const fvPatch&,
+          const DimensionedField<vector, volMesh>&,
+          const fvPatchFieldMapper&
+        );
 
-  //- Construct as copy
-  normalMotionSlipFvPatchVectorField
-  (
-    const normalMotionSlipFvPatchVectorField&
-  );
+        
+    // Member functions
 
-  //- Construct and return a clone
-  virtual tmp<fvPatchVectorField> clone() const
-  {
-    return tmp<fvPatchVectorField>
-    (
-      new normalMotionSlipFvPatchVectorField(*this)
-    );
-  }
+        //- Update the coefficients associated with the patch field
+        virtual void updateCoeffs();
 
-  //- Construct as copy setting internal field reference
-  normalMotionSlipFvPatchVectorField
-  (
-      const normalMotionSlipFvPatchVectorField&,
-      const DimensionedField<vector, volMesh>&
-  );
-
-  //- Construct and return a clone setting internal field reference
-  virtual tmp<fvPatchVectorField> clone
-  (
-      const DimensionedField<vector, volMesh>& iF
-  ) const
-  {
-    return tmp<fvPatchVectorField>
-    (
-      new normalMotionSlipFvPatchVectorField(*this, iF)
-    );
-  }
-
-// Member functions
-
-  //- Update the coefficients associated with the patch field
-  virtual void updateCoeffs();
-
-  //- Write
-  virtual void write(Ostream&) const;
+        //- Write
+        virtual void write(Ostream&) const;
 };
 
 

@@ -24,15 +24,11 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "normalMotionSlipPointPatchVectorField.H"
+#include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "pointPatchFields.H"
 
 #include "coupledPatchInterpolation.H"
-
-#include "addToRunTimeSelectionTable.H"
-#include "fvPatchFieldMapper.H"
-
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -42,7 +38,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
     const DimensionedField<vector, pointMesh>& iF
 )
 :
-  valuePointPatchField<vector>(p, iF)
+    valuePointPatchField<vector>(p, iF)
 {}
 
 
@@ -53,7 +49,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
   const dictionary& dict
 )
 :
-  valuePointPatchField<vector>(p, iF, dict)
+    valuePointPatchField<vector>(p, iF, dict)
 {}
 
 
@@ -69,16 +65,6 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
 {}
 
 
-Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
-(
-  const normalMotionSlipPointPatchVectorField& ptf,
-  const DimensionedField<vector, pointMesh>& iF
-)
-:
-  valuePointPatchField<vector>(ptf, iF)
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::normalMotionSlipPointPatchVectorField::evaluate
@@ -86,59 +72,62 @@ void Foam::normalMotionSlipPointPatchVectorField::evaluate
     const Pstream::commsTypes
 )
 {
-  if(debug) 
-  {
-    Info<<"   normalMotionSlipPointPatchVectorField::evaluate"<<nl;
-  }
+    if(debug) 
+    {
+        Info<<"   normalMotionSlipPointPatchVectorField::evaluate"<<nl;
+    }
   
-  const polyMesh& mesh = this->internalField().mesh()();
-  const label& patchID = this->patch().index();
-  const fvMesh& fvmesh_ = refCast<const fvMesh>(mesh);
-  coupledPatchInterpolation patchInterpolator
-  ( 
-    mesh.boundaryMesh()[patchID], fvmesh_
-  );
+    const polyMesh& mesh = this->internalField().mesh()();
+    const label& patchID = this->patch().index();
+    const fvMesh& fvmesh_ = refCast<const fvMesh>(mesh);
+    coupledPatchInterpolation patchInterpolator
+    ( 
+        mesh.boundaryMesh()[patchID], fvmesh_
+    );
   
-  const volVectorField& cmu =
-    this->db().objectRegistry::lookupObject<volVectorField>("cellMotionU");
-  
-  this->operator==
-  ( 
-    patchInterpolator.faceToPointInterpolate( cmu.boundaryField()[patchID] ) 
-  );
-  
-  valuePointPatchField<vector>::evaluate();
+    const volVectorField& cmu =
+            this->db().objectRegistry::lookupObject<volVectorField>
+            (
+                "cellMotionU"
+            );
+
+    this->operator==
+    ( 
+        patchInterpolator.faceToPointInterpolate( cmu.boundaryField()[patchID] ) 
+    );
+
+    valuePointPatchField<vector>::evaluate();
 }
 
 void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
 {
-  if(debug) 
-  {
-    Info<<"   normalMotionSlipPointPatchVectorField::updateCoeffs"<<nl;
-  }
-  
-  const polyMesh& mesh = this->internalField().mesh()();
-  
-  const volScalarField& C =
-          this->db().objectRegistry::lookupObject<volScalarField>("C");
-  const label& patchID = this->patch().index();
-  const IOdictionary& IOd
-        = this->db().lookupObject<IOdictionary>("transportProperties");
-  scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
-  scalarField grC = -C.boundaryField()[patchID].snGrad();
-  vectorField pNf = mesh.boundaryMesh()[patchID].faceNormals();
+    if(debug) 
+    {
+        Info<<"   normalMotionSlipPointPatchVectorField::updateCoeffs"<<nl;
+    }
 
-  faceDispl = lR * grC * pNf;
-  valuePointPatchField<vector>::updateCoeffs();
+    const polyMesh& mesh = this->internalField().mesh()();
+
+    const volScalarField& C =
+            this->db().objectRegistry::lookupObject<volScalarField>("C");
+    const label& patchID = this->patch().index();
+    const IOdictionary& IOd
+          = this->db().lookupObject<IOdictionary>("transportProperties");
+    scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+    scalarField grC = -C.boundaryField()[patchID].snGrad();
+    vectorField pNf = mesh.boundaryMesh()[patchID].faceNormals();
+
+    faceDispl = lR * grC * pNf;
+    valuePointPatchField<vector>::updateCoeffs();
 }
  
   namespace Foam
 {
-  makePointPatchTypeField
-  (
-    pointPatchVectorField,
-    normalMotionSlipPointPatchVectorField
-  );
+    makePointPatchTypeField
+    (
+        pointPatchVectorField,
+        normalMotionSlipPointPatchVectorField
+    );
 }
 
 

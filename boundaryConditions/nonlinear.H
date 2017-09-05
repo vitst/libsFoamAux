@@ -5,7 +5,7 @@ scalar n2     = 1.0;
 scalar Cth    = 0.0;
 scalar gamma  = 0.01;
 
-bool limitingPlane = true;          // Limiting plane
+bool limitingPlane = false;          // Limiting plane
 vector refNorm(0,0,1);
 point  refPoint (0,0,-4.5);
 plane limitPlane(refPoint, refNorm);

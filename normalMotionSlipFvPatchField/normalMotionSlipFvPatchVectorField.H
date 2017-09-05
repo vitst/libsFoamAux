@@ -83,102 +83,83 @@ namespace Foam
 
 class normalMotionSlipFvPatchVectorField
 :
-    public fixedValueFvPatchVectorField
+  public fixedValueFvPatchVectorField
 {
-    // Private data
-
-    //- Name of velocity field
-    word UName_;
-
-    //- calculate point displacement field and normals once
-    //vectorField displacement;
-
+// Private data
+  
 public:
 
-    //- Runtime type information
-    TypeName("normalMotionSlip");
+//- Runtime type information
+TypeName("normalMotionSlip");
 
+// Constructors
 
-    // Constructors
+  //- Construct from patch and internal field
+  normalMotionSlipFvPatchVectorField
+  (
+    const fvPatch&,
+    const DimensionedField<vector, volMesh>&
+  );
 
-        //- Construct from patch and internal field
-        normalMotionSlipFvPatchVectorField
-        (
-            const fvPatch&,
-            const DimensionedField<vector, volMesh>&
-        );
+  //- Construct from patch, internal field and dictionary
+  normalMotionSlipFvPatchVectorField
+  (
+    const fvPatch&,
+    const DimensionedField<vector, volMesh>&,
+    const dictionary&
+  );
 
-        //- Construct from patch, internal field and dictionary
-        normalMotionSlipFvPatchVectorField
-        (
-            const fvPatch&,
-            const DimensionedField<vector, volMesh>&,
-            const dictionary&
-        );
+  //- Construct by mapping given normalMotionSlipFvPatchVectorField
+  //  onto a new patch
+  normalMotionSlipFvPatchVectorField
+  (
+    const normalMotionSlipFvPatchVectorField&,
+    const fvPatch&,
+    const DimensionedField<vector, volMesh>&,
+    const fvPatchFieldMapper&
+  );
 
-        //- Construct by mapping given normalMotionSlipFvPatchVectorField
-        //  onto a new patch
-        normalMotionSlipFvPatchVectorField
-        (
-            const normalMotionSlipFvPatchVectorField&,
-            const fvPatch&,
-            const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
-        );
+  //- Construct as copy
+  normalMotionSlipFvPatchVectorField
+  (
+    const normalMotionSlipFvPatchVectorField&
+  );
 
-        //- Construct as copy
-        normalMotionSlipFvPatchVectorField
-        (
-            const normalMotionSlipFvPatchVectorField&
-        );
+  //- Construct and return a clone
+  virtual tmp<fvPatchVectorField> clone() const
+  {
+    return tmp<fvPatchVectorField>
+    (
+      new normalMotionSlipFvPatchVectorField(*this)
+    );
+  }
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchVectorField> clone() const
-        {
-            return tmp<fvPatchVectorField>
-            (
-                new normalMotionSlipFvPatchVectorField(*this)
-            );
-        }
+  //- Construct as copy setting internal field reference
+  normalMotionSlipFvPatchVectorField
+  (
+      const normalMotionSlipFvPatchVectorField&,
+      const DimensionedField<vector, volMesh>&
+  );
 
-        //- Construct as copy setting internal field reference
-        normalMotionSlipFvPatchVectorField
-        (
-            const normalMotionSlipFvPatchVectorField&,
-            const DimensionedField<vector, volMesh>&
-        );
+  //- Construct and return a clone setting internal field reference
+  virtual tmp<fvPatchVectorField> clone
+  (
+      const DimensionedField<vector, volMesh>& iF
+  ) const
+  {
+    return tmp<fvPatchVectorField>
+    (
+      new normalMotionSlipFvPatchVectorField(*this, iF)
+    );
+  }
 
-        //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatchVectorField> clone
-        (
-            const DimensionedField<vector, volMesh>& iF
-        ) const
-        {
-          return tmp<fvPatchVectorField>
-          (
-            new normalMotionSlipFvPatchVectorField(*this, iF)
-          );
-        }
+// Member functions
 
+  //- Update the coefficients associated with the patch field
+  virtual void updateCoeffs();
 
-    // Member functions
-
-        //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
-
-        //- Evaluate the patch field, sets Updated to false
-        virtual void evaluate
-        (
-          const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
-        );
-        //- Initialise the evaluation of the patch field
-        virtual void initEvaluate
-        (
-          const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
-        );
-        
-        //- Write
-        virtual void write(Ostream&) const;
+  //- Write
+  virtual void write(Ostream&) const;
 };
 
 

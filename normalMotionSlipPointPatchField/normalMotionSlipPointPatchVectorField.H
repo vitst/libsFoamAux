@@ -35,11 +35,7 @@ SourceFiles
 #ifndef normalMotionSlipPointPatchVectorField_H
 #define normalMotionSlipPointPatchVectorField_H
 
-//#include "slipPointPatchField.H"
-//#include "fixedValuePointPatchField.H"
 #include "valuePointPatchField.H"
-
-//#include "calculatedPointPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,7 +43,6 @@ namespace Foam
 {
 
 // Forward declaration of friend functions and operators
-
 class normalMotionSlipPointPatchVectorField;
 
 
@@ -56,8 +51,6 @@ Ostream& operator<<
     Ostream&,
     const normalMotionSlipPointPatchVectorField&
 );
- 
-
 
 
 /*---------------------------------------------------------------------------*\
@@ -66,15 +59,13 @@ Ostream& operator<<
 
 class normalMotionSlipPointPatchVectorField
 :
-//    public slipPointPatchField<vector>
-//    public fixedValuePointPatchField<vector>
     public valuePointPatchField<vector>
-//    public calculatedPointPatchField<vector>
 {
     // Private data
-    bool iniDisp;
     
+    //- saves displacement field on the boundary for cellMotionU
     vectorField faceDispl;
+    
 
 public:
 
@@ -147,20 +138,14 @@ public:
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
         
-        bool getIniDisp();
-
         const Field<vector>& getDisp() const 
         { return faceDispl; }
         
         //- Update the patch field
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
+          const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
         );
-
-        //- Write
-        //virtual void write(Ostream&) const;
-        
 };
 
 

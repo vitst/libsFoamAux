@@ -53,8 +53,9 @@ normalMotionSlipFvPatchVectorField
 :
     fixedValueFvPatchVectorField(p, iF)
 {
-  fvPatchVectorField::operator=(vectorField("value", dict, p.size()));
+    fvPatchVectorField::operator=(vectorField("value", dict, p.size()));
 }
+
 
 Foam::normalMotionSlipFvPatchVectorField::
 normalMotionSlipFvPatchVectorField
@@ -67,6 +68,28 @@ normalMotionSlipFvPatchVectorField
 :
     fixedValueFvPatchVectorField(ptf, p, iF, mapper)
 {}
+
+
+Foam::normalMotionSlipFvPatchVectorField::
+normalMotionSlipFvPatchVectorField
+(
+    const normalMotionSlipFvPatchVectorField& mwvpvf
+)
+:
+    fixedValueFvPatchVectorField(mwvpvf)
+{}
+
+
+Foam::normalMotionSlipFvPatchVectorField::
+normalMotionSlipFvPatchVectorField
+(
+    const normalMotionSlipFvPatchVectorField& mwvpvf,
+    const DimensionedField<vector, volMesh>& iF
+)
+:
+    fixedValueFvPatchVectorField(mwvpvf, iF)
+{}
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
   
@@ -82,8 +105,8 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
         return;
     }
 
-    const vectorField& n = this->patch().nf();
-    const label& patchID = this->patch().index();
+    vectorField n = this->patch().nf();
+    label patchID = this->patch().index();
 
     const pointVectorField& pmU = 
             this->db().objectRegistry::lookupObject<pointVectorField>
@@ -106,11 +129,13 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
     fixedValueFvPatchVectorField::updateCoeffs();
 }
 
+
 void Foam::normalMotionSlipFvPatchVectorField::write(Ostream& os) const
 {
     fvPatchVectorField::write(os);
     writeEntry("value", os);
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

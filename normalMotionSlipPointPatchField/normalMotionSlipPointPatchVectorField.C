@@ -44,9 +44,9 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
 
 Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
 (
-  const pointPatch& p,
-  const DimensionedField<vector, pointMesh>& iF,
-  const dictionary& dict
+    const pointPatch& p,
+    const DimensionedField<vector, pointMesh>& iF,
+    const dictionary& dict
 )
 :
     valuePointPatchField<vector>(p, iF, dict)
@@ -55,13 +55,22 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
 
 Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
 (
-  const normalMotionSlipPointPatchVectorField& ptf,
-  const pointPatch& p,
-  const DimensionedField<vector, pointMesh>& iF,
-  const pointPatchFieldMapper& mapper
+    const normalMotionSlipPointPatchVectorField& ptf,
+    const pointPatch& p,
+    const DimensionedField<vector, pointMesh>& iF,
+    const pointPatchFieldMapper& mapper
 )
 :
     valuePointPatchField<vector>(ptf, p, iF, mapper)
+{}
+
+Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
+(
+    const normalMotionSlipPointPatchVectorField& ptf,
+    const DimensionedField<vector, pointMesh>& iF
+)
+:
+    valuePointPatchField<vector>(ptf, iF)
 {}
 
 
@@ -78,7 +87,7 @@ void Foam::normalMotionSlipPointPatchVectorField::evaluate
     }
   
     const polyMesh& mesh = this->internalField().mesh()();
-    const label& patchID = this->patch().index();
+    label patchID = this->patch().index();
     const fvMesh& fvmesh_ = refCast<const fvMesh>(mesh);
     coupledPatchInterpolation patchInterpolator
     ( 

@@ -114,6 +114,41 @@ public:
             const pointPatchFieldMapper&
         );
 
+        //- Construct and return a clone
+        virtual autoPtr<pointPatchField<vector>> clone() const
+        {
+            return autoPtr<pointPatchField<vector>>
+            (
+                new normalMotionSlipPointPatchVectorField
+                (
+                    *this
+                )
+            );
+        }
+
+        //- Construct as copy setting internal field reference
+        normalMotionSlipPointPatchVectorField
+        (
+            const normalMotionSlipPointPatchVectorField&,
+            const DimensionedField<vector, pointMesh>&
+        );
+
+        //- Construct and return a clone setting internal field reference
+        virtual autoPtr<pointPatchField<vector>> clone
+        (
+            const DimensionedField<vector, pointMesh>& iF
+        ) const
+        {
+            return autoPtr<pointPatchField<vector>>
+            (
+                new normalMotionSlipPointPatchVectorField
+                (
+                    *this,
+                    iF
+                )
+            );
+        }
+
     // Member functions
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();

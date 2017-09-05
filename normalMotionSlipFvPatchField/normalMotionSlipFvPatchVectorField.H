@@ -103,6 +103,39 @@ public:
           const fvPatchFieldMapper&
         );
 
+        //- Construct as copy
+        normalMotionSlipFvPatchVectorField
+        (
+            const normalMotionSlipFvPatchVectorField&
+        );
+
+        //- Construct and return a clone
+        virtual tmp<fvPatchVectorField> clone() const
+        {
+            return tmp<fvPatchVectorField>
+            (
+                new normalMotionSlipFvPatchVectorField(*this)
+            );
+        }
+
+        //- Construct as copy setting internal field reference
+        normalMotionSlipFvPatchVectorField
+        (
+            const normalMotionSlipFvPatchVectorField&,
+            const DimensionedField<vector, volMesh>&
+        );
+
+        //- Construct and return a clone setting internal field reference
+        virtual tmp<fvPatchVectorField> clone
+        (
+            const DimensionedField<vector, volMesh>& iF
+        ) const
+        {
+            return tmp<fvPatchVectorField>
+            (
+                new normalMotionSlipFvPatchVectorField(*this, iF)
+            );
+        }
         
     // Member functions
 

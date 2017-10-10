@@ -1,10 +1,12 @@
 #!/bin/bash
 # Make symbolic links
 
+curDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 mkdir -p ../lnInclude
 cd ../lnInclude
-for H in ../libsFoamAux/*/*.H; do
+for H in $curDIR/*/*.H; do
     ln -s $H
 done
 
-ln -s ../libsFoamAux/coupledPatchInterpolation/CoupledPatchInterpolation.C
+ln -s $curDIR/coupledPatchInterpolation/CoupledPatchInterpolation.C

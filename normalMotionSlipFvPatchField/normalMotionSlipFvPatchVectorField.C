@@ -95,7 +95,7 @@ normalMotionSlipFvPatchVectorField
   
 void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
 {
-    if(debug) 
+    if(debug)
     {
         Info<<"   normalMotionSlipFvPatchVectorField::updateCoeffs"<<nl;
     }
@@ -104,8 +104,8 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
     {
         return;
     }
-
-    vectorField n = this->patch().nf();
+    
+    const vectorField& n = this->patch().nf();
     label patchID = this->patch().index();
 
     const pointVectorField& pmU = 

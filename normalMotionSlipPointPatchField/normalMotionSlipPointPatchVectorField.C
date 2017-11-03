@@ -29,7 +29,8 @@ License
 #include "pointPatchFields.H"
 
 #include "coupledPatchInterpolation.H"
-
+#include "fixedNormalSlipPointPatchField.H"
+#include "cyclicSlipPointPatchField.H"
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
@@ -127,6 +128,46 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
     vectorField pNf = mesh.boundaryMesh()[patchID].faceNormals();
 
     faceDispl = lR * grC * pNf;
+    
+    // trying to fix an error on the boundary between two meshes
+    const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
+    
+    const pointVectorField& pmU = 
+            this->db().objectRegistry::lookupObject<pointVectorField>
+            (
+                "pointMotionU"
+            );
+/*
+    const Foam::normalMotionSlipPointPatchVectorField& pmuBC =
+            refCast<const Foam::normalMotionSlipPointPatchVectorField>
+            (
+                pmU.boundaryField()[patchID]
+            );
+  */  
+    // enforcing slip boundary conditions on the neighbor faces
+    /*
+    forAll(bMesh, i)
+    {
+      Info<<"BBBBBB:  "<< bMesh[i].type()<<nl;
+      
+      Info<<"CCCCCC:  "<< isA<fixedNormalSlipPointPatchField<vector> >(pmU.boundaryField()[i]) <<nl;
+      Info<<"DDDDDD:  "<< isA<cyclicSlipPointPatchField<vector> >(pmU.boundaryField()[i]) <<nl;
+      
+      if(isA<fixedNormalSlipPointPatchField<vector> >(pmU.boundaryField()[i]))
+      {
+      }
+      else if(isA<cyclicSlipPointPatchField<vector> >(pmU.boundaryField()[i]))
+      {
+      
+      }
+      
+      
+    }
+     */
+    
+    
+    
+    
     valuePointPatchField<vector>::updateCoeffs();
 }
  

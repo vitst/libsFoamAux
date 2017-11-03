@@ -123,7 +123,7 @@ void Foam::velocityLaplacianConvFvMotionSolver::solve()
 
     diffusivityPtr_->correct();
     pointMotionU_.boundaryFieldRef().updateCoeffs();
-
+    
     scalar tolerance = 0.001;
     int iter = 0;
     while ( true )
@@ -162,7 +162,6 @@ void Foam::velocityLaplacianConvFvMotionSolver::solve()
         
       }
     }
-    
 }
 
 

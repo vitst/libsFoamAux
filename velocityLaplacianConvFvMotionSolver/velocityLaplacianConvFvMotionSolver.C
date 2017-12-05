@@ -158,8 +158,17 @@ void Foam::velocityLaplacianConvFvMotionSolver::solve()
         {
           Info << " Step " << iter
                << " residual: "<< residual << " > " << tolerance << endl;
+          //Info << " iniR " << sp.initialResidual() << nl;
         }
         
+      }
+      if( iter>1000 )
+      {
+        Info << nl << "velocityLaplacianConvFvMotionSolver WARNING:"
+             << "Laplacian solver did not converge." << nl
+             << "Maximum number of iterations"
+             << "  iter: "<< iter << endl;
+        break;
       }
     }
 }

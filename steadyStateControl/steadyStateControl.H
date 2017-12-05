@@ -28,8 +28,7 @@ Description
     Modification of simpleControl class to supply convergence
     information/checks for a steady state solution, without
     incrementing the time counter.
-    ***It requires dataDictPatch (and recompilation of OF)***
-    Vitaliy Starchenko (Feb 2015)
+    Vitaliy Starchenko (Dec 2017)
 
 
 \*---------------------------------------------------------------------------*/

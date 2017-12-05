@@ -106,9 +106,10 @@ void Foam::steadyStateControl::maxTypeResidual
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
     if (mesh_.foundObject<fieldType>(fieldName))
     {
-	    fieldType& field = const_cast<fieldType&>(
+	    fieldType& field = const_cast<fieldType&>
+        (
 		    mesh_.lookupObject<fieldType>( fieldName )
-	);
+        );
 
         const List<SolverPerformance<Type> > sp(data);
 
@@ -116,11 +117,12 @@ void Foam::steadyStateControl::maxTypeResidual
         reduce(sz, sumOp<int>());
         Type nF = gSumCmptProd( field, field ) / static_cast<double>(sz);
 
-	scalar norm = mag(nF);
+        scalar norm = mag(nF);
 
-	for (direction cmpt=0; cmpt < nF.size(); cmpt++){
-	  nF[cmpt] = sqrt( nF[cmpt] );
-	}
+        for (direction cmpt=0; cmpt < nF.size(); cmpt++)
+        {
+            nF[cmpt] = sqrt( nF[cmpt] );
+        }
         nF = nF/norm;
 
         firstRes = cmptMax( cmptMultiply(sp.first().initialResidual(), nF) );
@@ -139,16 +141,18 @@ Foam::scalar Foam::steadyStateControl::maxResidual
 {
     scalar firstRes = 0;
 
-    if(mesh_.foundObject<volScalarField>(fieldName)){
-      const List< SolverPerformance<scalar> > sp(data);
-      firstRes = sp.first().initialResidual();
-      lastRes = sp.last().initialResidual();
+    if(mesh_.foundObject<volScalarField>(fieldName))
+    {
+        const List< SolverPerformance<scalar> > sp(data);
+        firstRes = sp.first().initialResidual();
+        lastRes = sp.last().initialResidual();
     }
-    else{
-      maxTypeResidual<vector>(fieldName, data, firstRes, lastRes);
-      maxTypeResidual<sphericalTensor>(fieldName, data, firstRes, lastRes);
-      maxTypeResidual<symmTensor>(fieldName, data, firstRes, lastRes);
-      maxTypeResidual<tensor>(fieldName, data, firstRes, lastRes);
+    else
+    {
+        maxTypeResidual<vector>(fieldName, data, firstRes, lastRes);
+        maxTypeResidual<sphericalTensor>(fieldName, data, firstRes, lastRes);
+        maxTypeResidual<symmTensor>(fieldName, data, firstRes, lastRes);
+        maxTypeResidual<tensor>(fieldName, data, firstRes, lastRes);
     }
 
     return firstRes;
@@ -219,7 +223,6 @@ bool Foam::steadyStateControl::loop()
         initialised_ = true;
         storePrevIterFields();
     }
-      
 
     return run;
 }

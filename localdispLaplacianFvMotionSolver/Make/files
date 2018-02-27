@@ -1,0 +1,3 @@
+localdispLaplacianFvMotionSolver.C
+
+LIB = $(FOAM_USER_LIBBIN)/liblocaldispLaplacianFvMotionSolver

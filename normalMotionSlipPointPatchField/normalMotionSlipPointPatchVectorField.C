@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-201X OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -86,6 +86,7 @@ void Foam::normalMotionSlipPointPatchVectorField::evaluate
     {
         Info<<"   normalMotionSlipPointPatchVectorField::evaluate"<<nl;
     }
+    Info<<"   normalMotionSlipPointPatchVectorField::evaluate"<<nl;
   
     const polyMesh& mesh = this->internalField().mesh()();
     label patchID = this->patch().index();
@@ -100,12 +101,13 @@ void Foam::normalMotionSlipPointPatchVectorField::evaluate
             (
                 "cellMotionU"
             );
-
+    
+    //const scalar dt = this->db().time().deltaTValue();
     this->operator==
     ( 
         patchInterpolator.faceToPointInterpolate( cmu.boundaryField()[patchID] ) 
     );
-
+    
     valuePointPatchField<vector>::evaluate();
 }
 
@@ -115,6 +117,7 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
     {
         Info<<"   normalMotionSlipPointPatchVectorField::updateCoeffs"<<nl;
     }
+        Info<<"   normalMotionSlipPointPatchVectorField::updateCoeffs"<<nl;
 
     const polyMesh& mesh = this->internalField().mesh()();
 
@@ -126,9 +129,18 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
     scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
     scalarField grC = -C.boundaryField()[patchID].snGrad();
     vectorField pNf = mesh.boundaryMesh()[patchID].faceNormals();
-
-    faceDispl = lR * grC * pNf;
     
+    //const scalar dt = this->db().time().deltaTValue();
+
+    Info<<"   normalMotionSlipPointPatchVectorField::updateCoeffs1"<<nl;
+    //faceDispl = dt * lR * grC * pNf;
+    faceDispl.setSize( pNf.size() );
+    faceDispl = lR * grC * pNf;
+    Info<<"   normalMotionSlipPointPatchVectorField::updateCoeffs2"<<nl;
+    
+    //Info<<"max faceDisp: "<<max(faceDispl)<<nl;
+    
+    /*
     // trying to fix an error on the boundary between two meshes
     const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
     
@@ -137,13 +149,13 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
             (
                 "pointMotionU"
             );
-/*
     const Foam::normalMotionSlipPointPatchVectorField& pmuBC =
             refCast<const Foam::normalMotionSlipPointPatchVectorField>
             (
                 pmU.boundaryField()[patchID]
             );
-  */  
+    */
+    
     // enforcing slip boundary conditions on the neighbor faces
     /*
     forAll(bMesh, i)

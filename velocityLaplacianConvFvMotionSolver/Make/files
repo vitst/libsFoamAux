@@ -1,3 +1,0 @@
-velocityLaplacianConvFvMotionSolver.C
-
-LIB = $(FOAM_USER_LIBBIN)/libvelocityLaplacianConvFvMotionSolver

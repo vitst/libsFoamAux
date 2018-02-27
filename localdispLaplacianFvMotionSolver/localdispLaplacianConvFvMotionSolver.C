@@ -107,6 +107,7 @@ Foam::velocityLaplacianConvFvMotionSolver::curPoints() const
     (
         fvMesh_.points()
       + fvMesh_.time().deltaTValue()*pointMotionU_.primitiveField()
+      //+ pointMotionU_.primitiveField()
     );
 
     twoDCorrectPoints(tcurPoints.ref());
@@ -130,7 +131,17 @@ void Foam::velocityLaplacianConvFvMotionSolver::solve()
     {
       iter++;
 
-      fvVectorMatrix UEqn
+      Info << " velocityLaplacianConvFvMotionSolver::solve()111 " << nl;
+      
+      Info << diffusivityPtr_->operator()() << nl;
+      
+      Info << " velocityLaplacianConvFvMotionSolver::solve()111 DDDDDDDD" << nl;
+      
+      Info << cellMotionU_.size() << nl;
+      
+      Info << " velocityLaplacianConvFvMotionSolver::solve()111 CCCCCCCC" << nl;
+      
+      fvVectorMatrix MUEqn
       (
           fvm::laplacian
           (
@@ -140,10 +151,11 @@ void Foam::velocityLaplacianConvFvMotionSolver::solve()
           )
       );
       
-      //UEqn.relax();
+      Info << " velocityLaplacianConvFvMotionSolver::solve()222 " << nl;
+      //UEqn.relax(0.0);
       
       SolverPerformance<vector> sp 
-              = UEqn.solveSegregatedOrCoupled(UEqn.solverDict());
+              = MUEqn.solveSegregatedOrCoupled(MUEqn.solverDict());
       scalar residual = cmptMax(sp.initialResidual());
 
       if( residual < tolerance )

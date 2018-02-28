@@ -8,7 +8,7 @@ for d in */ ; do
   if [ -f ${d}/Allwmake ]; then
     echo "Making library $d"
     pushd $d
-    Allwmake
+    ./Allwmake
     popd
   fi
 done

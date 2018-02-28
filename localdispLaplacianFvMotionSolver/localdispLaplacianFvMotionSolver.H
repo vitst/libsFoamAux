@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::velocityLaplacianConvFvMotionSolver
+    Foam::localdispLaplacianFvMotionSolver
 
 Group
     grpMeshMotionSolvers 
@@ -32,16 +32,18 @@ Description
     Laplacian for the motion velocity.
 
 SourceFiles
-    velocityLaplacianConvFvMotionSolver.C
+    localdispLaplacianFvMotionSolver.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef velocityLaplacianConvFvMotionSolver_H
-#define velocityLaplacianConvFvMotionSolver_H
+#ifndef localdispLaplacianFvMotionSolver_H
+#define localdispLaplacianFvMotionSolver_H
 
 #include "velocityMotionSolver.H"
 #include "fvMotionSolver.H"
 #include "motionInterpolation.H"
+#include "surfaceFields.H"
+#include "surfaceFieldsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,10 +55,10 @@ class motionInterpolation;
 class motionDiffusivity;
 
 /*---------------------------------------------------------------------------*\
-              Class velocityLaplacianConvFvMotionSolver Declaration
+              Class localdispLaplacianFvMotionSolver Declaration
 \*---------------------------------------------------------------------------*/
 
-class velocityLaplacianConvFvMotionSolver
+class localdispLaplacianFvMotionSolver
 :
     public velocityMotionSolver,
     public fvMotionSolver
@@ -65,6 +67,7 @@ class velocityLaplacianConvFvMotionSolver
 
         //- Cell-centre motion field
         mutable volVectorField cellMotionU_;
+        surfaceScalarField W_;
 
         //- Interpolation used to transfer cell displacement to the points
         autoPtr<motionInterpolation> interpolationPtr_;
@@ -72,29 +75,28 @@ class velocityLaplacianConvFvMotionSolver
         //- Diffusivity used to control the motion
         autoPtr<motionDiffusivity> diffusivityPtr_;
 
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        velocityLaplacianConvFvMotionSolver
+        localdispLaplacianFvMotionSolver
         (
-            const velocityLaplacianConvFvMotionSolver&
+            const localdispLaplacianFvMotionSolver&
         );
 
         //- Disallow default bitwise assignment
-        void operator=(const velocityLaplacianConvFvMotionSolver&);
+        void operator=(const localdispLaplacianFvMotionSolver&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("velocityLaplacianConv");
+    TypeName("localdispLaplacian");
 
 
     // Constructors
 
         //- Construct from polyMesh and IOdictionary
-        velocityLaplacianConvFvMotionSolver
+        localdispLaplacianFvMotionSolver
         (
             const polyMesh&,
             const IOdictionary&
@@ -102,18 +104,18 @@ public:
 
 
     //- Destructor
-    ~velocityLaplacianConvFvMotionSolver();
+    ~localdispLaplacianFvMotionSolver();
 
 
     // Member Functions
 
-        //- Return reference to the cell motion velocity field
+        //- Return reference to the cell displacement field
         volVectorField& cellMotionU()
         {
             return cellMotionU_;
         }
 
-        //- Return const reference to the cell motion velocity field
+        //- Return const reference to the cell displacement velocity field
         const volVectorField& cellMotionU() const
         {
             return cellMotionU_;

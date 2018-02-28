@@ -105,7 +105,7 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
         return;
     }
     
-    const vectorField& n = this->patch().nf();
+    const vectorField n(this->patch().nf());
     label patchID = this->patch().index();
 
     const pointVectorField& pmU = 
@@ -120,15 +120,6 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
                 pmU.boundaryField()[patchID]
             );
 
-    /*
-    Info<<"nMSS max faceDisp: "<<max(pmuBC.getDisp())
-            <<"  iF: "
-            <<max(this->patchInternalField())
-            //<<"  patchID: "
-            //<< patchID
-            <<nl;
-    */
-
     vectorField::operator=
     ( 
         pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField())
@@ -136,17 +127,6 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
 
     fixedValueFvPatchVectorField::updateCoeffs();
 }
-
-/*
-void Foam::normalMotionSlipFvPatchVectorField::evaluate
-(
-    const Pstream::commsTypes
-)
-{
-        Info<<"   normalMotionSlipFvPatchVectorField::evaluate"<<nl;
-    fixedValueFvPatchVectorField::evaluate();
-}
- */
 
 void Foam::normalMotionSlipFvPatchVectorField::write(Ostream& os) const
 {

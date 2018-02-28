@@ -150,11 +150,13 @@ public:
         }
 
     // Member functions
+        const Field<vector>& getDisp() const 
+        { 
+          return faceDispl; 
+        }
+        
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
-        
-        const Field<vector>& getDisp() const 
-        { return faceDispl; }
         
         //- Update the patch field
         virtual void evaluate

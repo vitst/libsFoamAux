@@ -67,7 +67,6 @@ class localdispLaplacianFvMotionSolver
 
         //- Cell-centre motion field
         mutable volVectorField cellMotionU_;
-        surfaceScalarField W_;
 
         //- Interpolation used to transfer cell displacement to the points
         autoPtr<motionInterpolation> interpolationPtr_;

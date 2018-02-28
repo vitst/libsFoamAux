@@ -97,7 +97,7 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
 {
     if(debug)
     {
-        Info<<"   normalMotionSlipFvPatchVectorField::updateCoeffs"<<nl;
+        Info<<"   normalMotionSlipFvPatchVectorField::updateCoeffs()"<<nl;
     }
 
     if (updated())

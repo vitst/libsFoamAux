@@ -1431,7 +1431,7 @@ relaxPatchMeshPoints(vectorField& pointMotion)
   
   int N = newPointsPos.size();
   
-  const pointField& boundaryPoints = pPatch.localPoints();
+  //const pointField& boundaryPoints = pPatch.localPoints();
   
   //const pointField&  faceCs = pPatch.faceCentres();
   //const vectorField& faceNs = pPatch.faceNormals();
@@ -1929,14 +1929,14 @@ calc_weights_surface()
   scalarField cc(boundaryPoints.size(), 1.0);
   syncTools::syncPointList(meshTmp, meshPoints, cc, plusEqOp<scalar>(), 0.0);
 
-  const vectorField& faceNs = pp.faceNormals();
+  //const vectorField& faceNs = pp.faceNormals();
 
   // TODO!!! Re weights
   forAll(weights, i)
   {
     vectorField& pw = weights[i];
     vector &sw = sumWeights[i];
-    const labelList& pFaces = plistFaces[i];
+    //const labelList& pFaces = plistFaces[i];
     forAll(pw, j)
     {
       vector &ppw = pw[j];
@@ -1954,7 +1954,7 @@ calc_weights_surface()
         if(ii==1) ppw[ii] = 0.0;
       }
       
-      label faceI = pFaces[j];
+      //label faceI = pFaces[j];
 
       /*
       pw[j] = 
@@ -1985,9 +1985,9 @@ calc_point_weights_surface()
   
   const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
   const polyPatch& pPatch = refCast<const polyPatch>(bMesh[patchID]);
-  const List<face>& llf = pPatch.localFaces();
-  const labelListList& plistFaces = pPatch.pointFaces();
-  const labelListList& flistFaces = pPatch.faceFaces();
+  //const List<face>& llf = pPatch.localFaces();
+  //const labelListList& plistFaces = pPatch.pointFaces();
+  //const labelListList& flistFaces = pPatch.faceFaces();
   const labelListList& plistEdges = pPatch.pointEdges();
   const labelList& meshPoints = pPatch.meshPoints();
   
@@ -1995,8 +1995,8 @@ calc_point_weights_surface()
 
   const pointField& boundaryPoints = pPatch.localPoints();
   
-  const pointField&  faceCs = pPatch.faceCentres();
-  const vectorField& faceNs = pPatch.faceNormals();
+  //const pointField&  faceCs = pPatch.faceCentres();
+  //const vectorField& faceNs = pPatch.faceNormals();
   
   vectorFieldList weights( boundaryPoints.size() );
   vectorField sumWeights( boundaryPoints.size() );

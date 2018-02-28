@@ -75,19 +75,6 @@ Foam::localdispLaplacianFvMotionSolver::localdispLaplacianFvMotionSolver
         ),
         cellMotionBoundaryTypes<vector>(pointMotionU_.boundaryField())
     ),
-    W_
-    (
-        IOobject
-        (
-            "inverseDiffusivity0",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fvMesh_,
-        dimensionedScalar("1.0", dimless, 1.0)
-    ),
     interpolationPtr_
     (
         coeffDict().found("interpolation")
@@ -99,7 +86,6 @@ Foam::localdispLaplacianFvMotionSolver::localdispLaplacianFvMotionSolver
         motionDiffusivity::New(fvMesh_, coeffDict().lookup("diffusivity"))
     )
 {
-    W_ = diffusivityPtr_->operator()();
 }
 
 
@@ -123,8 +109,8 @@ Foam::localdispLaplacianFvMotionSolver::curPoints() const
     tmp<pointField> tcurPoints
     (
         fvMesh_.points()
-      + pointMotionU_.primitiveField()
-      //+ fvMesh_.time().deltaTValue()*pointMotionU_.primitiveField()
+      + 
+        pointMotionU_.primitiveField()
     );
 
     twoDCorrectPoints(tcurPoints.ref());
@@ -142,60 +128,6 @@ void Foam::localdispLaplacianFvMotionSolver::solve()
     diffusivityPtr_->correct();
     pointMotionU_.boundaryFieldRef().updateCoeffs();
     
-    //scalarField W = fvMesh_.V();
-    //W = 1/W;
-    //Info<<"diffusivity:  "<<diffusivityPtr_->operator()()<<nl;
-    //Info<<"diffusivity:  "<<W_<<nl;
-    
-    
-    /*
-    volVectorField Y
-    (
-        IOobject
-        (
-            "Y",
-            fvMesh_.time().timeName(),
-            fvMesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            false
-        ),
-        fvMesh_,
-        dimensionedVector("Y", dimensionSet(0,1,0,0,0,0,0), vector::zero),
-        fixedValueFvPatchVectorField::typeName
-        //zeroGradientFvPatchVectorField::typeName
-    );
-    Y.primitiveFieldRef() = fvMesh_.C(); // fvMesh_.time().deltaTValue();
-    //Y.correctBoundaryConditions();
-
-    forAll(Y.boundaryField(), I)
-    {
-       vectorField& bvField = Y.boundaryFieldRef()[I];
-       bvField = fvMesh_.boundaryMesh()[I].faceCentres(); // / fvMesh_.time().deltaTValue();
-    } 
-    */
-    
-    
-    /*
-    Info<<"fvc::laplacian    "
-            <<
-          fvc::laplacian
-          (
-              W_,
-              Y,
-              "laplacian(diffusivity,Y)"
-          )
-          << nl;
-    //std::exit(0);
-     */
-    
-    //Info<<"max pm BEF: "<< max(pointMotionU_.primitiveField())<<nl;
-    //pointMotionU_ = pointMotionU_ * fvMesh_.time().deltaTValue();
-    //Info<<"max pm AFT: "<< max(pointMotionU_.primitiveField())<<nl;
-    
-    //Info<<"W size   "<<W_.size()<<nl;
-    //Info<<"cellMotionU_   "<<cellMotionU_.size()<<nl;
-    
     scalar tolerance = 0.0001;
     int iter = 0;
     while ( true )
@@ -207,27 +139,10 @@ void Foam::localdispLaplacianFvMotionSolver::solve()
           fvm::laplacian
           (
               diffusivityPtr_->operator()(),
-//              W_,
               cellMotionU_,
               "laplacian(diffusivity,cellMotionD)"
           )
-      /*
-      +
-          fvc::laplacian
-          (
-              W_,
-              Y,
-              "laplacian(diffusivity,Y)"
-          )
-       */
       );
-      
-/*
-*/
-      
-      //UEqn.relax();
-      
-      //Y = Y + cellMotionU_*fvMesh_.time().deltaTValue();
       
       SolverPerformance<vector> sp 
               = UEqn.solveSegregatedOrCoupled(UEqn.solverDict());
@@ -258,11 +173,6 @@ void Foam::localdispLaplacianFvMotionSolver::solve()
         break;
       }
     }
-    
-    //Info<<"max cm BEF: "<< max(cellMotionU_.primitiveField())<<nl;
-    //pointMotionU_ = pointMotionU_ / fvMesh_.time().deltaTValue();
-    //cellMotionU_ = cellMotionU_ / fvMesh_.time().deltaTValue();
-    //Info<<"max cm AFT: "<< max(cellMotionU_.primitiveField())<<nl;
 }
 
 

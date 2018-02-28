@@ -28,7 +28,7 @@ Description
     This patch can be used for the mesh motion using velocityLaplacian 
     dynamic mesh solver. It should be used along with 
     normalMotionSlipPointPatchVectorField for cellMotionU volume filed. 
-    It saves face displacement at the begin of laplace solver. At the end it
+    It saves face displacement at the begin of Laplace solver. At the end it
     interpolates displacement to the point field.
 
     \heading Patch usage

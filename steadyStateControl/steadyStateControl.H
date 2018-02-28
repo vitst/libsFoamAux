@@ -108,7 +108,7 @@ public:
 
 
     //- Destructor
-    virtual ~steadyStateControl();
+    virtual ~steadyStateControl() = default;
 
 
     // Member Functions

@@ -191,12 +191,6 @@ Foam::steadyStateControl::steadyStateControl(fvMesh& mesh)
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::steadyStateControl::~steadyStateControl()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::steadyStateControl::loop()

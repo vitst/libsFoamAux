@@ -132,7 +132,6 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
     int iter = 0;
     while ( true )
     {
-      iter++;
 
       fvVectorMatrix UEqn
       (
@@ -150,28 +149,18 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
 
       if( residual < tolerance )
       {
-        Info << "velocity laplacian: Converged in " 
-                << iter << " steps.  Residual = "
-                << residual << nl << endl;
+          Info << "velocity laplacian: Converged in " 
+               << iter << " steps.  Residual = "
+               << residual << nl << endl;
         break;
       }
-      else{
-        if((iter-1)%100==0)
-        {
+      if(debug)
+      {
           Info << " Step " << iter << token::TAB
                << " residual: "<< residual << " > " << tolerance << endl;
-          //Info << " iniR " << sp.initialResidual() << nl;
-        }
-        
       }
-      if( iter>1000 )
-      {
-        Info << nl << "velocityDeltatLaplacianFvMotionSolver WARNING:"
-             << "Laplacian solver did not converge." << nl
-             << "Maximum number of iterations"
-             << "  iter: "<< iter << endl;
-        break;
-      }
+
+      iter++;
     }
 }
 

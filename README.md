@@ -14,7 +14,14 @@ steadyStateControl iterates to convergence without updating the timestamp or wri
 Files: steadyStateControl.H
        steadyStateControl.C
 
-dissolMeshRelax: User library for mesh relaxation
+normalMotionSlip: User library for mesh relaxation. Templated from OF slip class with added normal velocity.
+
+Files: normalMotionSlipFvPatchField/normalMotionSlipFvPatchField.H
+       normalMotionSlipFvPatchField/normalMotionSlipFvPatchField.C
+       normalMotionSlipPointPatchField/normalMotionSlipPointPatchField.H
+       normalMotionSlipPointPatchField/normalMotionSlipPointPatchField.C
+
+dissolMeshRelax: User library for mesh relaxation. Superseded by normalMotionSlip, but still used by surfRoughGen.
 
 Files: dissolMotionPointPatchVectorField.H
        dissolMotionPointPatchVectorField.C
@@ -33,7 +40,8 @@ Files: OFstreamMod.H
 
 boundaryConditions: Templates for coded boundary conditions
 
-Files: nonlinear.H
+Files: linear.H
+       nonlinear.H
        danckwerts.H
 
 

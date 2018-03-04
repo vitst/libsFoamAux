@@ -1,25 +1,15 @@
-//  Power-law kinetics with limiting plane  //
+//  Power-law kinetics  //
 
-scalar n1     = 1.0;                // Reaction parameters
+const IOdictionary& IOd                 //  Get auxiliary input
+        = this->db().lookupObject<IOdictionary>("transportProperties");
+scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+
+scalar n1     = 1.0;                    //  Reaction parameters
 scalar n2     = 1.0;
 scalar Cth    = 0.0;
 scalar gamma  = 0.01;
 
-bool limitingPlane = false;          // Limiting plane
-vector refNorm(0,0,1);
-point  refPoint (0,0,-4.5);
-plane limitPlane(refPoint, refNorm);
-
-//  Get auxiliary input data
-
-const scalar dt = this->db().time().deltaTValue();
-const pointField& localFcs = this->patch().patch().faceCentres();
-const pointField& localFns = this->patch().patch().faceNormals();
-const IOdictionary& IOd
-        = this->db().lookupObject<IOdictionary>("transportProperties");
-       scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
-
-//  Update coefficients
+// Update coefficients
 
 Field<scalar>& val = *this;
 scalarField    del = mag( 1. / this->patch().deltaCoeffs() );
@@ -41,17 +31,6 @@ forAll(field, i)
   scalar dw   = 0.5 / gamma / pow( cosh( (fi-Cth)/gamma ), 2 );
   scalar R    = w * c1 + (1-w) * c2;
   scalar dR   = dw * (c1-c2) + w * (dc1-dc2) + dc2;
-
-  scalar theta = 1.0;
-  if( limitingPlane )               // Apply limiting plane
-  {
-    scalar displ = R * dt;
-    scalar distToInters = limitPlane.normalIntersect(localFcs[i], localFns[i]);
-    if (displ > distToInters) theta = distToInters / displ;
-  }
-  if (theta < SMALL) theta = 0.0;
-  R  *= theta;
-  dR *= theta;
 
   scalar alpha  = del[i] / lR;
   scalar adR    = alpha * dR;

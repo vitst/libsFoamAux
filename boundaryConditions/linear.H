@@ -1,18 +1,8 @@
-//  Linear kinetics with limiting plane  //
+//  Linear kinetics  //
 
-bool limitingPlane = false;         // Limiting plane
-vector refNorm(0,0,1);
-point  refPoint (0,0,-4.5);
-plane limitPlane(refPoint, refNorm);
-
-//  Get auxiliary input data
-
-const scalar dt = this->db().time().deltaTValue();
-const pointField& localFcs = this->patch().patch().faceCentres();
-const pointField& localFns = this->patch().patch().faceNormals();
-const IOdictionary& IOd
+const IOdictionary& IOd                     //  Get auxiliary data
         = this->db().lookupObject<IOdictionary>("transportProperties");
-       scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
 
 //  Update coefficients
 
@@ -27,17 +17,6 @@ forAll(field, i)
 {
   scalar R    = field[i];
   scalar dR   = 1.0;
-
-  scalar theta = 1.0;
-  if( limitingPlane )               // Apply limiting plane
-  {
-    scalar displ = R * dt;
-    scalar distToInters = limitPlane.normalIntersect(localFcs[i], localFns[i]);
-    if (displ > distToInters) theta = distToInters / displ;
-  }
-  if (theta < SMALL) theta = 0.0;
-  R  *= theta;
-  dR *= theta;
 
   scalar alpha  = del[i] / lR;
   scalar adR    = alpha * dR;

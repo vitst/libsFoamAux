@@ -64,6 +64,9 @@ class velocityDeltatLaplacianFvMotionSolver
     public fvMotionSolver
 {
     // Private data
+  
+        // tolerance for Laplace eq. solver
+        scalar tolerance;
 
         //- Cell-centre motion field
         mutable volVectorField cellMotionU_;

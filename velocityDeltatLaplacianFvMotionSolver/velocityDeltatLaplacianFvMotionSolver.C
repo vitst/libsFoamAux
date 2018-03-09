@@ -86,6 +86,11 @@ Foam::velocityDeltatLaplacianFvMotionSolver::velocityDeltatLaplacianFvMotionSolv
         motionDiffusivity::New(fvMesh_, coeffDict().lookup("diffusivity"))
     )
 {
+  if( !coeffDict().readIfPresent<scalar>("tolerance", tolerance) ){
+    SeriousErrorIn("velocityDeltatLaplacianFvMotionSolver.C")
+        << "No 'tolerance' parameter in "<< coeffDict().name()
+        << exit(FatalError);
+  }
 }
 
 
@@ -128,7 +133,6 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
     diffusivityPtr_->correct();
     pointMotionU_.boundaryFieldRef().updateCoeffs();
     
-    scalar tolerance = 0.0001;
     int iter = 0;
     while ( true )
     {
@@ -152,7 +156,7 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
           Info << "velocity laplacian: Converged in " 
                << iter << " steps.  Residual = "
                << residual << nl << endl;
-        break;
+          break;
       }
       if(debug)
       {

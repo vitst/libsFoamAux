@@ -81,6 +81,9 @@ class normalMotionSlipPointPatchVectorField
     //- saves displacement field on the boundary for cellMotionU
     vectorField faceDispl;
     
+    word fieldName;
+    
+    word scalarName;
 
 public:
 
@@ -163,6 +166,9 @@ public:
         (
           const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
         );
+        
+        //- Write
+        virtual void write(Ostream&) const;
 };
 
 

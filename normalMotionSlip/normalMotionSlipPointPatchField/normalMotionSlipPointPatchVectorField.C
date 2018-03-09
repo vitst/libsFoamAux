@@ -27,10 +27,9 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "pointPatchFields.H"
+#include "IFstream.H"
 
 #include "coupledPatchInterpolation.H"
-#include "fixedNormalSlipPointPatchField.H"
-#include "cyclicSlipPointPatchField.H"
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
@@ -51,7 +50,31 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
 )
 :
     valuePointPatchField<vector>(p, iF, dict)
-{}
+{
+    if (!dict.readIfPresent<word>("field", fieldName))
+    {
+        SeriousErrorIn("normalMotionSlipPointPatchVectorField")
+            << "No field name parameter 'field' in "<< dict.name()
+            << exit(FatalError);
+    }
+    
+    if( debug )
+    {
+      Info << "field name: " << fieldName << nl;
+    }
+    
+    if (!dict.readIfPresent<word>("scalarName", scalarName))
+    {
+        SeriousErrorIn("normalMotionSlipPointPatchVectorField")
+            << "No parameter 'scalarName' in "<< dict.name()
+            << exit(FatalError);
+    }
+    
+    if( debug )
+    {
+      Info << "scalar name: " << scalarName << nl;
+    }
+}
 
 
 Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
@@ -62,7 +85,9 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
     const pointPatchFieldMapper& mapper
 )
 :
-    valuePointPatchField<vector>(ptf, p, iF, mapper)
+    valuePointPatchField<vector>(ptf, p, iF, mapper),
+    fieldName(ptf.fieldName),
+    scalarName(ptf.scalarName)
 {}
 
 Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorField
@@ -71,7 +96,9 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
     const DimensionedField<vector, pointMesh>& iF
 )
 :
-    valuePointPatchField<vector>(ptf, iF)
+    valuePointPatchField<vector>(ptf, iF),
+    fieldName(ptf.fieldName),
+    scalarName(ptf.scalarName)
 {}
 
 
@@ -118,22 +145,41 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
 
     const polyMesh& mesh = this->internalField().mesh()();
 
-    const volScalarField& C =
-            this->db().objectRegistry::lookupObject<volScalarField>("C");
+    const volScalarField& field =
+            this->db().objectRegistry::lookupObject<volScalarField>(fieldName);
     const label& patchID = this->patch().index();
     const IOdictionary& IOd
           = this->db().lookupObject<IOdictionary>("transportProperties");
-    scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
-    scalarField grC = -C.boundaryField()[patchID].snGrad();
-    vectorField pNf = mesh.boundaryMesh()[patchID].faceNormals();
+    scalar scalarVal =  (new dimensionedScalar(IOd.lookup(scalarName)))->value();
+    scalarField gradField = -field.boundaryField()[patchID].snGrad();
+    vectorField faceNorm = mesh.boundaryMesh()[patchID].faceNormals();
     
     const scalar dt = this->db().time().deltaTValue();
-    faceDispl = dt * lR * grC * pNf;
+    faceDispl = dt * scalarVal * field * faceNorm;
     
     valuePointPatchField<vector>::updateCoeffs();
 }
- 
-  namespace Foam
+
+
+void Foam::normalMotionSlipPointPatchVectorField::write
+(
+  Ostream& os
+) const
+{
+    valuePointPatchField<vector>::write(os);
+    
+    if( debug )
+    {
+      Info << "Writing to BC field name: " << fieldName 
+              << "  scalar: "<< scalarName << nl;
+    }
+
+    os.writeKeyword("field")<< fieldName << token::END_STATEMENT << nl;
+    os.writeKeyword("scalarName")<< scalarName << token::END_STATEMENT << nl;
+}
+
+
+namespace Foam
 {
     makePointPatchTypeField
     (

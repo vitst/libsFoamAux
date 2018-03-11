@@ -119,6 +119,7 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
             (
                 pmU.boundaryField()[patchID]
             );
+    vectorField disp( pmuBC.getDisp() );
 
     vectorField::operator=
     ( 

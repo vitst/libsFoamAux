@@ -86,6 +86,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
 )
 :
     valuePointPatchField<vector>(ptf, p, iF, mapper),
+    faceDispl( ptf.faceDispl ),
     fieldName(ptf.fieldName),
     scalarName(ptf.scalarName)
 {}
@@ -97,6 +98,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
 )
 :
     valuePointPatchField<vector>(ptf, iF),
+    faceDispl( ptf.faceDispl ),
     fieldName(ptf.fieldName),
     scalarName(ptf.scalarName)
 {}
@@ -161,8 +163,8 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
     vectorField faceNorm = mesh.boundaryMesh()[patchID].faceNormals();
     
     const scalar dt = this->db().time().deltaTValue();
-    faceDispl = dt * scalarVal * field * faceNorm;
-    
+    faceDispl = dt * scalarVal * gradField * faceNorm;
+
     valuePointPatchField<vector>::updateCoeffs();
 }
 

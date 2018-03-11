@@ -144,6 +144,12 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
     }
 
     const polyMesh& mesh = this->internalField().mesh()();
+    
+    if( debug )
+    {
+      Info << "Reading field: " << fieldName 
+              << "  and scalar: "<< scalarName << nl;
+    }
 
     const volScalarField& field =
             this->db().objectRegistry::lookupObject<volScalarField>(fieldName);

@@ -1,8 +1,6 @@
 # libsFoamAux: Auxiliary libraries for OpenFOAM.
 
-Notes:  Patches to OF source no longer needed (after commit c084134)  
-        Source common to official and extended releases are in master
-        Forks to accomodate extended source will be in developPlus  
+Notes:  Source codes built with OpenFOAM-v1706; v1712 should also work
         Script mkInclude makes symbolic links  
         
 

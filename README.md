@@ -21,11 +21,6 @@ Files: normalMotionSlipFvPatchField/normalMotionSlipFvPatchField.H
        normalMotionSlipPointPatchField/normalMotionSlipPointPatchField.H
        normalMotionSlipPointPatchField/normalMotionSlipPointPatchField.C
 
-dissolMeshRelax: User library for mesh relaxation. Superseded by normalMotionSlip, but still used by surfRoughGen.
-
-Files: dissolMotionPointPatchVectorField.H
-       dissolMotionPointPatchVectorField.C
-
 coupledPatchInterpolation: User library for face to point interpolation
 over a coupled patch
 
@@ -43,5 +38,10 @@ boundaryConditions: Templates for coded boundary conditions
 Files: linear.H
        nonlinear.H
        danckwerts.H
+
+dissolMotion: User library for mesh relaxation. Superseded by normalMotionSlip, but still used by surfRoughGen.
+
+Files: dissolMotionPointPatchVectorField.H
+       dissolMotionPointPatchVectorField.C
 
 

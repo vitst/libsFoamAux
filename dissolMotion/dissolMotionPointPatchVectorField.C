@@ -1951,7 +1951,7 @@ calc_weights_surface()
           ppw[ii] = GREAT;
         }
         //ppw[ii] = 1.0 / cc[i];
-        if(ii==1) ppw[ii] = 0.0;
+        //if(ii==1) ppw[ii] = 0.0;
       }
       
       //label faceI = pFaces[j];

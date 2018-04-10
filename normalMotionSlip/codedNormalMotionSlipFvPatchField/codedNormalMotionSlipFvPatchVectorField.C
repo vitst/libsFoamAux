@@ -23,77 +23,78 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "normalMotionSlipFvPatchVectorField.H"
+#include "codedNormalMotionSlipFvPatchVectorField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "symmTransformField.H"
 
-#include "normalMotionSlipPointPatchVectorField.H"
+#include "codedNormalMotionSlipPointPatchVectorField.H"
+#include "fixedValuePointPatchFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::normalMotionSlipFvPatchVectorField::
-normalMotionSlipFvPatchVectorField
+Foam::codedNormalMotionSlipFvPatchVectorField::
+codedNormalMotionSlipFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    fixedValueFvPatchVectorField(p, iF)
+    normalMotionSlipFvPatchVectorField(p, iF)
 {}
 
 
-Foam::normalMotionSlipFvPatchVectorField::
-normalMotionSlipFvPatchVectorField
+Foam::codedNormalMotionSlipFvPatchVectorField::
+codedNormalMotionSlipFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
     const dictionary& dict
 )
 :
-    fixedValueFvPatchVectorField(p, iF)
+    normalMotionSlipFvPatchVectorField(p, iF)
 {
     fvPatchVectorField::operator=(vectorField("value", dict, p.size()));
 }
 
 
-Foam::normalMotionSlipFvPatchVectorField::
-normalMotionSlipFvPatchVectorField
+Foam::codedNormalMotionSlipFvPatchVectorField::
+codedNormalMotionSlipFvPatchVectorField
 (
-    const normalMotionSlipFvPatchVectorField& ptf,
+    const codedNormalMotionSlipFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
-    fixedValueFvPatchVectorField(ptf, p, iF, mapper)
+    normalMotionSlipFvPatchVectorField(ptf, p, iF, mapper)
 {}
 
 
-Foam::normalMotionSlipFvPatchVectorField::
-normalMotionSlipFvPatchVectorField
+Foam::codedNormalMotionSlipFvPatchVectorField::
+codedNormalMotionSlipFvPatchVectorField
 (
-    const normalMotionSlipFvPatchVectorField& mwvpvf
+    const codedNormalMotionSlipFvPatchVectorField& mwvpvf
 )
 :
-    fixedValueFvPatchVectorField(mwvpvf)
+    normalMotionSlipFvPatchVectorField(mwvpvf)
 {}
 
 
-Foam::normalMotionSlipFvPatchVectorField::
-normalMotionSlipFvPatchVectorField
+Foam::codedNormalMotionSlipFvPatchVectorField::
+codedNormalMotionSlipFvPatchVectorField
 (
-    const normalMotionSlipFvPatchVectorField& mwvpvf,
+    const codedNormalMotionSlipFvPatchVectorField& mwvpvf,
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    fixedValueFvPatchVectorField(mwvpvf, iF)
+    normalMotionSlipFvPatchVectorField(mwvpvf, iF)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-  
-void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
+
+void Foam::codedNormalMotionSlipFvPatchVectorField::updateCoeffs()
 {
     if(debug)
     {
@@ -113,12 +114,13 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
             (
                 "pointMotionU"
             );
-
-    const Foam::normalMotionSlipPointPatchVectorField& pmuBC =
-            refCast<const Foam::normalMotionSlipPointPatchVectorField>
+    
+    const Foam::codedNormalMotionSlipPointPatchVectorField& pmuBC =
+            refCast<const Foam::codedNormalMotionSlipPointPatchVectorField>
             (
                 pmU.boundaryField()[patchID]
             );
+    
     //vectorField disp( pmuBC.getDisp() );
 
     vectorField::operator=
@@ -128,14 +130,9 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
 
     fixedValueFvPatchVectorField::updateCoeffs();
 }
-
-void Foam::normalMotionSlipFvPatchVectorField::write(Ostream& os) const
-{
-    fvPatchVectorField::write(os);
-    writeEntry("value", os);
-}
-
-
+ 
+ 
+  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -143,7 +140,7 @@ namespace Foam
     makePatchTypeField
     (
         fvPatchVectorField,
-        normalMotionSlipFvPatchVectorField
+        codedNormalMotionSlipFvPatchVectorField
     );
 }
 

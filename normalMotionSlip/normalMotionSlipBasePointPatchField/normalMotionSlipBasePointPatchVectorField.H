@@ -22,12 +22,12 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::normalMotionSlipPointPatchVectorField
+    Foam::normalMotionSlipBasePointPatchVectorField
 
 Description
     This patch can be used for the mesh motion using velocityLaplacian 
     dynamic mesh solver. It should be used along with 
-    normalMotionSlipPointPatchVectorField for cellMotionU volume filed. 
+    normalMotionSlipBasePointPatchVectorField for cellMotionU volume filed. 
     It saves face displacement at the begin of Laplace solver. At the end it
     interpolates displacement to the point field.
 
@@ -37,20 +37,20 @@ Description
     \verbatim
     patchName
     {
-        type            normalMotionSlip;
+        type            normalMotionSlipBase;
         value           uniform (0 0 0);
     }
     \endverbatim
 
 SourceFiles
-    normalMotionSlipPointPatchVectorField.C
+    normalMotionSlipBasePointPatchVectorField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef normalMotionSlipPointPatchVectorField_H
-#define normalMotionSlipPointPatchVectorField_H
+#ifndef normalMotionSlipBasePointPatchVectorField_H
+#define normalMotionSlipBasePointPatchVectorField_H
 
-#include "normalMotionSlipBasePointPatchVectorField.H"
+#include "valuePointPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -58,46 +58,46 @@ namespace Foam
 {
 
 // Forward declaration of friend functions and operators
-class normalMotionSlipPointPatchVectorField;
+class normalMotionSlipBasePointPatchVectorField;
 
 
 Ostream& operator<<
 (
     Ostream&,
-    const normalMotionSlipPointPatchVectorField&
+    const normalMotionSlipBasePointPatchVectorField&
 );
 
 
 /*---------------------------------------------------------------------------*\
-                        Class normalMotionSlipPointPatchVectorField Declaration
+                        Class normalMotionSlipBasePointPatchVectorField Declaration
 \*---------------------------------------------------------------------------*/
 
-class normalMotionSlipPointPatchVectorField
+class normalMotionSlipBasePointPatchVectorField
 :
-    public normalMotionSlipBasePointPatchVectorField
+    public valuePointPatchField<vector>
 {
     // Private data
-    word fieldName;
     
-    word scalarName;
-
+    //- saves displacement field on the boundary for cellMotionU
+    vectorField faceDispl;
+    
 public:
 
     //- Runtime type information
-    TypeName("normalMotionSlip");
+    TypeName("normalMotionSlipBase");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        normalMotionSlipPointPatchVectorField
+        normalMotionSlipBasePointPatchVectorField
         (
             const pointPatch&,
             const DimensionedField<vector, pointMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        normalMotionSlipPointPatchVectorField
+        normalMotionSlipBasePointPatchVectorField
         (
             const pointPatch&,
             const DimensionedField<vector, pointMesh>&,
@@ -105,9 +105,9 @@ public:
         );
 
         //- Construct by mapping given patchField<vector> onto a new patch
-        normalMotionSlipPointPatchVectorField
+        normalMotionSlipBasePointPatchVectorField
         (
-            const normalMotionSlipPointPatchVectorField&,
+            const normalMotionSlipBasePointPatchVectorField&,
             const pointPatch&,
             const DimensionedField<vector, pointMesh>&,
             const pointPatchFieldMapper&
@@ -118,7 +118,7 @@ public:
         {
             return autoPtr<pointPatchField<vector>>
             (
-                new normalMotionSlipPointPatchVectorField
+                new normalMotionSlipBasePointPatchVectorField
                 (
                     *this
                 )
@@ -126,9 +126,9 @@ public:
         }
 
         //- Construct as copy setting internal field reference
-        normalMotionSlipPointPatchVectorField
+        normalMotionSlipBasePointPatchVectorField
         (
-            const normalMotionSlipPointPatchVectorField&,
+            const normalMotionSlipBasePointPatchVectorField&,
             const DimensionedField<vector, pointMesh>&
         );
 
@@ -140,7 +140,7 @@ public:
         {
             return autoPtr<pointPatchField<vector>>
             (
-                new normalMotionSlipPointPatchVectorField
+                new normalMotionSlipBasePointPatchVectorField
                 (
                     *this,
                     iF
@@ -149,16 +149,24 @@ public:
         }
 
     // Member functions
+        const Field<vector>& getDisp() const 
+        { 
+          return faceDispl; 
+        }
+        
+        void setDisp(Field<vector> f)
+        { 
+          faceDispl = f; 
+        }
+        
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
         
         //- Update the patch field
-        /*
         virtual void evaluate
         (
           const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
         );
-         */
         
         //- Write
         virtual void write(Ostream&) const;
@@ -172,7 +180,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //#ifdef NoRepository
-//    #include "normalMotionSlipPointPatchVectorField.C"
+//    #include "normalMotionSlipBasePointPatchVectorField.C"
 //#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

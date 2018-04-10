@@ -38,7 +38,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
     const DimensionedField<vector, pointMesh>& iF
 )
 :
-    valuePointPatchField<vector>(p, iF)
+    normalMotionSlipBasePointPatchVectorField(p, iF)
 {}
 
 
@@ -49,7 +49,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
     const dictionary& dict
 )
 :
-    valuePointPatchField<vector>(p, iF, dict)
+    normalMotionSlipBasePointPatchVectorField(p, iF, dict)
 {
     if (!dict.readIfPresent<word>("field", fieldName))
     {
@@ -85,8 +85,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
     const pointPatchFieldMapper& mapper
 )
 :
-    valuePointPatchField<vector>(ptf, p, iF, mapper),
-    faceDispl( ptf.faceDispl ),
+    normalMotionSlipBasePointPatchVectorField(ptf, p, iF, mapper),
     fieldName(ptf.fieldName),
     scalarName(ptf.scalarName)
 {}
@@ -97,8 +96,7 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
     const DimensionedField<vector, pointMesh>& iF
 )
 :
-    valuePointPatchField<vector>(ptf, iF),
-    faceDispl( ptf.faceDispl ),
+    normalMotionSlipBasePointPatchVectorField(ptf, iF),
     fieldName(ptf.fieldName),
     scalarName(ptf.scalarName)
 {}
@@ -106,12 +104,13 @@ Foam::normalMotionSlipPointPatchVectorField::normalMotionSlipPointPatchVectorFie
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+/*
 void Foam::normalMotionSlipPointPatchVectorField::evaluate
 (
     const Pstream::commsTypes
 )
 {
-    if(debug) 
+    if(debug)
     {
         Info<<"   normalMotionSlipPointPatchVectorField::evaluate()"<<nl;
     }
@@ -137,6 +136,7 @@ void Foam::normalMotionSlipPointPatchVectorField::evaluate
     
     valuePointPatchField<vector>::evaluate();
 }
+ */
 
 void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
 {
@@ -163,7 +163,9 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
     vectorField faceNorm = mesh.boundaryMesh()[patchID].faceNormals();
     
     const scalar dt = this->db().time().deltaTValue();
-    faceDispl = dt * scalarVal * gradField * faceNorm;
+    vectorField fD = dt * scalarVal * gradField * faceNorm;
+    
+    setDisp(fD);
 
     valuePointPatchField<vector>::updateCoeffs();
 }

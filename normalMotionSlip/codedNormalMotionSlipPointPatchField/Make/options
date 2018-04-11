@@ -4,4 +4,7 @@ EXE_INC = \
 
 LIB_LIBS = \
     -lOpenFOAM \
-    -lfiniteVolume
+    -lfiniteVolume \
+    -L$(FOAM_USER_LIBBIN) \
+    -lnormalMotionSlipBasePointPatchVectorField
+

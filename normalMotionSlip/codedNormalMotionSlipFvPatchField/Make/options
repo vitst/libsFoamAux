@@ -6,4 +6,5 @@ LIB_LIBS = \
     -lOpenFOAM \
     -lfiniteVolume \
     -L$(FOAM_USER_LIBBIN) \
-    -lnormalMotionSlipPointPatchVectorField
+    -lcodedNormalMotionSlipPointPatchVectorField \
+    -lnormalMotionSlipFvPatchVectorField

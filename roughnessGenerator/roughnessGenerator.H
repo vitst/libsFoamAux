@@ -84,7 +84,7 @@ public:
             double majLen_,
             double minLen_,
             double rgh_,
-            double dHurst,
+            double dHurst_,
             double cutLen_,
             double maxDisp_
         );

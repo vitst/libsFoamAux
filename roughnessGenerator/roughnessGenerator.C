@@ -62,7 +62,7 @@ Foam::RoughnessGenerator::RoughnessGenerator
     double majLen_,
     double minLen_,
     double rgh_,
-    double dHurst,
+    double dHurst_,
     double cutLen_,
     double maxDisp_
 )
@@ -73,7 +73,7 @@ Foam::RoughnessGenerator::RoughnessGenerator
     majLen(majLen_),
     minLen(minLen_),
     rgh(rgh_),
-    dHurst(dHurst),
+    dHurst(dHurst_),
     cutLen(cutLen_),
     maxDisp(maxDisp_)
 {

@@ -51,8 +51,8 @@ class RoughnessGenerator
     // Protected data
     
         int seed;
-        int M;
-        int N;
+        int majNum;
+        int minNum;
         double majLen;
         double minLen;
         double rgh;
@@ -79,8 +79,8 @@ public:
         RoughnessGenerator
         (
             int seed_,
-            int M_,
-            int N_,
+            int majNum_,
+            int minNum_,
             double majLen_,
             double minLen_,
             double rgh_,

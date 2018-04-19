@@ -40,14 +40,14 @@ Foam::RoughnessGenerator::index
     const label j
 )
 {
-    return j + N * i;
+    return j + minNum * i;
 }
 
 Foam::scalar
 Foam::RoughnessGenerator::power(double ksq)
 {
-    if (ksq == 0)  return 0;        // <rad^2> ~ 1/ksq^(1+H)
-    if (ksq >  1)  return 0;        // cutoff wavelength = cutLen
+    if (ksq == 0)    return 0;        // <rad^2> ~ 1/ksq^(1+H)
+    if (ksq >  0.5)  return 0;        // cutoff wavelength = cutLen
     scalar p = Foam::pow(ksq, -(dHurst+1) );
     return std::sqrt(p);
 }
@@ -57,8 +57,8 @@ Foam::RoughnessGenerator::power(double ksq)
 Foam::RoughnessGenerator::RoughnessGenerator
 (
     int seed_,
-    int M_,
-    int N_,
+    int majNum_,
+    int minNum_,
     double majLen_,
     double minLen_,
     double rgh_,
@@ -68,8 +68,8 @@ Foam::RoughnessGenerator::RoughnessGenerator
 )
 :
     seed(seed_),
-    M(M_),
-    N(N_),
+    majNum(majNum_),
+    minNum(minNum_),
     majLen(majLen_),
     minLen(minLen_),
     rgh(rgh_),
@@ -84,7 +84,7 @@ Foam::RoughnessGenerator::RoughnessGenerator
 
 void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
 {
-    unsigned int MN = M*N;
+    unsigned int MN = majNum*minNum;
     std::vector<std::complex<double> > f, F;
     f.resize(MN);
     F.resize(MN);
@@ -94,8 +94,8 @@ void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
     
     Info <<  "majLen:        "  <<  majLen      <<  endl;
     Info <<  "minLen:        "  <<  minLen      <<  endl;
-    Info <<  "majNum:        "  <<  M           <<  endl;
-    Info <<  "minNum:        "  <<  N           <<  endl;
+    Info <<  "majNum:        "  <<  majNum      <<  endl;
+    Info <<  "minNum:        "  <<  minNum      <<  endl;
     Info <<  "seed:          "  <<  seed        <<  endl;
     Info <<  "roughness:     "  <<  rgh         <<  endl;
     Info <<  "dHurst:        "  <<  dHurst      <<  endl;
@@ -111,9 +111,9 @@ void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
      *   --- ---
      */
     // calculating 1 and 4
-    for(int m=0; m<M/2+1; ++m)
+    for(int m=0; m<majNum/2+1; ++m)
     {
-      for(int n=0; n<N/2+1; ++n)
+      for(int n=0; n<minNum/2+1; ++n)
       {
         scalar p = TwoPi * rnd.sample01<scalar>();
         scalar rad;
@@ -125,18 +125,18 @@ void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
 
         f[ index(m,n) ] = 
                 rad * std::complex<double>(Foam::cos(p),  Foam::sin(p));
-        f[ index(((M-m)%M),(N-n)%N) ] = 
+        f[ index(((majNum-m)%majNum),(minNum-n)%minNum) ] = 
                 rad * std::complex<double>(Foam::cos(p), -Foam::sin(p));
       }
     }
-    f[ index(M/2,0)   ].imag(0.0);
-    f[ index(0,  N/2) ].imag(0.0);
-    f[ index(M/2,N/2) ].imag(0.0);
+    f[ index(majNum/2,0)   ].imag(0.0);
+    f[ index(0,  minNum/2) ].imag(0.0);
+    f[ index(majNum/2,minNum/2) ].imag(0.0);
 
     // calculating 2 and 3
-    for(int m=1; m<M/2; ++m)
+    for(int m=1; m<majNum/2; ++m)
     {
-      for(int n=1; n<N/2; ++n)
+      for(int n=1; n<minNum/2; ++n)
       {
         scalar p = TwoPi * rnd.sample01<scalar>();
         scalar rad;
@@ -146,15 +146,15 @@ void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
         ksq  = majk*majk + mink*mink;
         rad  = power(ksq) * rnd.GaussNormal<scalar>();
 
-        f[ index(  m, N-n) ] = 
+        f[ index(  m, minNum-n) ] = 
                 rad * std::complex<double>(Foam::cos(p),  Foam::sin(p));
-        f[ index(M-m,   n) ] = 
+        f[ index(majNum-m,   n) ] = 
                 rad * std::complex<double>(Foam::cos(p), -Foam::sin(p));
       }
     }
     
     fftw_plan plan;
-    plan = fftw_plan_dft_2d(M, N,
+    plan = fftw_plan_dft_2d(majNum, minNum,
                              reinterpret_cast<fftw_complex*>(&f[0]),
                              reinterpret_cast<fftw_complex*>(&F[0]),
                              FFTW_BACKWARD,

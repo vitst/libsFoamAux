@@ -117,7 +117,7 @@ void Foam::steadyStateControl::maxTypeResidual
         reduce(sz, sumOp<int>());
         Type nF = gSumCmptProd( field, field ) / static_cast<double>(sz);
 
-        scalar norm = mag(nF);
+        scalar norm = sqrt( mag(nF) );
 
         for (direction cmpt=0; cmpt < nF.size(); cmpt++)
         {

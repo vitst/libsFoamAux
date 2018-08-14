@@ -2340,9 +2340,13 @@ getPointMotion( vectorField& pointMotion )
   
   const polyMesh& mesh = this->internalField().mesh()();
 
-  const IOdictionary& IOd
-        = this->db().lookupObject<IOdictionary>("transportProperties");
+  IOdictionary& IOd
+        = this->db().lookupObjectRef<IOdictionary>("transportProperties");
   scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+
+  IOd.set<scalar>("lR", 10.0);
+
+  IOd.regIOobject::write();
 
   const volScalarField& C = 
     this->db().objectRegistry::lookupObject<volScalarField>("C");

@@ -149,7 +149,21 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
       
       SolverPerformance<vector> sp 
               = UEqn.solveSegregatedOrCoupled(UEqn.solverDict());
-      scalar residual = cmptMax(sp.initialResidual());
+
+      int sz = cellMotionU_.size();
+      reduce(sz, sumOp<int>());
+      vector nF = gSumCmptProd( cellMotionU_, cellMotionU_ ) / static_cast<double>(sz);
+
+      scalar norm = sqrt( mag(nF) );
+
+      for (direction cmpt=0; cmpt < nF.size(); cmpt++)
+      {   
+          nF[cmpt] = sqrt( nF[cmpt] );
+      }
+
+      nF = nF/norm;
+
+      scalar residual = cmptMax( cmptMultiply(sp.initialResidual(),  nF) );
 
       if( residual < tolerance )
       {

@@ -261,7 +261,8 @@ Foam::codedNormalMotionSlipPointPatchVectorField::redirectPatchField() const
         // Make sure to construct the patchfield with up-to-date value
 
         OStringStream os;
-        os.writeEntry("type", name_);
+        //os.writeEntry("type", name_);
+        os.writeKeyword("type") << name_ << token::END_STATEMENT << nl;
         static_cast<const Field<vector>&>(*this).writeEntry("value", os);
         IStringStream is(os.str());
         dictionary dict(is);
@@ -328,9 +329,60 @@ void Foam::codedNormalMotionSlipPointPatchVectorField::evaluate
 void Foam::codedNormalMotionSlipPointPatchVectorField::write(Ostream& os) const
 {
     normalMotionSlipBasePointPatchVectorField::write(os);
-    os.writeEntry("name", name_);
+    //os.writeEntry("name", name_);
+    os.writeKeyword("type") << name_ << token::END_STATEMENT << nl;
 
-    codedBase::writeCodeDict(os, dict_);
+    //codedBase::writeCodeDict(os, dict_);
+    if (dict_.found("codeInclude"))
+    {
+        os.writeKeyword("codeInclude")
+            << token::HASH << token::BEGIN_BLOCK;
+
+        os.writeQuoted(string(dict_["codeInclude"]), false)
+            << token::HASH << token::END_BLOCK
+            << token::END_STATEMENT << nl;
+    }
+
+    if (dict_.found("localCode"))
+    {
+        os.writeKeyword("localCode")
+            << token::HASH << token::BEGIN_BLOCK;
+
+        os.writeQuoted(string(dict_["localCode"]), false)
+            << token::HASH << token::END_BLOCK
+            << token::END_STATEMENT << nl;
+    }
+
+    if (dict_.found("code"))
+    {
+        os.writeKeyword("code")
+            << token::HASH << token::BEGIN_BLOCK;
+
+        os.writeQuoted(string(dict_["code"]), false)
+            << token::HASH << token::END_BLOCK
+            << token::END_STATEMENT << nl;
+    }
+
+    if (dict_.found("codeOptions"))
+    {
+        os.writeKeyword("codeOptions")
+            << token::HASH << token::BEGIN_BLOCK;
+
+        os.writeQuoted(string(dict_["codeOptions"]), false)
+            << token::HASH << token::END_BLOCK
+            << token::END_STATEMENT << nl;
+    }
+
+    if (dict_.found("codeLibs"))
+    {
+        os.writeKeyword("codeLibs")
+            << token::HASH << token::BEGIN_BLOCK;
+
+        os.writeQuoted(string(dict_["codeLibs"]), false)
+            << token::HASH << token::END_BLOCK
+            << token::END_STATEMENT << nl;
+    }
+
 }
 
 

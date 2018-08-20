@@ -121,7 +121,8 @@ void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
         majk = m*cutLen/majLen;
         mink = n*cutLen/minLen;
         ksq   = majk*majk + mink*mink;
-        rad = power(ksq) * rnd.GaussNormal<scalar>();
+        //rad = power(ksq) * rnd.GaussNormal<scalar>();
+        rad = power(ksq) * rnd.scalarNormal();
 
         f[ index(m,n) ] = 
                 rad * std::complex<double>(Foam::cos(p),  Foam::sin(p));
@@ -144,7 +145,8 @@ void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
         majk = TwoPi*m/majLen;
         mink = TwoPi*n/minLen;
         ksq  = majk*majk + mink*mink;
-        rad  = power(ksq) * rnd.GaussNormal<scalar>();
+        //rad  = power(ksq) * rnd.GaussNormal<scalar>();
+        rad  = power(ksq) * rnd.scalarNormal();
 
         f[ index(  m, minNum-n) ] = 
                 rad * std::complex<double>(Foam::cos(p),  Foam::sin(p));

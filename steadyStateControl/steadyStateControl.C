@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "steadyStateControl.H"
+#include "volFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -35,9 +36,10 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::steadyStateControl::read()
+bool Foam::steadyStateControl::read()
 {
-    solutionControl::read(true);
+    //solutionControl::read(true);
+    return fluidSolutionControl::read() && readResidualControls();
 }
 
 
@@ -48,25 +50,26 @@ bool Foam::steadyStateControl::criteriaSatisfied()
         return false;
     }
 
-    Time& time = const_cast<Time&>(mesh_.time());
+    //Time& time = const_cast<Time&>(mesh().time());
     if (debug)
     {
-        Info<<"Time: "<< time.timeName() <<"    Iteration: "<<iter_counter<<nl;
+        Info<<"Time: "<< time().timeName() <<"    Iteration: "<<iter_counter<<nl;
     }
 
     bool achieved = true;
     bool checked = false;    // safety that some checks were indeed performed
 
-    const dictionary& solverDict = mesh_.solverPerformanceDict();
+    const dictionary& solverDict = mesh().solverPerformanceDict();
     forAllConstIter(dictionary, solverDict, iter)
     {
         const word& variableName = iter().keyword();
-        const label fieldi = applyToField(variableName);
+        //const label fieldi = applyToField(variableName);
+        const label fieldi = residualControlIndex(variableName, residualControl_);
         if (fieldi != -1)
         {
             scalar lastResidual = 0;
             const scalar residual =
-                this->maxResidual(variableName, iter().stream(), lastResidual);
+                maxResidual(variableName, iter().stream(), lastResidual);
 
             checked = true;
 
@@ -85,7 +88,7 @@ bool Foam::steadyStateControl::criteriaSatisfied()
     }
     
     // clear dictionary
-    dictionary& dict = const_cast<dictionary&>(mesh_.solverPerformanceDict());
+    dictionary& dict = const_cast<dictionary&>(mesh().solverPerformanceDict());
     dict.clear();
 
     initialised_ = false;
@@ -104,11 +107,11 @@ void Foam::steadyStateControl::maxTypeResidual
 ) const
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
-    if (mesh_.foundObject<fieldType>(fieldName))
+    if (mesh().foundObject<fieldType>(fieldName))
     {
-	    fieldType& field = const_cast<fieldType&>
+	      fieldType& field = const_cast<fieldType&>
         (
-		    mesh_.lookupObject<fieldType>( fieldName )
+		        mesh().lookupObject<fieldType>( fieldName )
         );
 
         const List<SolverPerformance<Type> > sp(data);
@@ -137,11 +140,11 @@ Foam::scalar Foam::steadyStateControl::maxResidual
     const word& fieldName,
     ITstream& data,
     scalar& lastRes
-) const
+)
 {
     scalar firstRes = 0;
 
-    if(mesh_.foundObject<volScalarField>(fieldName))
+    if(mesh().foundObject<volScalarField>(fieldName))
     {
         const List< SolverPerformance<scalar> > sp(data);
         firstRes = sp.first().initialResidual();
@@ -149,6 +152,7 @@ Foam::scalar Foam::steadyStateControl::maxResidual
     }
     else
     {
+    
         maxTypeResidual<vector>(fieldName, data, firstRes, lastRes);
         maxTypeResidual<sphericalTensor>(fieldName, data, firstRes, lastRes);
         maxTypeResidual<symmTensor>(fieldName, data, firstRes, lastRes);
@@ -162,12 +166,14 @@ Foam::scalar Foam::steadyStateControl::maxResidual
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::steadyStateControl::steadyStateControl(fvMesh& mesh)
+Foam::steadyStateControl::steadyStateControl(fvMesh& mesh, const word& algorithmName)
 :
-    solutionControl(mesh, "SIMPLE"),
+    fluidSolutionControl(mesh, algorithmName),
+    singleRegionConvergenceControl( static_cast<singleRegionSolutionControl&>(*this) ),
     initialised_(false),
     iter_counter(0)
 {
+
     read();
 
     Info<<nl;
@@ -190,6 +196,10 @@ Foam::steadyStateControl::steadyStateControl(fvMesh& mesh)
     }
 }
 
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::steadyStateControl::~steadyStateControl()
+{}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

@@ -24,12 +24,13 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "velocityDeltatLaplacianFvMotionSolver.H"
-#include "motionInterpolation.H"
+//#include "motionInterpolation.H"
 #include "motionDiffusivity.H"
 #include "fvmLaplacian.H"
 #include "fvcLaplacian.H"
 #include "addToRunTimeSelectionTable.H"
-#include "zeroGradientFvPatchFields.H"
+//#include "zeroGradientFvPatchFields.H"
+#include "volPointInterpolation.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -75,12 +76,14 @@ Foam::velocityDeltatLaplacianFvMotionSolver::velocityDeltatLaplacianFvMotionSolv
         ),
         cellMotionBoundaryTypes<vector>(pointMotionU_.boundaryField())
     ),
+    /*
     interpolationPtr_
     (
         coeffDict().found("interpolation")
       ? motionInterpolation::New(fvMesh_, coeffDict().lookup("interpolation"))
       : motionInterpolation::New(fvMesh_)
     ),
+    */
     diffusivityPtr_
     (
         motionDiffusivity::New(fvMesh_, coeffDict().lookup("diffusivity"))
@@ -105,7 +108,8 @@ Foam::velocityDeltatLaplacianFvMotionSolver::~velocityDeltatLaplacianFvMotionSol
 Foam::tmp<Foam::pointField>
 Foam::velocityDeltatLaplacianFvMotionSolver::curPoints() const
 {
-    interpolationPtr_->interpolate
+    //interpolationPtr_->interpolate
+    volPointInterpolation::New(fvMesh_).interpolate
     (
         cellMotionU_,
         pointMotionU_
@@ -148,7 +152,7 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
       );
       
       SolverPerformance<vector> sp 
-              = UEqn.solveSegregatedOrCoupled(UEqn.solverDict());
+              = UEqn.solve();
       scalar residual = cmptMax(sp.initialResidual());
 
       if( residual < tolerance )

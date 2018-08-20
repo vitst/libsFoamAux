@@ -41,9 +41,9 @@ SourceFiles
 
 #include "velocityMotionSolver.H"
 #include "fvMotionSolver.H"
-#include "motionInterpolation.H"
-#include "surfaceFields.H"
-#include "surfaceFieldsFwd.H"
+//#include "motionInterpolation.H"
+//#include "surfaceFields.H"
+//#include "surfaceFieldsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -72,7 +72,7 @@ class velocityDeltatLaplacianFvMotionSolver
         mutable volVectorField cellMotionU_;
 
         //- Interpolation used to transfer cell displacement to the points
-        autoPtr<motionInterpolation> interpolationPtr_;
+        //autoPtr<motionInterpolation> interpolationPtr_;
 
         //- Diffusivity used to control the motion
         autoPtr<motionDiffusivity> diffusivityPtr_;

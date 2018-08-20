@@ -36,7 +36,12 @@ Description
 #ifndef steadyStateControl_H
 #define steadyStateControl_H
 
-#include "solutionControl.H"
+
+//#include "solutionControl.H"
+#include "fluidSolutionControl.H"
+#include "singleRegionConvergenceControl.H"
+
+#define STEADY_STATE_CONTROL
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,7 +54,9 @@ namespace Foam
 
 class steadyStateControl
 :
-    public solutionControl
+    //public solutionControl
+    public fluidSolutionControl,
+    public singleRegionConvergenceControl
 {
 
 protected:
@@ -59,11 +66,10 @@ protected:
         //- Initialised flag
         bool initialised_;
 
-
     // Protected Member Functions
 
         //- Read controls from fvSolution dictionary
-        void read();
+        virtual bool read();
 
         //- Return true if all convergence checks are satisfied
         bool criteriaSatisfied();
@@ -74,7 +80,7 @@ protected:
         //- Disallow default bitwise assignment
         void operator=(const steadyStateControl&);
 
-    	int iter_counter;
+    	  int iter_counter;
 
         template<class Type>
         void maxTypeResidual
@@ -90,7 +96,7 @@ protected:
             const word& fieldName,
             ITstream& data,
             scalar& lastRes
-        ) const;
+        );
 
 public:
 
@@ -104,11 +110,11 @@ public:
     // Constructors
 
         //- Construct from mesh
-        steadyStateControl(fvMesh& mesh);
+        steadyStateControl(fvMesh& mesh, const word& algorithmName="SIMPLE");
 
 
     //- Destructor
-    virtual ~steadyStateControl() = default;
+    virtual ~steadyStateControl();
 
 
     // Member Functions

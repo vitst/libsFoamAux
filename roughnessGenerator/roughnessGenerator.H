@@ -56,7 +56,6 @@ class RoughnessGenerator
         double rgh;
         double dHurst;        // Fractal dimension D = 3 - dHurst
         double cutoff;
-        double maxDisp;
     
     // Private functions
 
@@ -81,8 +80,7 @@ public:
             int minNum_,
             double rgh_,
             double dHurst_,
-            double cutoff_,
-            double maxDisp_
+            double cutoff_
         );
 
     // Member Functions

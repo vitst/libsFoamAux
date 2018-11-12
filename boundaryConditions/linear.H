@@ -1,17 +1,14 @@
 //  Linear kinetics  //
 
-const IOdictionary& IOd                     //  Get auxiliary data
-        = this->db().lookupObject<IOdictionary>("transportProperties");
-scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
-
-//  Update coefficients
-
 Field<scalar>& val = *this;
 scalarField    del = mag( 1. / this->patch().deltaCoeffs() );
 scalarField    field  = mag(val);
 scalarField    frac( field.size(), 0.0 );
 scalarField    refVal( field.size(), 0.0 );
 scalarField    refGr( field.size(), 0.0 );
+
+const IOdictionary& IOd = this->db().lookupObject<IOdictionary>("transportProperties");
+scalar lR = (new dimensionedScalar(IOd.lookup("lR")))->value();
 
 forAll(field, i)
 {

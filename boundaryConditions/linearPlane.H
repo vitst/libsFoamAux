@@ -2,10 +2,6 @@
 //  Add "#include plane.H" in boundary specification
 //  Edit plane: refNorm and refPoint (below)
 
-const IOdictionary& IOd                     //  Get auxiliary data
-        = this->db().lookupObject<IOdictionary>("transportProperties");
-scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
-
 bool limitingPlane = true;                  //  Limiting plane
 vector refNorm(0,0,1);
 point  refPoint (0,0,-4.5);
@@ -22,6 +18,9 @@ scalarField    field  = mag(val);
 scalarField    frac( field.size(), 0.0 );
 scalarField    refVal( field.size(), 0.0 );
 scalarField    refGr( field.size(), 0.0 );
+
+const IOdictionary& IOd = this->db().lookupObject<IOdictionary>("transportProperties");
+scalar lR = (new dimensionedScalar(IOd.lookup("lR")))->value();
 
 forAll(field, i)
 {

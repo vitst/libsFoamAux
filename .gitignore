@@ -33,3 +33,6 @@ linux64Gcc*/
 *.exe
 *.out
 *.app
+
+# project dirs
+.idea

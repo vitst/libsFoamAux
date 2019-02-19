@@ -139,14 +139,14 @@ bool Foam::functionObjects::apertureAver::read(const dictionary& dict)
               << exit(FatalError);
     }
     
-    if( !dict.readIfPresent<int>("flowDirection", majDir) ){
+    if( !dict.readIfPresent<label>("flowDirection", majDir) ){
         SeriousErrorIn("apertureAver::read")
               << "There is no flowDirection parameter "
                 "in apertureAver dictionary"
               << exit(FatalError);
     }
     
-    if( !dict.readIfPresent<int>("integrationDirection", intDir) ){
+    if( !dict.readIfPresent<label>("integrationDirection", intDir) ){
         SeriousErrorIn("apertureAver::read")
               << "There is no integrationDirection parameter "
                 "in apertureAver dictionary"

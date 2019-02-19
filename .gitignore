@@ -36,3 +36,5 @@ linux64Gcc*/
 
 # project dirs
 .idea
+CMakeLists.txt
+cmake-build-debug

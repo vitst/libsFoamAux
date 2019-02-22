@@ -1,12 +1,11 @@
 #!/bin/bash
 
-echo "Cleaning all libraries"
+echo "Clean everything"
+rm -r ../lnInclude                      # Clean links
 for d in */ ; do
   if [ -d ${d}/Make ]; then
     wclean $d
-  fi
-  if [ -f ${d}/Allwmake ]; then
-    echo "Making library $d"
+  elif [ -f ${d}/Allwmake ]; then
     pushd $d
     ./Allwclean
     popd

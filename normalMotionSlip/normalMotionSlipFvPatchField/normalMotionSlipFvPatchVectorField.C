@@ -27,6 +27,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "symmTransformField.H"
+#include "coupledPatchInterpolation.H"
 
 #include "normalMotionSlipPointPatchVectorField.H"
 
@@ -105,7 +106,6 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
         return;
     }
     
-    const vectorField n(this->patch().nf());
     label patchID = this->patch().index();
 
     const pointVectorField& pmU = 
@@ -113,20 +113,86 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
             (
                 "pointMotionU"
             );
-
+    
     const Foam::normalMotionSlipPointPatchVectorField& pmuBC =
             refCast<const Foam::normalMotionSlipPointPatchVectorField>
             (
                 pmU.boundaryField()[patchID]
             );
-    //vectorField disp( pmuBC.getDisp() );
+    // calculate updated face normals and face centers from new point positions
+    // without the relaxation
+    //const polyMesh& mesh = this->internalField().mesh();
+    //const fvMesh& mesh = this->internalField().mesh();
+    //const polyPatch& curPatch = mesh.boundaryMesh()[patchID];
+    //const List<face>& llf = curPatch.localFaces();
+    //const pointField& curPP  = curPatch.localPoints();
+    
+    //const fvMesh& fvmesh_ = refCast<const fvMesh>(mesh);
+    //const fvMesh& fvmesh_ = this->internalField().mesh();// patchField_.patch().boundaryMesh().mesh();
+    
+    //coupledPatchInterpolation patchInterpolator
+    //(
+    //  curPatch, fvmesh_
+    //);
+    //vectorField pMotion = patchInterpolator.faceToPointInterpolate(pmuBC.getDisp());
+    
+    //pointField movedPoints(curPP + pMotion);
+
+    // normals for the displaced mesh without relaxation
+    //const vectorField n(nextFaceNormals(movedPoints, llf));
+    const vectorField n(this->patch().nf());
+    // cell centers for the displaced mesh without relaxation
+    //const pointField fc(faceCentres(movedPoints, llf));
+    
+    //vectorField aux(pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField()));
 
     vectorField::operator=
     ( 
         pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField())
+        //aux + transform(I - sqr(n), this->patchInternalField())
     );
+    //pmuBC.setDisp(aux + transform(I - sqr(n), this->patchInternalField()));
 
     fixedValueFvPatchVectorField::updateCoeffs();
+}
+
+//Foam::tmp<Foam::vectorField>
+Foam::vectorField
+Foam::normalMotionSlipFvPatchVectorField::
+nextFaceNormals(const pointField& points, const List<face>& flist) const
+{
+  vectorField fn( flist.size() );
+  forAll(fn, facei)
+  {
+    fn[facei]  = flist[facei].normal(points);
+    fn[facei] /= mag(fn[facei]) + VSMALL;
+  }
+  return fn;
+}
+
+Foam::pointField
+Foam::normalMotionSlipFvPatchVectorField::
+nextFaceCentres(const pointField& points, const List<face>& flist) const
+{
+  pointField fc( flist.size() );
+  forAll(fc, facei)
+  {
+    fc[facei] = flist[facei].centre(points);
+  }
+  return fc;
+}
+
+
+void Foam::normalMotionSlipFvPatchVectorField::evaluate
+(
+    const Pstream::commsTypes
+)
+{
+    if(debug)
+    {
+        Info<<"   normalMotionSlipFvPatchVectorField::evaluate()"<<nl;
+    }
+    fixedValueFvPatchVectorField::evaluate();
 }
 
 void Foam::normalMotionSlipFvPatchVectorField::write(Ostream& os) const

@@ -33,3 +33,8 @@ linux64Gcc*/
 *.exe
 *.out
 *.app
+
+# project dirs
+.idea
+CMakeLists.txt
+cmake-build-debug

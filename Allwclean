@@ -1,13 +1,13 @@
 #!/bin/bash
 
 echo "Clean everything"
-rm -r ../lnInclude                      # Clean links
+rm -rf ../lnInclude                   # remove links
 for d in */ ; do
   if [ -d ${d}/Make ]; then
     wclean $d
-  elif [ -f ${d}/Allwmake ]; then
+  elif [ -f ${d}/Allclean ]; then
     pushd $d
-    ./Allwclean
+    ./Allclean
     popd
   fi
 done

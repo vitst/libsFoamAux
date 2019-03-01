@@ -4,6 +4,7 @@
 # Include 
 lnInclude/
 linux64Gcc*/
+linux64Cray*/
 
 # Compiled Object files
 *.slo

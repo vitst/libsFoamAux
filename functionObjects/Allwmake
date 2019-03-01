@@ -3,4 +3,4 @@
 # these libs need to be compiled in order
 
 wmake libso apertureAver
-wmake libso planePatchIntersection 
+#wmake libso planePatchIntersection 

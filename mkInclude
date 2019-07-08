@@ -3,6 +3,7 @@
 
 curDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+
 mkdir -p ../lnInclude
 cd ../lnInclude
 #for H in $curDIR/*/*.H; do

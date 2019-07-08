@@ -52,10 +52,13 @@ namespace functionObjects
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 void Foam::functionObjects::volumeIntegrate::printInfo() const
 {
+    Info<<"***************************************************************"<<nl;
+    Info<<"Dictionary parameters"<<nl;
     Info<< "field names: " << fieldNames_ << nl;
         
     Info<< "min point: " << minPoint_ <<nl;
     Info<< "max point: " << maxPoint_ <<nl;
+    Info<<"***************************************************************"<<nl;
 }
 
 bool Foam::functionObjects::volumeIntegrate::cellInsideTheBox(point& pos) const
@@ -132,6 +135,8 @@ bool Foam::functionObjects::volumeIntegrate::read(const dictionary& dict)
     
     printInfo();
     
+    Info<<nl<<nl;
+    
     return true;
 }
 
@@ -147,7 +152,6 @@ bool Foam::functionObjects::volumeIntegrate::execute()
     //for (const word& fieldName : fieldSet_.selection())
     for (const word& fieldName : fieldNames_)
     {
-        Info<<"working filed: "<<fieldName<<nl;
         integrateFields<scalar>(fieldName);
         integrateFields<vector>(fieldName);
         integrateFields<sphericalTensor>(fieldName);
@@ -160,7 +164,7 @@ bool Foam::functionObjects::volumeIntegrate::execute()
 
 bool Foam::functionObjects::volumeIntegrate::write()
 {
-    Info<<"At the current moment there is no write into the file"<<nl;
+    Info<<"Currently there is no write into a file"<<nl;
     return true;
 }
 

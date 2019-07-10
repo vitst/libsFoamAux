@@ -65,6 +65,7 @@ void Foam::functionObjects::volumeIntegrate::integrateFields
         const fieldType& field = lookupObject<fieldType>(fieldName);
         
         Type volIntegral = pTraits<Type>::zero;
+        scalar volume = 0;
 
         // loop over the cells and calculate integral of
         forAll (field, cellI)
@@ -72,10 +73,12 @@ void Foam::functionObjects::volumeIntegrate::integrateFields
             vector pos=mesh_.C()[cellI];
             if( cellInsideTheBox(pos) )
             {
-                volIntegral = field[cellI] * mesh_.V()[cellI];
+                volIntegral += field[cellI] * mesh_.V()[cellI];
+                volume += mesh_.V()[cellI];
             }
         }
         
+        Info<<"Volume:  "<<volume<<endl;
         Info<<"Volume integral of "<<fieldName<<":  "<<volIntegral<<endl;
     }
 }

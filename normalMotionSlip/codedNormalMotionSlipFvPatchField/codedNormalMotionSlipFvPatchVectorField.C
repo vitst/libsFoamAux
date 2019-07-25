@@ -122,13 +122,24 @@ void Foam::codedNormalMotionSlipFvPatchVectorField::updateCoeffs()
             );
     
     //vectorField disp( pmuBC.getDisp() );
-
-    vectorField::operator=
-    ( 
-        pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField())
-    );
+    bool rlxON = pmuBC.getRlxON();
+    if(rlxON)
+    {
+        vectorField::operator=
+        ( 
+            pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField())
+        );
+    }
+    else
+    {
+        vectorField::operator=
+        ( 
+            pmuBC.getDisp()
+        );
+    }
 
     fixedValueFvPatchVectorField::updateCoeffs();
+  
 }
  
  

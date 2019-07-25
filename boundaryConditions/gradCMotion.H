@@ -13,3 +13,4 @@ const scalar dt = this->db().time().deltaTValue();
 vectorField fD = dt * scalarVal * gradField * faceNorm;
 
 this->setDisp(fD);
+this->setRlxON(true);

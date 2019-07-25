@@ -39,7 +39,8 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
     const DimensionedField<vector, pointMesh>& iF
 )
 :
-    valuePointPatchField<vector>(p, iF)
+    valuePointPatchField<vector>(p, iF),
+    rlxON(true)
 {}
 
 
@@ -50,7 +51,8 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
     const dictionary& dict
 )
 :
-    valuePointPatchField<vector>(p, iF, dict)
+    valuePointPatchField<vector>(p, iF, dict),
+    rlxON(true)
 {
 }
 
@@ -64,6 +66,7 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
 )
 :
     valuePointPatchField<vector>(ptf, p, iF, mapper),
+    rlxON(ptf.rlxON),
     faceDispl( ptf.faceDispl )
 {}
 
@@ -74,6 +77,7 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
 )
 :
     valuePointPatchField<vector>(ptf, iF),
+    rlxON(ptf.rlxON),
     faceDispl( ptf.faceDispl )
 {}
 

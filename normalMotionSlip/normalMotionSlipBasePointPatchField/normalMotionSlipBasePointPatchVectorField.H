@@ -80,6 +80,8 @@ class normalMotionSlipBasePointPatchVectorField
     
     //- saves displacement field on the boundary for cellMotionU
     vectorField faceDispl;
+
+    bool rlxON;
     
 public:
 
@@ -149,7 +151,17 @@ public:
         }
 
     // Member functions
-        const Field<vector>& getDisp() const 
+        const bool getRlxON() const
+        { 
+          return rlxON; 
+        }
+        
+        void setRlxON(bool rlx)
+        { 
+          rlxON = rlx; 
+        }
+
+        const Field<vector>& getDisp() const
         { 
           return faceDispl; 
         }

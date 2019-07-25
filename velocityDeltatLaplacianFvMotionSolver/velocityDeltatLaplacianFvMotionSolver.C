@@ -134,22 +134,8 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
     pointMotionU_.boundaryFieldRef().updateCoeffs();
     
     int iter = 0;
-    scalar residual = 1;
     while ( true )
     {
-
-      if( residual < tolerance )
-      {
-          Info << "velocity laplacian: Converged in " 
-               << iter << " steps.  Residual = "
-               << residual << nl << endl;
-          break;
-      }
-      if(debug)
-      {
-          Info << " Step " << iter << token::TAB
-               << " residual: "<< residual << " > " << tolerance << endl;
-      }
 
       fvVectorMatrix UEqn
       (
@@ -177,7 +163,20 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
 
       nF = nF/norm;
 
-      residual = cmptMax( cmptMultiply(sp.initialResidual(),  nF) );
+      scalar residual = cmptMax( cmptMultiply(sp.initialResidual(),  nF) );
+
+      if( residual < tolerance )
+      {
+          Info << "velocity laplacian: Converged in " 
+               << iter << " steps.  Residual = "
+               << residual << nl << endl;
+          break;
+      }
+      if(debug)
+      {
+          Info << " Step " << iter << token::TAB
+               << " residual: "<< residual << " > " << tolerance << endl;
+      }
 
       iter++;
     }

@@ -164,7 +164,8 @@ nextFaceNormals(const pointField& points, const List<face>& flist) const
   vectorField fn( flist.size() );
   forAll(fn, facei)
   {
-    fn[facei]  = flist[facei].normal(points);
+//    fn[facei]  = flist[facei].normal(points);
+    fn[facei]  = flist[facei].unitNormal(points);
     fn[facei] /= mag(fn[facei]) + VSMALL;
   }
   return fn;

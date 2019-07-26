@@ -373,9 +373,10 @@ void Foam::functionObjects::apertureAver::build_surface_points
         }
     }
 
+    labelList faceMap;
     triSurface wallTriSurface
     (
-      triSurfaceTools::triangulate( mesh.boundaryMesh(), includePatches )
+      triSurfaceTools::triangulate( mesh.boundaryMesh(), includePatches, faceMap )
     );
 
     // intersection

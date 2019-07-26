@@ -1156,11 +1156,16 @@ neighborListEdge
       label edb = ed.start();
       
       // @TODO use otherVertex function instead
-      if( edb!=ind && findIndex(list, edb) != -1 )
+ //- Deprecated(2017-10) search for first occurence of the given element.
+ //  \return The index found or return -1 if not found.
+ //  \deprecated(2017-10) - use the UList find/found methods
+      //if( edb!=ind && findIndex(list, edb) != -1 )
+      if( edb!=ind && list.find(edb) != -1 )
         nel.append(edb);
 
       label ede = ed.end();
-      if( ede!=ind && findIndex(list, ede) != -1)
+      //if( ede!=ind && findIndex(list, ede) != -1)
+      if( ede!=ind && list.find(ede) != -1)
         nel.append(ede);
     }
     neLi.append(nel);
@@ -2095,7 +2100,8 @@ faceNormals(const pointField& points, const List<face>& flist) const
   vectorField fn( flist.size() );
   forAll(fn, facei)
   {
-    fn[facei]  = flist[facei].normal(points);
+    //fn[facei]  = flist[facei].normal(points);
+    fn[facei]  = flist[facei].unitNormal(points);
     fn[facei] /= mag(fn[facei]) + VSMALL;
   }
   return fn;
@@ -2322,7 +2328,8 @@ commonPoints
   forAll(list1, loclLabel1)
   {
     label globLabel1 = list1[loclLabel1];
-    label loclLabel2 = findIndex(list2, globLabel1);
+    //label loclLabel2 = findIndex(list2, globLabel1);
+    label loclLabel2 = list2.find(globLabel1);
     if( loclLabel2 != -1 )
     {
       localList1.append( loclLabel1 );
@@ -2342,7 +2349,9 @@ getPointMotion( vectorField& pointMotion )
 
   IOdictionary& IOd
         = this->db().lookupObjectRef<IOdictionary>("transportProperties");
-  scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+//  scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+  dimensionedScalar lRd("lR", IOd);
+  scalar lR = lRd.value();
 
   IOd.set<scalar>("lR", 10.0);
 

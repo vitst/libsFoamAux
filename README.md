@@ -39,7 +39,12 @@ OFstreamMod: User library adds support for appending to an existing file; used b
 Files: OFstreamMod.H
        OFstreamMod.C
 
-dissolMotion: User library for mesh relaxation. Superseded by normalMotionSlip, but still used by surfRoughGen.
+3) orderBoundaries: OpenFoam utility to reorder boundary patches for normalM    otionSlip
+<br>usage:
+<br>    orderBoundaries -overwrite
+<br>The case dissolCirc uses orderBoundaries<\br>
+
+dissolMotion: User library for mesh relaxation. Superseded by normalMotionSlip, but still used by surfRoughGen utility.
 
 Files: dissolMotionPointPatchVectorField.H
 dissolMotionPointPatchVectorField.C

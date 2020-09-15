@@ -35,9 +35,10 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::steadyStateControl::read()
+bool Foam::steadyStateControl::read()
 {
     solutionControl::read(true);
+    return true;
 }
 
 
@@ -117,7 +118,7 @@ void Foam::steadyStateControl::maxTypeResidual
         reduce(sz, sumOp<int>());
         Type nF = gSumCmptProd( field, field ) / static_cast<double>(sz);
 
-        scalar norm = sqrt( mag(nF) );
+        scalar norm = mag(nF);
 
         for (direction cmpt=0; cmpt < nF.size(); cmpt++)
         {

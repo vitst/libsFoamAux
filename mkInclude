@@ -3,12 +3,10 @@
 
 curDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-
 mkdir -p ../lnInclude
 cd ../lnInclude
-#for H in $curDIR/*/*.H; do
 for H in $(find $curDIR -type f -name "*.H"); do
-    ln -s $H
+    ln -sf $H
 done
 
-ln -s $curDIR/coupledPatchInterpolation/CoupledPatchInterpolation.C
+ln -sf $curDIR/coupledPatchInterpolation/CoupledPatchInterpolation.C

@@ -91,6 +91,11 @@ Foam::velocityDeltatLaplacianFvMotionSolver::velocityDeltatLaplacianFvMotionSolv
         << "No 'tolerance' parameter in "<< coeffDict().name()
         << exit(FatalError);
   }
+  if( !coeffDict().readIfPresent<bool>("iterateLaplacianSolve", iterateLaplacianSolve) ){
+    SeriousErrorIn("velocityDeltatLaplacianFvMotionSolver.C")
+        << "No 'iterateLaplacianSolve' parameter in "<< coeffDict().name()
+        << exit(FatalError);
+  }
 }
 
 
@@ -176,6 +181,13 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
       {
           Info << " Step " << iter << token::TAB
                << " residual: "<< residual << " > " << tolerance << endl;
+      }
+
+      if( !iterateLaplacianSolve ){
+          Info << "iterateLaplacianSolve in dynamicMeshDict is set to "
+               << iterateLaplacianSolve << "\nThus, no iteration over "
+               << "laplacian for mesh update."<< endl;
+          break;
       }
 
       iter++;

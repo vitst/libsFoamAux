@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Web:      www.OpenFOAM.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Finds the intersection of a plane with specified patch. The plane is
+    defined by a point and a normal.
+    The data output is ...
+
+    !**! This tool is not general enought
+    It will result in a file of a field average vs Z
+    The number of bins is set by zBins parameter from minPoint.z to maxPoint.z
+
+\*---------------------------------------------------------------------------*/
+
+type            volumeIntegrate;
+libs            ("libvolumeIntegrateZ.so");
+
+// it is necessary to specify all fields used for integration
+// here otherwise postProcess tool wont read them
+fields
+(
+    C
+    U
+);
+
+// volume integration box is set by two points
+minPoint         ( -10  -10   0   );
+maxPoint         (  10   10   100 );
+
+zBins    50;
+
+
+// ************************************************************************* //

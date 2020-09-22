@@ -141,7 +141,29 @@ public:
 
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
+        
+        //- Evaluate the patch field
+        virtual void evaluate
+        (
+            const Pstream::commsTypes commsType =
+                Pstream::commsTypes::blocking
+        );
 
+
+        //tmp<vectorField> nextFaceNormals
+        vectorField nextFaceNormals
+        (
+            const pointField& points, 
+            const List<face>& flist
+        ) const;
+        
+        //tmp<pointField> nextFaceCentres
+        pointField nextFaceCentres
+        (
+            const pointField& points,
+            const List<face>& flist
+        ) const;
+        
         //- Write
         virtual void write(Ostream&) const;
 };

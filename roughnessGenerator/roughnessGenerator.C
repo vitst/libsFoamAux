@@ -61,8 +61,7 @@ Foam::RoughnessGenerator::RoughnessGenerator
     int minNum_,
     double rgh_,
     double dHurst_,
-    double cutoff_,
-    double maxDisp_
+    double cutoff_
 )
 :
     seed(seed_),
@@ -70,8 +69,7 @@ Foam::RoughnessGenerator::RoughnessGenerator
     minNum(minNum_),
     rgh(rgh_),
     dHurst(dHurst_),
-    cutoff(cutoff_),
-    maxDisp(maxDisp_)
+    cutoff(cutoff_)
 {
 }
 
@@ -94,7 +92,6 @@ void Foam::RoughnessGenerator::getFFTdisp(scalarField& disp)
     Info <<  "roughness:     "  <<  rgh         <<  endl;
     Info <<  "dHurst:        "  <<  dHurst      <<  endl;
     Info <<  "cutoff:        "  <<  cutoff      <<  endl;
-    Info <<  "maxDisp:       "  <<  maxDisp     <<  endl;
 
     Info <<  "Displacement calc starts...." << nl;
     /*

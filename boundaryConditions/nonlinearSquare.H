@@ -1,4 +1,4 @@
-//  Linear kinetics  //
+//  Square nonlinear kinetics  //
 
 Field<scalar>& val = *this;
 scalarField    del = mag( 1. / this->patch().deltaCoeffs() );
@@ -12,13 +12,15 @@ scalar lR = (new dimensionedScalar(IOd.lookup("lR")))->value();
 
 forAll(field, i)
 {
-  scalar R    = field[i];
-  scalar dR   = 1.0;
+  //scalar R    = field[i];
+  scalar R    = field[i] * field[i];
+  //scalar dR   = 1.0;
+  scalar dR   = 2 * field[i];
 
   scalar alpha  = del[i] / lR;
   scalar adR    = alpha * dR;
   frac[i]   = adR / ( 1 + adR );
-  refVal[i] = R;
+  refVal[i] = field[i]; // reference concentration is a boundary value from previous iteration
   refGr[i]  = -R / lR;
 }
 

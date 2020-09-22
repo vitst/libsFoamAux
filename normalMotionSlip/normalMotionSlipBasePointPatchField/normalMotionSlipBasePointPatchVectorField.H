@@ -77,6 +77,9 @@ class normalMotionSlipBasePointPatchVectorField
     public valuePointPatchField<vector>
 {
     // Private data
+
+    //- switches relaxation on and off
+    bool rlxON;
     
     //- saves displacement field on the boundary for cellMotionU
     vectorField faceDispl;
@@ -149,7 +152,17 @@ public:
         }
 
     // Member functions
-        const Field<vector>& getDisp() const 
+        const bool& getRlxON() const
+        { 
+          return rlxON; 
+        }
+        
+        void setRlxON(bool rlx)
+        { 
+          rlxON = rlx; 
+        }
+
+        const Field<vector>& getDisp() const
         { 
           return faceDispl; 
         }

@@ -4,6 +4,7 @@
 # Include 
 lnInclude/
 linux64Gcc*/
+linux64Cray*/
 
 # Compiled Object files
 *.slo
@@ -33,3 +34,8 @@ linux64Gcc*/
 *.exe
 *.out
 *.app
+
+# project dirs
+.idea
+CMakeLists.txt
+cmake-build-debug

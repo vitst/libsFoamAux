@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# these libs need to be compiled in order
+
+wmake libso apertureAver
+wmake libso volumeIntegrate
+wmake libso volumeIntegrateZ
+#wmake libso field2tiff
+#wmake libso volumeHisto

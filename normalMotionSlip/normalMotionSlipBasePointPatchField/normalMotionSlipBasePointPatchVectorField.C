@@ -28,6 +28,7 @@ License
 #include "volFields.H"
 #include "pointPatchFields.H"
 #include "IFstream.H"
+#include "symmTransformField.H"
 
 #include "coupledPatchInterpolation.H"
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -38,7 +39,8 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
     const DimensionedField<vector, pointMesh>& iF
 )
 :
-    valuePointPatchField<vector>(p, iF)
+    valuePointPatchField<vector>(p, iF),
+    rlxON(true)
 {}
 
 
@@ -49,7 +51,8 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
     const dictionary& dict
 )
 :
-    valuePointPatchField<vector>(p, iF, dict)
+    valuePointPatchField<vector>(p, iF, dict),
+    rlxON(true)
 {
 }
 
@@ -63,6 +66,7 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
 )
 :
     valuePointPatchField<vector>(ptf, p, iF, mapper),
+    rlxON(ptf.rlxON),
     faceDispl( ptf.faceDispl )
 {}
 
@@ -73,6 +77,7 @@ Foam::normalMotionSlipBasePointPatchVectorField::normalMotionSlipBasePointPatchV
 )
 :
     valuePointPatchField<vector>(ptf, iF),
+    rlxON(ptf.rlxON),
     faceDispl( ptf.faceDispl )
 {}
 
@@ -102,10 +107,39 @@ void Foam::normalMotionSlipBasePointPatchVectorField::evaluate
             (
                 "cellMotionU"
             );
+    /*
+    //const fvMesh& mesh = this->internalField().mesh();
+    const polyPatch& curPatch = mesh.boundaryMesh()[patchID];
+    const List<face>& llf = curPatch.localFaces();
+    const pointField& curPP  = curPatch.localPoints();
+
+    vectorField pMotion = patchInterpolator.faceToPointInterpolate(this->getDisp());
+    
+    pointField movedPoints(curPP + pMotion);
+
+    vectorField fn( llf.size() );
+    forAll(fn, facei)
+    {
+      fn[facei]  = llf[facei].normal(movedPoints);
+      fn[facei] /= mag(fn[facei]) + VSMALL;
+    }
+
+    vectorField proj
+    (
+    //cmu.boundaryField()[patchID].patchInternalField()
+    transform(I - sqr(fn), cmu.boundaryField()[patchID].patchInternalField())
+    );
+    */
+    
     
     this->operator==
     ( 
-        patchInterpolator.faceToPointInterpolate(cmu.boundaryField()[patchID]) 
+        patchInterpolator.faceToPointInterpolate
+        (
+            cmu.boundaryField()[patchID]
+            //+
+            //proj
+        )
     );
     
     valuePointPatchField<vector>::evaluate();

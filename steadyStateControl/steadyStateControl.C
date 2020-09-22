@@ -35,9 +35,10 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::steadyStateControl::read()
+bool Foam::steadyStateControl::read()
 {
     solutionControl::read(true);
+    return true;
 }
 
 

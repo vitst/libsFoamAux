@@ -6,7 +6,7 @@ const scalarField Un     = this->patch().template
                          & (-1)*this->patch().nf();
 
 const IOdictionary& iod = this->db().lookupObject<IOdictionary>("transportProperties");
-scalar D = (new dimensionedScalar(iod.lookup("D")))->value();
+scalar D = (new dimensionedScalar("D", (dimArea/dimTime), iod))->value();
 
 this->refValue() = pTraits<scalar>::one;
 this->refGrad()  = pTraits<scalar>::zero;

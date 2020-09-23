@@ -8,7 +8,7 @@ scalarField    refVal( field.size(), 0.0 );
 scalarField    refGr( field.size(), 0.0 );
 
 const IOdictionary& IOd = this->db().lookupObject<IOdictionary>("transportProperties");
-scalar lR = (new dimensionedScalar(IOd.lookup("lR")))->value();
+scalar lR =  (new dimensionedScalar("lR", dimLength, IOd))->value();
 
 forAll(field, i)
 {

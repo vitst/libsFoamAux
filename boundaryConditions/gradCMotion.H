@@ -5,7 +5,8 @@ const volScalarField& field =
 const label& patchID = this->patch().index();
 const IOdictionary& IOd
           = this->db().lookupObject<IOdictionary>("transportProperties");
-scalar scalarVal =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+scalar scalarVal =  (new dimensionedScalar("lR", dimLength, IOd))->value();
+
 scalarField gradField = -field.boundaryField()[patchID].snGrad();
 vectorField faceNorm = mesh.boundaryMesh()[patchID].faceNormals();
     

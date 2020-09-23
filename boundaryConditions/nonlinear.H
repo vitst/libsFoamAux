@@ -2,7 +2,7 @@
 
 const IOdictionary& IOd                 //  Get auxiliary input
         = this->db().lookupObject<IOdictionary>("transportProperties");
-scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+scalar lR =  (new dimensionedScalar("lR", dimLength, IOd))->value();
 
 scalar n1     = 1.0;                    //  Reaction parameters
 scalar n2     = 1.0;

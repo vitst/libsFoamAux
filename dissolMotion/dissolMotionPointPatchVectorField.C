@@ -45,6 +45,7 @@ License
 #include "plane.H"
 #include "face.H"
 #include "syncTools.H"
+#include "ListOps.H"
 
 //#include "triSurface.H"
 //#include "triSurfaceTools.H"
@@ -1156,11 +1157,11 @@ neighborListEdge
       label edb = ed.start();
       
       // @TODO use otherVertex function instead
-      if( edb!=ind && findIndex(list, edb) != -1 )
+      if( edb!=ind && list.find(edb) != -1 )
         nel.append(edb);
 
       label ede = ed.end();
-      if( ede!=ind && findIndex(list, ede) != -1)
+      if( ede!=ind && list.find(ede) != -1)
         nel.append(ede);
     }
     neLi.append(nel);
@@ -2095,7 +2096,7 @@ faceNormals(const pointField& points, const List<face>& flist) const
   vectorField fn( flist.size() );
   forAll(fn, facei)
   {
-    fn[facei]  = flist[facei].normal(points);
+    fn[facei]  = flist[facei].unitNormal(points);
     fn[facei] /= mag(fn[facei]) + VSMALL;
   }
   return fn;
@@ -2188,7 +2189,7 @@ fixCommonNeighborPatchPoints( vectorField& pointMotion )
           label pointI = local_EdgePoints[i];
           
           vector nrm(vector::zero);
-          label iii = findIndex(pinnedPoints, pointI);
+          label iii = pinnedPoints.find(pointI);
           if( iii != -1 )
           {
             nrm = pinnedPointsNorm[iii];
@@ -2322,7 +2323,7 @@ commonPoints
   forAll(list1, loclLabel1)
   {
     label globLabel1 = list1[loclLabel1];
-    label loclLabel2 = findIndex(list2, globLabel1);
+    label loclLabel2 = list2.find(globLabel1);
     if( loclLabel2 != -1 )
     {
       localList1.append( loclLabel1 );
@@ -2342,11 +2343,10 @@ getPointMotion( vectorField& pointMotion )
 
   IOdictionary& IOd
         = this->db().lookupObjectRef<IOdictionary>("transportProperties");
-  scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
+  scalar lR =  (new dimensionedScalar("lR", dimLength, IOd))->value();
 
-  IOd.set<scalar>("lR", 10.0);
-
-  IOd.regIOobject::write();
+  //IOd.set<scalar>("lR", 10.0);
+  //IOd.regIOobject::write();
 
   const volScalarField& C = 
     this->db().objectRegistry::lookupObject<volScalarField>("C");

@@ -2,8 +2,9 @@
 
 const IOdictionary& IOd                     //  Get auxiliary data
         = this->db().lookupObject<IOdictionary>("transportProperties");
-scalar lR =  (new dimensionedScalar(IOd.lookup("lR")))->value();
-scalar D  =  (new dimensionedScalar(IOd.lookup("D")))->value();
+scalar lR =  (new dimensionedScalar("lR", dimLength, IOd))->value();
+scalar D =  (new dimensionedScalar("D", (dimArea/dimTime), IOd))->value();
+
 const volScalarField& auxField =
         this->db().objectRegistry::lookupObject<volScalarField>("Deff");
 const label& patchID = this->patch().index();

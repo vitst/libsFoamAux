@@ -158,7 +158,7 @@ void Foam::normalMotionSlipPointPatchVectorField::updateCoeffs()
     const label& patchID = this->patch().index();
     const IOdictionary& IOd
           = this->db().lookupObject<IOdictionary>("transportProperties");
-    scalar scalarVal =  (new dimensionedScalar(IOd.lookup(scalarName)))->value();
+    scalar scalarVal =  (new dimensionedScalar(scalarName, dimLength, IOd))->value();
     scalarField gradField = -field.boundaryField()[patchID].snGrad();
     vectorField faceNorm = mesh.boundaryMesh()[patchID].faceNormals();
     

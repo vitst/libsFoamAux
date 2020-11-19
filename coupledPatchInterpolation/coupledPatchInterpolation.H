@@ -33,19 +33,20 @@ Description
 #define coupledPatchInterpolation_H
 
 #include "CoupledPatchInterpolation.H"
-#include "PrimitivePatch.H"
-#include "face.H"
-#include "SubList.H"
-#include "pointField.H"
+//#include "PrimitivePatch.H"
+#include "primitivePatch.H"
+//#include "face.H"
+//#include "SubList.H"
+//#include "pointField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef CoupledPatchInterpolation
-    <
-        PrimitivePatch<face, SubList, const pointField&>
-    >   coupledPatchInterpolation;
+    typedef CoupledPatchInterpolation<primitivePatch> coupledPatchInterpolation;
+    //<
+    //    PrimitivePatch<faceList, const pointField&>
+    //>   coupledPatchInterpolation;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

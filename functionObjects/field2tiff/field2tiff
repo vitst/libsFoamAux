@@ -1,0 +1,31 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Web:      www.OpenFOAM.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Finds the intersection of a plane with specified patch. The plane is
+    defined by a point and a normal.
+    The data output is ...
+
+\*---------------------------------------------------------------------------*/
+
+type            field2tiff;
+libs            ("libfield2tiff.so");
+
+// it is necessary to specify all fields used for integration
+// here otherwise postProcess tool wont read them
+fields
+(
+    C
+);
+
+// scan volume in box set by two points
+minPoint         (  -687   -684.5      0 );
+maxPoint         (   687    684.5    100 );
+
+imageUnit    1.0;
+
+// ************************************************************************* //

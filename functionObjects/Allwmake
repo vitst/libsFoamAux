@@ -5,5 +5,5 @@
 wmake libso apertureAver
 wmake libso volumeIntegrate
 wmake libso volumeIntegrateZ
-#wmake libso field2tiff
+wmake libso field2tiff
 #wmake libso volumeHisto

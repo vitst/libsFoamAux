@@ -98,7 +98,7 @@ void Foam::functionObjects::field2tiff::convertFields
                         << mesh_.time().timeName() << nl;
         Info<< "Image dimensions: " << nX << "  "<< nY << "  " << nZ <<nl<<endl;
 
-        TIFF *outTiff = TIFFOpen(fN.c_str(), "w");
+        TIFF *outTiff = TIFFOpen(fN.c_str(), "w8");
         uint32 x_dim = static_cast<uint32>(nX);
         uint32 y_dim = static_cast<uint32>(nY);
 

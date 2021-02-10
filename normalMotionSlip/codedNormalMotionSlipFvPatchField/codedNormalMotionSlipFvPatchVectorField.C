@@ -121,7 +121,6 @@ void Foam::codedNormalMotionSlipFvPatchVectorField::updateCoeffs()
                 pmU.boundaryField()[patchID]
             );
     
-    //vectorField disp( pmuBC.getDisp() );
     bool rlxON = pmuBC.getRlxON();
     if(rlxON)
     {

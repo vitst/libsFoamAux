@@ -145,7 +145,6 @@ void Foam::normalMotionSlipFvPatchVectorField::updateCoeffs()
     //const pointField fc(faceCentres(movedPoints, llf));
     
     //vectorField aux(pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField()));
-
     vectorField::operator=
     ( 
         pmuBC.getDisp() + transform(I - sqr(n), this->patchInternalField())

@@ -166,7 +166,7 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
           nF[cmpt] = sqrt( nF[cmpt] );
       }
 
-      nF = nF/norm;
+      nF = nF/(norm+SMALL);
 
       scalar residual = cmptMax( cmptMultiply(sp.initialResidual(),  nF) );
 

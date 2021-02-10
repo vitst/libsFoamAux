@@ -2,6 +2,10 @@
 
 echo "Make everything"
 ./mkInclude                       # make links
+
+# need to make the OFstreamMod first
+wmake OFstreamMod
+
 for d in */ ; do
   if [ -d ${d}/Make ]; then
     wmake $d

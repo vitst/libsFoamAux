@@ -86,6 +86,10 @@ Foam::velocityDeltatLaplacianFvMotionSolver::velocityDeltatLaplacianFvMotionSolv
         motionDiffusivity::New(fvMesh_, coeffDict().lookup("diffusivity"))
     )
 {
+  if( !coeffDict().readIfPresent<bool>("verbose", verbose) ){
+      // set default value to verbose if absent
+      verbose = true;
+  }
   if( !coeffDict().readIfPresent<scalar>("tolerance", tolerance) ){
     SeriousErrorIn("velocityDeltatLaplacianFvMotionSolver.C")
         << "No 'tolerance' parameter in "<< coeffDict().name()
@@ -166,15 +170,16 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
           nF[cmpt] = sqrt( nF[cmpt] );
       }
 
-      nF = nF/(norm+SMALL);
+      nF = nF / (norm+SMALL);
 
       scalar residual = cmptMax( cmptMultiply(sp.initialResidual(),  nF) );
 
       if( residual < tolerance )
       {
-          Info << "velocity laplacian: Converged in " 
-               << iter << " steps.  Residual = "
-               << residual << nl << endl;
+          if(verbose)
+              Info << "velocity laplacian: Converged in " 
+                   << iter << " steps.  Residual = "
+                   << residual << nl << endl;
           break;
       }
       if(debug)

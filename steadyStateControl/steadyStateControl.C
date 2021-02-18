@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "steadyStateControl.H"
+#include "Time.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -59,15 +60,18 @@ bool Foam::steadyStateControl::criteriaSatisfied()
     bool checked = false;    // safety that some checks were indeed performed
 
     const dictionary& solverDict = mesh_.solverPerformanceDict();
-    forAllConstIter(dictionary, solverDict, iter)
+    forAllConstIters(solverDict, iter)
     {
-        const word& variableName = iter().keyword();
-        const label fieldi = applyToField(variableName);
+        const entry& solverPerfDictEntry = *iter;
+
+        const word& fieldName = solverPerfDictEntry.keyword();
+        const label fieldi = applyToField(fieldName);
+
         if (fieldi != -1)
         {
             scalar lastResidual = 0;
             const scalar residual =
-                this->maxResidual(variableName, iter().stream(), lastResidual);
+                this->maxResidual(fieldName, iter().stream(), lastResidual);
 
             checked = true;
 
@@ -78,7 +82,7 @@ bool Foam::steadyStateControl::criteriaSatisfied()
             {
                 Info<< algorithmName_ << " solution statistics:";
 
-                Info<< "    " << variableName << ": tolerance = " << residual
+                Info<< "    " << fieldName << ": tolerance = " << residual
                     << " (" << residualControl_[fieldi].absTol << ")"
                     << endl;
             }
@@ -90,7 +94,6 @@ bool Foam::steadyStateControl::criteriaSatisfied()
     dict.clear();
 
     initialised_ = false;
-
 
     return checked && achieved;
 }
@@ -163,31 +166,38 @@ Foam::scalar Foam::steadyStateControl::maxResidual
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::steadyStateControl::steadyStateControl(fvMesh& mesh)
+Foam::steadyStateControl::steadyStateControl
+(
+    fvMesh& mesh,
+    const word& dictName,
+    const bool verbose    
+)
 :
-    solutionControl(mesh, "SIMPLE"),
+    solutionControl(mesh, dictName),
     initialised_(false),
     iter_counter(0)
 {
     read();
-
-    Info<<nl;
-
-    if (residualControl_.empty())
+    if (verbose)
     {
-        Info<< algorithmName_ << ": no convergence criteria found. Exiting"<< endl;
-        exit(FatalIOError);
-    }
-    else
-    {
-        Info<< algorithmName_ << ": convergence criteria" << nl;
-        forAll(residualControl_, i)
+        Info << nl;
+    
+        if (residualControl_.empty())
         {
-            Info<< "    field " << residualControl_[i].name << token::TAB
-                << " tolerance " << residualControl_[i].absTol
-                << nl;
+            Info<< algorithmName_ << ": no convergence criteria found. Exiting"<< endl;
+            exit(FatalIOError);
         }
-        Info<< endl;
+        else
+        {
+            Info<< algorithmName_ << ": convergence criteria" << nl;
+            forAll(residualControl_, i)
+            {
+                Info<< "    field " << residualControl_[i].name << token::TAB
+                    << " tolerance " << residualControl_[i].absTol
+                    << nl;
+            }
+            Info<<endl;
+        }
     }
 }
 
@@ -196,6 +206,8 @@ Foam::steadyStateControl::steadyStateControl(fvMesh& mesh)
 
 bool Foam::steadyStateControl::loop()
 {
+    solutionControl::setFirstIterFlag(true, true);
+
     bool run = true;
     read();
 

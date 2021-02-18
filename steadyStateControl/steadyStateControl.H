@@ -29,6 +29,7 @@ Description
     information/checks for a steady state solution, without
     incrementing the time counter.
     Vitaliy Starchenko (Dec 2017)
+    upd Feb 2021 (update to the current OF code changes)
 
 
 \*---------------------------------------------------------------------------*/
@@ -37,6 +38,8 @@ Description
 #define steadyStateControl_H
 
 #include "solutionControl.H"
+
+#define STEADY_STATE_SIMPLE_CONTROL
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -68,12 +71,6 @@ protected:
         //- Return true if all convergence checks are satisfied
         bool criteriaSatisfied();
 
-        //- Disallow default bitwise copy construct
-        steadyStateControl(const steadyStateControl&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const steadyStateControl&);
-
     	int iter_counter;
 
         template<class Type>
@@ -92,6 +89,14 @@ protected:
             scalar& lastRes
         ) const;
 
+private:
+
+        //- Disallow default bitwise copy construct
+        steadyStateControl(const steadyStateControl&) = delete;
+
+        //- Disallow default bitwise assignment
+        void operator=(const steadyStateControl&) = delete;
+
 public:
 
 
@@ -103,8 +108,13 @@ public:
 
     // Constructors
 
-        //- Construct from mesh
-        steadyStateControl(fvMesh& mesh);
+        //- Construct from mesh and the name of control sub-dictionary
+        steadyStateControl
+        (
+            fvMesh& mesh,
+            const word& dictName = "SIMPLE",
+            const bool verbose = true
+        );
 
 
     //- Destructor

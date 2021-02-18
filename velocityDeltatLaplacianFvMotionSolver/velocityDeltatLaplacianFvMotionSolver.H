@@ -65,8 +65,11 @@ class velocityDeltatLaplacianFvMotionSolver
 {
     // Private data
   
-        // tolerance for Laplace eq. solver
+        // switch whether to iterate Laplace eq. solver
         bool iterateLaplacianSolve;
+
+        // print convergence summary on screen
+        bool verbose;
 
         // tolerance for Laplace eq. solver
         scalar tolerance;

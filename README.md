@@ -1,5 +1,7 @@
 # libsFoamAux: Auxiliary libraries for OpenFOAM.
 
+This is a branch of the v2012 to make it compartable with OF-dev (July 2021)
+
 ## Notes:  
 * Source codes built with OpenFOAM-v2012(R)
 * Script `mkInclude` makes symbolic links  

@@ -1,7 +1,7 @@
 # libsFoamAux: Auxiliary libraries for OpenFOAM.
 
 ## Notes:  
-* Source codes built with OpenFOAM-v1912(R)
+* Source codes built with OpenFOAM-v2012(R)
 * Script `mkInclude` makes symbolic links  
 * The user must set the path to the `codeTemplates` directory (in `libsFoamAux`): e.g. `export FOAM_CODE_TEMPLATES=path-to-libsFoamAux/codeTemplates`
         

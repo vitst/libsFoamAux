@@ -141,61 +141,62 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
 
     diffusivityPtr_->correct();
     pointMotionU_.boundaryFieldRef().updateCoeffs();
+
+    bool ifzero = (mag(gSum(cellMotionU_))==0);
     
     int iter = 0;
-    while ( true )
+    while ( true && !ifzero)
     {
-
-      fvVectorMatrix UEqn
-      (
-          fvm::laplacian
-          (
-              diffusivityPtr_->operator()(),
-              cellMotionU_,
-              "laplacian(diffusivity,cellMotionD)"
-          )
-      );
-      
-      SolverPerformance<vector> sp 
-              = UEqn.solveSegregatedOrCoupled(UEqn.solverDict());
-
-      int sz = cellMotionU_.size();
-      reduce(sz, sumOp<int>());
-      vector nF = gSumCmptProd( cellMotionU_, cellMotionU_ ) / static_cast<double>(sz);
-
-      scalar norm = sqrt( mag(nF) );
-
-      for (direction cmpt=0; cmpt < nF.size(); cmpt++)
-      {   
-          nF[cmpt] = sqrt( nF[cmpt] );
-      }
-
-      nF = nF / (norm+SMALL);
-
-      scalar residual = cmptMax( cmptMultiply(sp.initialResidual(),  nF) );
-
-      if( residual < tolerance )
-      {
-          if(verbose)
-              Info << "velocity laplacian: Converged in " 
-                   << iter << " steps.  Residual = "
-                   << residual << nl << endl;
-          break;
-      }
-      if(debug)
-      {
-          Info << " Step " << iter << token::TAB
-               << " residual: "<< residual << " > " << tolerance << endl;
-      }
-
-      if( !iterateLaplacianSolve ){
-          Info << "iterateLaplacianSolve in dynamicMeshDict is set to "
-               << iterateLaplacianSolve << "\nThus, no iteration over "
-               << "laplacian for mesh update."<< endl;
-          break;
-      }
-
-      iter++;
+        fvVectorMatrix UEqn
+        (
+            fvm::laplacian
+            (
+                diffusivityPtr_->operator()(),
+                cellMotionU_,
+                "laplacian(diffusivity,cellMotionD)"
+            )
+        );
+        
+        SolverPerformance<vector> sp 
+                = UEqn.solveSegregatedOrCoupled(UEqn.solverDict());
+  
+        int sz = cellMotionU_.size();
+        reduce(sz, sumOp<int>());
+        vector nF = gSumCmptProd( cellMotionU_, cellMotionU_ ) / static_cast<double>(sz);
+  
+        scalar norm = sqrt( mag(nF) );
+  
+        for (direction cmpt=0; cmpt < nF.size(); cmpt++)
+        {   
+            nF[cmpt] = sqrt( nF[cmpt] );
+        }
+  
+        nF = nF / (norm+SMALL);
+  
+        scalar residual = cmptMax( cmptMultiply(sp.initialResidual(),  nF) );
+  
+        if( residual < tolerance )
+        {
+            if(verbose)
+                Info << "velocity laplacian: Converged in " 
+                     << iter << " steps.  Residual = "
+                     << residual << nl << endl;
+            break;
+        }
+        if(debug)
+        {
+            Info << " Step " << iter << token::TAB
+                 << " residual: "<< residual << " > " << tolerance << endl;
+        }
+  
+        if( !iterateLaplacianSolve ){
+            Info << "iterateLaplacianSolve in dynamicMeshDict is set to "
+                 << iterateLaplacianSolve << "\nThus, no iteration over "
+                 << "laplacian for mesh update."<< endl;
+            break;
+        }
+  
+        iter++;
     }
 }
 

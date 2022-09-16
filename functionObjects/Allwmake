@@ -7,3 +7,5 @@ wmake libso volumeIntegrate
 wmake libso volumeIntegrateZ
 wmake libso field2tiff
 #wmake libso volumeHisto
+
+wmake libso curv

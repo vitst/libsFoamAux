@@ -1,0 +1,18 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Web:      www.OpenFOAM.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+        Calculates curvature of the specified patch through FAM
+
+\*---------------------------------------------------------------------------*/
+
+type            patchSurfaceArea;
+libs            ("libpatchSurfaceArea.so");
+
+patchName       "reactive_surface";
+
+// ************************************************************************* //

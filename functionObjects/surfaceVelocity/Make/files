@@ -1,0 +1,3 @@
+surfaceVelocity.C
+
+LIB = $(FOAM_USER_LIBBIN)/libsurfaceVelocity

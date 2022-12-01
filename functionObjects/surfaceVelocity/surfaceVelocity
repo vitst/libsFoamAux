@@ -1,0 +1,26 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Web:      www.OpenFOAM.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+        Calculates current velocity of the specified patch
+
+\*---------------------------------------------------------------------------*/
+
+type            surfaceVelocity;
+libs            ("libsurfaceVelocity.so");
+
+patchName       "reactive_surface";
+
+// it is necessary to specify all fields used for integration
+  // here otherwise postProcess tool wont read them
+fields
+(
+    C
+);
+
+
+// ************************************************************************* //

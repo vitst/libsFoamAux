@@ -1,0 +1,3 @@
+patchSurfaceArea.C
+
+LIB = $(FOAM_USER_LIBBIN)/libpatchSurfaceArea

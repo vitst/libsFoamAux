@@ -1,0 +1,24 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Web:      www.OpenFOAM.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+        Calculates values at the specified patch vs X coord
+
+\*---------------------------------------------------------------------------*/
+
+type            patchValuesX;
+libs            ("libpatchValuesX.so");
+
+patchName       "reactive_surface";
+
+fields
+(
+    CC
+);
+
+
+// ************************************************************************* //

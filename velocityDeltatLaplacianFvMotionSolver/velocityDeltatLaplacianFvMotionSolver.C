@@ -142,10 +142,13 @@ void Foam::velocityDeltatLaplacianFvMotionSolver::solve()
     diffusivityPtr_->correct();
     pointMotionU_.boundaryFieldRef().updateCoeffs();
 
-    bool ifzero = (mag(gSum(cellMotionU_))==0);
-    
+    bool ifzero = (mag(gSum(pointMotionU_))==0);
+    bool ifzero1 = (mag(gSum(cellMotionU_))==0);
+    Info<<"++++++++++++++++++++++++++++++++++++  "<< ifzero << "  " << ifzero1<<nl;
+
     int iter = 0;
-    while ( true && !ifzero)
+    //while ( true && !ifzero)
+    while ( true )
     {
         fvVectorMatrix UEqn
         (

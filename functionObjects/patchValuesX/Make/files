@@ -1,0 +1,3 @@
+patchValuesX.C
+
+LIB = $(FOAM_USER_LIBBIN)/libpatchValuesX

@@ -1,0 +1,3 @@
+patchCurvatureMulti.C
+
+LIB = $(FOAM_USER_LIBBIN)/libpatchCurvatureMulti

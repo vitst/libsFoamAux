@@ -11,3 +11,7 @@ wmake libso field2tiff
 wmake libso curv
 
 wmake libso patchValuesX
+
+wmake libso xpatchMotionData
+
+wmake libso patchCurvature

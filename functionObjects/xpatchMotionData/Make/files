@@ -1,0 +1,3 @@
+xpatchMotionData.C
+
+LIB = $(FOAM_USER_LIBBIN)/libxpatchMotionData

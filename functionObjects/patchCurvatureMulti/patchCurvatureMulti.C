@@ -106,17 +106,24 @@ bool Foam::functionObjects::patchCurvatureMulti::execute()
     forAll(patches_, i)
     {
         const label patch_rs = mesh_.boundaryMesh().findPatchID(patches_[i]);
-        labelHashSet pt(1);
-        pt.insert(patch_rs);
-        labelList faceMap;
-        triSurface wallTriSurface
-        (
-            triSurfaceTools::triangulate( mesh_.boundaryMesh(), pt, faceMap)
-        );
-    
-        scalarField curv( triSurfaceTools::curvatures( wallTriSurface ) );
-    
-        Info<<"Patch: "<<patches_[i]<<"  Min curv: "<< gMin(curv)<<"  Max curv: "<<gMax(curv)<<endl;
+        if(patch_rs>=0)
+        {
+            labelHashSet pt(1);
+            pt.insert(patch_rs);
+            labelList faceMap;
+            triSurface wallTriSurface
+            (
+                triSurfaceTools::triangulate( mesh_.boundaryMesh(), pt, faceMap)
+            );
+        
+            scalarField curv( triSurfaceTools::curvatures( wallTriSurface ) );
+        
+            Info<<"Patch: "<<patches_[i]<<"  Min curv: "<< gMin(curv)<<"  Max curv: "<<gMax(curv)<<endl;
+        }
+        else
+        {
+            Info<<"Patch: "<<patches_[i]<<"  Min curv: "<< SMALL <<"  Max curv: "<< SMALL <<"  !!! Does not exist !!!"<<endl;
+        }
     }
 
 

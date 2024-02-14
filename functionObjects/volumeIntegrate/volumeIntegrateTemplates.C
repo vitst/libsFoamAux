@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "volumeIntegrate.H"
+#include "OFstreamMod.H"
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
@@ -73,13 +74,28 @@ void Foam::functionObjects::volumeIntegrate::integrateFields
             vector pos=mesh_.C()[cellI];
             if( cellInsideTheBox(pos) )
             {
+                //volIntegral += field[cellI] / mesh_.V()[cellI];
                 volIntegral += field[cellI] * mesh_.V()[cellI];
+                //volIntegral += field[cellI];
                 volume += mesh_.V()[cellI];
             }
         }
+        volIntegral = volIntegral / volume;
         
         Info<<"Volume:  "<<volume<<endl;
         Info<<"Volume integral of "<<fieldName<<":  "<<volIntegral<<endl;
+
+        //volume_ = volume;
+        //volumeIntegral_ = volIntegral;
+        
+        for (const word& fieldName : fieldNames_)
+        {
+            fileName current_file_path =
+                      "postProcessing/volumeIntegral/volumeIntegral_"+fieldName+".csv";
+            ios_base::openmode mode = ios_base::out|ios_base::app;
+            OFstreamMod curv_stream(current_file_path, mode);
+            curv_stream << mesh_.time().timeName()<< ",  " << volume << ",  " << volIntegral << endl;
+        }
     }
 }
 

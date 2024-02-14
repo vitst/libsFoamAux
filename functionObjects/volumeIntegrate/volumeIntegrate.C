@@ -90,7 +90,28 @@ Foam::functionObjects::volumeIntegrate::volumeIntegrate
     {
         Info<< "functionObjects::volumeIntegrate Constructor"<<nl;
     }
+
+    //volume_ = 0;
+    //volumeIntegral_ = pTraits<Type>::zero;
+
     read(dict);
+
+    // initialize write file
+    word current_postPr_dir = "postProcessing/volumeIntegral";
+    if ( !isDir(current_postPr_dir) ) mkDir(current_postPr_dir);
+
+    for (const word& fieldName : fieldNames_)
+    {
+        fileName current_file_path =
+                  "postProcessing/volumeIntegral/volumeIntegral_"+fieldName+".csv";
+
+        ios_base::openmode mode = ios_base::out|ios_base::trunc;
+        //ios_base::openmode mode = ios_base::out|ios_base::app;
+        OFstreamMod curv_stream(current_file_path, mode);
+
+        curv_stream << "Volume integral of " << fieldName << endl;
+        curv_stream << "time,    volume,    filedInt"<<endl;
+    }
 }
 
 
@@ -164,7 +185,24 @@ bool Foam::functionObjects::volumeIntegrate::execute()
 
 bool Foam::functionObjects::volumeIntegrate::write()
 {
-    Info<<"Currently there is no write into a file"<<nl;
+    //Info<<"Currently there is no write into a file"<<nl;
+    Info<<"Currently write is in execute"<<nl;
+    
+    /*
+    //word current_postPr_dir = "postProcessing/volumeIntegral" / mesh_.time().timeName();
+    word current_postPr_dir = "postProcessing/volumeIntegral";
+    if ( !isDir(current_postPr_dir) ) mkDir(current_postPr_dir);
+
+    fileName current_file_path =
+              "postProcessing/volumeIntegral/volumeIntegral";
+
+    //ios_base::openmode mode = ios_base::out|ios_base::trunc;
+    ios_base::openmode mode = ios_base::out|ios_base::app;
+    OFstreamMod curv_stream(current_file_path, mode);
+
+    curv_stream << mesh_.time().timeName()<< "   " << volume_ << "   " << volumeIntegral_ << endl;
+    */
+
     return true;
 }
 

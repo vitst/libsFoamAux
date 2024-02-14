@@ -96,6 +96,19 @@ protected:
         //- Fields to integrate
         volFieldSelection fieldSet_;
 
+        /*
+        // result values
+        scalar volume_;
+        template<typename T>
+        class VolumeIntegral
+        {
+        public:
+            VolumeIntegral();
+            VolumeIntegral~();
+
+        };
+        */
+
     // Protected Member Functions
 
         void printInfo() const;

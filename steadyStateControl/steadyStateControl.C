@@ -59,7 +59,7 @@ bool Foam::steadyStateControl::criteriaSatisfied()
     bool achieved = true;
     bool checked = false;    // safety that some checks were indeed performed
 
-    const dictionary& solverDict = mesh_.solverPerformanceDict();
+    const dictionary& solverDict = mesh_.data().solverPerformanceDict();
     forAllConstIters(solverDict, iter)
     {
         const entry& solverPerfDictEntry = *iter;
@@ -90,7 +90,7 @@ bool Foam::steadyStateControl::criteriaSatisfied()
     }
     
     // clear dictionary
-    dictionary& dict = const_cast<dictionary&>(mesh_.solverPerformanceDict());
+    dictionary& dict = const_cast<dictionary&>(mesh_.data().solverPerformanceDict());
     dict.clear();
 
     initialised_ = false;

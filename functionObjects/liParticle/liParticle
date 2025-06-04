@@ -1,0 +1,31 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Web:      www.OpenFOAM.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+        Post processing of Li3PO4 particle simulations (specified patch)
+
+\*---------------------------------------------------------------------------*/
+
+type            liParticle;
+libs            ("libliParticle.so");
+
+patchName       "reactive_surface";
+
+// reaction kinetics R = theta * CA^nCA * CB^nCB
+nCA     1;
+nCB     1;
+
+// it is necessary to specify all fields used for the postprocessing
+// otherwise postProcess tool wont read them
+fields
+(
+    CA
+    CB
+);
+
+
+// ************************************************************************* //

@@ -10,6 +10,8 @@ wmake libso field2tiff
 
 wmake libso curv
 
+wmake libso liParticle
+
 wmake libso patchValuesX
 
 wmake libso xpatchMotionData

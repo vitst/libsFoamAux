@@ -35,6 +35,9 @@ linux64Cray*/
 *.out
 *.app
 
+# swap files
+*.swp
+
 # project dirs
 .idea
 CMakeLists.txt
